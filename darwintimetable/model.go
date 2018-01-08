@@ -1,29 +1,25 @@
 // Reference timetable
 package darwintimetable
 
-import (
-  "encoding/xml"
-  "log"
-  "strconv"
-  //"time"
-)
-
-type PportTimetable struct {
-  TimetableId     string      `xml:"timetableID,attr"`
-  Journeys      []*Journey    `xml:"Journey"`
+type Timetable struct {
+  TimetableId     string              `xml:"timetableID,attr"`
+  //Journeys      []*Journey            `xml:"Journey"`
+  Journeys        map[string]*Journey `xml:"-"`
 }
 
 type Journey struct {
-  RID             string      `xml:"rid,attr"`
-  UID             string      `xml:"uid,attr"`
-  TrainID         string      `xml:"trainId"`
-  SSD             string      `xml:"ssd,attr"`
-  Toc             string      `xml:"toc,attr"`
-  TrainCat        string      `xml:"trainCat,attr"`
-  Passenger       bool        `xml:"isPassengerSvc,attr"`
+  RID             string        `xml:"rid,attr"`
+  UID             string        `xml:"uid,attr"`
+  TrainID         string        `xml:"trainId"`
+  SSD             string        `xml:"ssd,attr"`
+  Toc             string        `xml:"toc,attr"`
+  TrainCat        string        `xml:"trainCat,attr"`
+  Passenger       bool          `xml:"isPassengerSvc,attr"`
   // The schedule
-  Schedule      []interface{} `xml:,any`
-  CancelReason    int         `xml:"cancelReason"`
+  Schedule      []interface{}   `xml:,any`
+  CancelReason    int           `xml:"cancelReason"`
+  // Associations
+  Associations  []*Association  `xml:"-"`
 }
 
 type OR struct {
@@ -136,84 +132,20 @@ type cancelReason struct {
   text string `xml:",chardata"`
 }
 
-func (j *Journey) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error {
-  for _, attr := range start.Attr {
-    switch attr.Name.Local {
-    case "rid":
-      j.RID = attr.Value
-    case "uid":
-      j.UID = attr.Value
-    case "trainId":
-      j.TrainID = attr.Value
-    case "ssd":
-      j.SSD = attr.Value
-    case "toc":
-      j.Toc = attr.Value
-    case "trainCat":
-      j.TrainCat = attr.Value
-    case "isPassengerSvc":
-      if b, err := strconv.ParseBool( attr.Value ); err != nil {
-        return err
-      } else {
-        j.Passenger = b
-      }
-    }
-  }
+type Association struct {
+  Main      AssocService  `xml:"main"`
+  Assoc     AssocService  `xml:"assoc"`
+  Tiploc    string        `xml:"tiploc,attr"`
+  Category  string        `xml:"category,attr"`
+  Cancelled bool          `xml:"isCancelled,attr"`
+  Deleted   bool          `xml:"isDeleted,attr"`
+}
 
-  for {
-    token, err := decoder.Token()
-    if err != nil {
-      return err
-    }
-
-    switch tok := token.(type) {
-    case xml.StartElement:
-      var elementStruct interface{}
-      switch tok.Name.Local {
-      case "OR":
-        elementStruct = &OR{}
-      case "OPOR":
-        elementStruct = &OPOR{}
-      case "IP":
-        elementStruct = &IP{}
-      case "OPIP":
-        elementStruct = &OPIP{}
-      case "PP":
-        elementStruct = &PP{}
-      case "DT":
-        elementStruct = &DT{}
-      case "OPDT":
-        elementStruct = &OPDT{}
-      case "cancelReason":
-        var cr *cancelReason = &cancelReason{}
-        if err = decoder.DecodeElement( cr, &tok ); err != nil {
-          return err
-        }
-        if cr.text != "" {
-          if crv, err := strconv.Atoi( cr.text ); err != nil {
-            return err
-            } else {
-              j.CancelReason = crv
-            }
-        }
-
-        elementStruct = nil
-      default:
-        log.Println( "Unknown element", tok.Name.Local, j.RID, j.SSD )
-        elementStruct = nil
-      }
-
-      if elementStruct != nil {
-        if err = decoder.DecodeElement( elementStruct, &tok ); err != nil {
-          return err
-        }
-
-        j.Schedule = append( j.Schedule, elementStruct )
-      }
-
-    case xml.EndElement:
-      return nil
-    }
-  }
-
+type AssocService struct {
+  RID   string    `xml:"rid,attr"`
+  Wta   string      `xml:"wta,attr"`
+  Wtd   string      `xml:"wtd,attr"`
+  Wtp   string      `xml:"wtp,attr"`
+  Pta   string      `xml:"pta,attr"`
+  Ptd   string      `xml:"ptd,attr"`
 }

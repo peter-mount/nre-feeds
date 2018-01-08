@@ -67,7 +67,7 @@ func (j *Journey) String() string {
   fieldb( &b, "Passenger", j.Passenger )
   fieldi( &b, "Cancel Reason", j.CancelReason )
 
-  b.WriteString( "| " )
+  b.WriteString( "\n| " )
   pad( &b, "Tiploc", 8 )
   pad( &b, "Act", 4 )
   pad( &b, "PAct", 4 )
@@ -85,6 +85,55 @@ func (j *Journey) String() string {
   for _, s := range j.Schedule {
     b.WriteString( fmt.Sprintf( "%v\n", s ) )
   }
+
+  b.WriteString( "\nAssociations\n| " )
+  pad( &b, "Tiploc", 8 )
+  pad( &b, "Cat", 3 )
+  pad( &b, "Can", 3 )
+  pad( &b, "Del", 3 )
+  pad( &b, "Main RID", 15 )
+  pad( &b, "PTA", 5 )
+  pad( &b, "PTD", 5 )
+  pad( &b, "WTA", 8 )
+  pad( &b, "WTD", 8 )
+  pad( &b, "WTP", 8 )
+  pad( &b, "Assoc RID", 15 )
+  pad( &b, "PTA", 5 )
+  pad( &b, "PTD", 5 )
+  pad( &b, "WTA", 8 )
+  pad( &b, "WTD", 8 )
+  pad( &b, "WTP", 8 )
+  b.WriteString( "\n" )
+  for _, a := range j.Associations {
+    b.WriteString( fmt.Sprintf( "%v\n", a ) )
+  }
+
+  return b.String()
+}
+
+func (a *Association) String() string {
+  var b bytes.Buffer
+
+  b.WriteString( "| " )
+  pad( &b, a.Tiploc, 8 )
+  pad( &b, a.Category, 3 )
+  padb( &b, a.Cancelled, 3 )
+  padb( &b, a.Deleted, 3 )
+  b.WriteString( a.Main.String() )
+  b.WriteString( a.Assoc.String() )
+
+  return b.String()
+}
+
+func (a *AssocService) String() string {
+  var b bytes.Buffer
+
+  pad( &b, a.RID, 15 )
+  pad( &b, a.Pta, 5 )
+  pad( &b, a.Ptd, 5 )
+  pad( &b, a.Wta, 8 )
+  pad( &b, a.Wtd, 8 )
+  pad( &b, a.Wtp, 8 )
 
   return b.String()
 }

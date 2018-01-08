@@ -31,7 +31,7 @@ func main() {
   }
 
   log.Println( "Unmarshal" )
-  var timetable darwintimetable.PportTimetable;
+  var timetable darwintimetable.Timetable;
   err = xml.Unmarshal( data, &timetable )
   if err != nil {
     log.Fatal( err )
@@ -40,7 +40,12 @@ func main() {
   log.Println( "TimetableId", timetable.TimetableId )
   log.Println( "  Journey's", len( timetable.Journeys ) )
 
-  for i := 0; i<10; i++ {
-    log.Printf(  "Journey %d\n%v\n", i, timetable.Journeys[ i ] )
-  }
+  log.Printf(  "\n%v\n", timetable.Journeys[ "201801048795721" ] )
+  log.Printf(  "\n%v\n", timetable.Journeys[ "201801046763762" ] )
+
+  log.Printf(  "\n%v\n", timetable.Journeys[ "201801047172127" ] )
+  log.Printf(  "\n%v\n", timetable.Journeys[ "201801047174151" ] )
+
+  log.Printf(  "\n%v\n", timetable.Journeys[ "201801048014393" ] )
+
 }
