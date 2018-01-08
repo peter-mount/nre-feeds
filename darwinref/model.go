@@ -2,13 +2,25 @@
 
 package darwinref
 
-// The reference xml wrapper
+// The reference xml format
 type PportTimetableRef struct {
   Locations           []*Location             `xml:"LocationRef"`
   Toc                 []*Toc                  `xml:"TocRef"`
-  LateRunningReasons    *LateRunningReasons   `xml:"LateRunningReasons"`
-  CancellationReasons   *CancellationReasons  `xml:"CancellationReasons"`
+  LateRunningReasons  []*Reason     `xml:"LateRunningReasons>Reason"`
+  CancellationReasons []*Reason     `xml:"CancellationReasons>Reason"`
   CISSource           []*CISSource            `xml:"CISSource"`
+}
+
+// Processed reference format
+type DarwinReference struct {
+  // Map of all locations by tiploc
+  Tiploc              map[string]*Location
+  // Map of all locations by CRS/3Alpha code
+  Crs                 map[string][]*Location
+  Toc                 map[string]*Toc
+  LateRunningReasons  map[int]string
+  CancellationReasons map[int]string
+  CISSource           map[string]string
 }
 
 // Defines a location, i.e. Station or passing point
@@ -24,16 +36,6 @@ type Toc struct {
   Toc         string            `xml:"toc,attr"`
   Name        string            `xml:"tocname,attr"`
   Url         string            `xml:"url,attr"`
-}
-
-// Late Running Reasons
-type LateRunningReasons struct {
-  Reason    []*Reason            `xml:"Reason"`
-}
-
-// Cancellation Reasons
-type CancellationReasons struct {
-  Reason    []Reason            `xml:"Reason"`
 }
 
 // A reason, shared by LateRunningReasons and CancellationReasons

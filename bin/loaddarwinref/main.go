@@ -39,7 +39,17 @@ func main() {
 
   log.Println( "Locations", len( reference.Locations ) )
   log.Println( "Toc's", len( reference.Toc ) )
-  log.Println( "LateRunningReasons", len( reference.LateRunningReasons.Reason ) )
-  log.Println( "CancellationReasons", len( reference.CancellationReasons.Reason ) )
+  log.Println( "LateRunningReasons", len( reference.LateRunningReasons ) )
+  log.Println( "CancellationReasons", len( reference.CancellationReasons ) )
   log.Println( "CISSource's", len( reference.CISSource ) )
+
+  log.Println( "---------")
+
+  var ref *darwinref.DarwinReference = reference.Decode()
+  log.Println( "             Tiploc", len( ref.Tiploc ) )
+  log.Println( "                Crs", len( ref.Crs ) )
+  log.Println( "              Toc's", len( ref.Toc ) )
+  log.Println( " LateRunningReasons", len( ref.LateRunningReasons ) )
+  log.Println( "CancellationReasons", len( ref.CancellationReasons ) )
+  log.Println( "          CISSource", len( ref.CISSource ) )
 }
