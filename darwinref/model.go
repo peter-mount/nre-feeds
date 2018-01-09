@@ -2,17 +2,9 @@
 
 package darwinref
 
-// The reference xml format
-type PportTimetableRef struct {
-  Locations           []*Location             `xml:"LocationRef"`
-  Toc                 []*Toc                  `xml:"TocRef"`
-  LateRunningReasons  []*Reason     `xml:"LateRunningReasons>Reason"`
-  CancellationReasons []*Reason     `xml:"CancellationReasons>Reason"`
-  CISSource           []*CISSource            `xml:"CISSource"`
-}
-
 // Processed reference format
 type DarwinReference struct {
+  TimetableId         string
   // Map of all locations by tiploc
   Tiploc              map[string]*Location
   // Map of all locations by CRS/3Alpha code
@@ -21,6 +13,7 @@ type DarwinReference struct {
   LateRunningReasons  map[int]string
   CancellationReasons map[int]string
   CISSource           map[string]string
+  Via                 map[string][]*Via
 }
 
 // Defines a location, i.e. Station or passing point

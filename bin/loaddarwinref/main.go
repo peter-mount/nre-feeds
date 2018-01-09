@@ -31,25 +31,18 @@ func main() {
   }
 
   log.Println( "Unmarshal" )
-  var reference darwinref.PportTimetableRef;
-  err = xml.Unmarshal( data, &reference )
+  var ref darwinref.DarwinReference;
+  err = xml.Unmarshal( data, &ref )
   if err != nil {
     log.Fatal( err )
   }
 
-  log.Println( "Locations", len( reference.Locations ) )
-  log.Println( "Toc's", len( reference.Toc ) )
-  log.Println( "LateRunningReasons", len( reference.LateRunningReasons ) )
-  log.Println( "CancellationReasons", len( reference.CancellationReasons ) )
-  log.Println( "CISSource's", len( reference.CISSource ) )
-
-  log.Println( "---------")
-
-  var ref *darwinref.DarwinReference = reference.Decode()
+  log.Println( "        TimetableId", ref.TimetableId )
   log.Println( "             Tiploc", len( ref.Tiploc ) )
   log.Println( "                Crs", len( ref.Crs ) )
   log.Println( "              Toc's", len( ref.Toc ) )
   log.Println( " LateRunningReasons", len( ref.LateRunningReasons ) )
   log.Println( "CancellationReasons", len( ref.CancellationReasons ) )
   log.Println( "          CISSource", len( ref.CISSource ) )
+  log.Println( "              Via's", len( ref.Via ) )
 }
