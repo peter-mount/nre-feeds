@@ -9,12 +9,12 @@ import (
 )
 
 func (r *DarwinReference) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error {
-  r.Tiploc = make( map[string]*Location )
-  r.Crs = make( map[string][]*Location )
-  r.Toc = make( map[string]*Toc )
-  r.LateRunningReasons = make( map[int]string )
-  r.CancellationReasons = make( map[int]string )
-  r.CISSource = make( map[string]string )
+  r.tiploc = make( map[string]*Location )
+  r.crs = make( map[string][]*Location )
+  r.toc = make( map[string]*Toc )
+  r.lateRunningReasons = make( map[int]string )
+  r.cancellationReasons = make( map[int]string )
+  r.cisSource = make( map[string]string )
   r.via = make( map[string][]*Via )
 
   for _, attr := range start.Attr {
@@ -43,14 +43,14 @@ func (r *DarwinReference) UnmarshalXML( decoder *xml.Decoder, start xml.StartEle
           return err
         }
 
-        if _, exists := r.Tiploc[ loc.Tiploc ]; exists {
+        if _, exists := r.tiploc[ loc.Tiploc ]; exists {
           log.Println( "Tiploc", loc.Tiploc, "duplicated" )
         } else {
-          r.Tiploc[ loc.Tiploc ] = loc
+          r.tiploc[ loc.Tiploc ] = loc
         }
 
         if loc.Crs != "" {
-          r.Crs[ loc.Crs ] = append( r.Crs[ loc.Crs ], loc )
+          r.crs[ loc.Crs ] = append( r.crs[ loc.Crs ], loc )
         }
 
       case "TocRef":
@@ -59,10 +59,10 @@ func (r *DarwinReference) UnmarshalXML( decoder *xml.Decoder, start xml.StartEle
           return err
         }
 
-        if _, exists := r.Toc[ toc.Toc ]; exists {
+        if _, exists := r.toc[ toc.Toc ]; exists {
           log.Println( "Toc", toc.Toc, "duplicated" )
         } else {
-          r.Toc[ toc.Toc ] = toc
+          r.toc[ toc.Toc ] = toc
         }
 
       case "LateRunningReasons":
@@ -80,9 +80,9 @@ func (r *DarwinReference) UnmarshalXML( decoder *xml.Decoder, start xml.StartEle
             return err
           }
           if late {
-          r.LateRunningReasons[ reason.Code ] = reason.Text
+            r.lateRunningReasons[ reason.Code ] = reason.Text
           } else {
-            r.CancellationReasons[ reason.Code ] = reason.Text
+            r.cancellationReasons[ reason.Code ] = reason.Text
           }
         }
 
@@ -91,7 +91,7 @@ func (r *DarwinReference) UnmarshalXML( decoder *xml.Decoder, start xml.StartEle
         if err = decoder.DecodeElement( cis, &tok ); err != nil {
           return err
         }
-        r.CISSource[ cis.Code ] = cis.Name
+        r.cisSource[ cis.Code ] = cis.Name
 
       case "Via":
         var via *Via = &Via{}

@@ -9,12 +9,12 @@ func (ref *DarwinReference) String() string {
   return fmt.Sprintf(
     "DarwinReference[TimetableId=%s, Tiploc=%d, Crs=%d, Toc=%d, LateRunningReasons=%d, CancellationReasons=%d, CISSource=%d, Via=%d]",
     ref.timetableId,
-    len( ref.Tiploc ),
-    len( ref.Crs ),
-    len( ref.Toc ),
-    len( ref.LateRunningReasons ),
-    len( ref.CancellationReasons ),
-    len( ref.CISSource ),
+    len( ref.tiploc ),
+    len( ref.crs ),
+    len( ref.toc ),
+    len( ref.lateRunningReasons ),
+    len( ref.cancellationReasons ),
+    len( ref.cisSource ),
     len( ref.via ) )
 }
 

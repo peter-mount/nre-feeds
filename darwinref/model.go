@@ -6,17 +6,17 @@ package darwinref
 type DarwinReference struct {
   timetableId         string
   // Map of all locations by tiploc
-  Tiploc              map[string]*Location
+  tiploc              map[string]*Location
   // Map of all locations by CRS/3Alpha code
-  Crs                 map[string][]*Location
+  crs                 map[string][]*Location
   // Map of Toc (Operator) codes
-  Toc                 map[string]*Toc
+  toc                 map[string]*Toc
   // Reasons for a train being late
-  LateRunningReasons  map[int]string
+  lateRunningReasons  map[int]string
   // Reasons for a train being cancelled at a location
-  CancellationReasons map[int]string
+  cancellationReasons map[int]string
   // CIS source
-  CISSource           map[string]string
+  cisSource           map[string]string
   // via texts, map of at+","+ dest then array of possibilities
   via                 map[string][]*Via
 }
