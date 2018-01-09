@@ -15,7 +15,14 @@ func (r *DarwinReference) UnmarshalXML( decoder *xml.Decoder, start xml.StartEle
   r.LateRunningReasons = make( map[int]string )
   r.CancellationReasons = make( map[int]string )
   r.CISSource = make( map[string]string )
-  r.Via = make( map[string][]*Via )
+  r.via = make( map[string][]*Via )
+
+  for _, attr := range start.Attr {
+    switch attr.Name.Local {
+    case "timetableId":
+      r.timetableId = attr.Value
+    }
+  }
 
   // Reason map to write to
   var late bool
@@ -91,7 +98,20 @@ func (r *DarwinReference) UnmarshalXML( decoder *xml.Decoder, start xml.StartEle
         if err = decoder.DecodeElement( via, &tok ); err != nil {
           return err
         }
-        r.Via[ via.At ] = append( r.Via[ via.At ], via )
+
+        var key string = via.At + "," + via.Dest
+        if  arr, exists := r.via[ key ]; exists {
+          // To complicate things there are some duplicate entries
+          exists = false
+          for _, ent := range arr {
+            exists = exists || via.Equals( ent )
+          }
+          if !exists {
+            r.via[ key ] = append( arr, via )
+          }
+        } else {
+          r.via[ key ] = append( r.via[ key ], via )
+        }
 
       default:
         log.Println( "Unknown element", tok.Name.Local )

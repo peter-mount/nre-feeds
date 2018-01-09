@@ -4,16 +4,21 @@ package darwinref
 
 // Processed reference format
 type DarwinReference struct {
-  TimetableId         string
+  timetableId         string
   // Map of all locations by tiploc
   Tiploc              map[string]*Location
   // Map of all locations by CRS/3Alpha code
   Crs                 map[string][]*Location
+  // Map of Toc (Operator) codes
   Toc                 map[string]*Toc
+  // Reasons for a train being late
   LateRunningReasons  map[int]string
+  // Reasons for a train being cancelled at a location
   CancellationReasons map[int]string
+  // CIS source
   CISSource           map[string]string
-  Via                 map[string][]*Via
+  // via texts, map of at+","+ dest then array of possibilities
+  via                 map[string][]*Via
 }
 
 // Defines a location, i.e. Station or passing point
@@ -43,7 +48,7 @@ type Via struct {
   Dest    string        `xml:"dest,attr"`
   Loc1    string        `xml:"loc1,attr"`
   Loc2    string        `xml:"loc2,attr"`
-  Text    string        `xml:"viatext,attr`
+  Text    string        `xml:"viatext,attr"`
 }
 
 type CISSource struct {

@@ -37,12 +37,18 @@ func main() {
     log.Fatal( err )
   }
 
-  log.Println( "        TimetableId", ref.TimetableId )
-  log.Println( "             Tiploc", len( ref.Tiploc ) )
-  log.Println( "                Crs", len( ref.Crs ) )
-  log.Println( "              Toc's", len( ref.Toc ) )
-  log.Println( " LateRunningReasons", len( ref.LateRunningReasons ) )
-  log.Println( "CancellationReasons", len( ref.CancellationReasons ) )
-  log.Println( "          CISSource", len( ref.CISSource ) )
-  log.Println( "              Via's", len( ref.Via ) )
+  log.Printf( "Imported %v\n", &ref )
+
+  log.Printf( "Via %v\n", test( &ref, "AFK", "VICTRIE" ) )
+  log.Printf( "Via %v\n", test( &ref, "AFK", "CANONST" ) )
+  log.Printf( "Via %v\n", test( &ref, "AFK", "LNDNBDE" ) )
+  log.Printf( "Via %v\n", test( &ref, "AFK", "CHRX" ) )
+  log.Printf( "Via %v\n", test( &ref, "AFK", "BLFR" ) )
+  log.Printf( "Via %v\n", test( &ref, "AFK", "MSTONEE" ) )
+
+}
+
+func test( ref *darwinref.DarwinReference, a string, d string ) []*darwinref.Via {
+  vias, _ := ref.GetViaAt( a, d )
+  return vias
 }
