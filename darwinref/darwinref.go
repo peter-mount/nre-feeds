@@ -23,9 +23,9 @@ type DarwinReference struct {
   // Map of Toc (Operator) codes
   toc                 *bolt.Bucket
   // Reasons for a train being late
-  lateRunningReasons  map[int]string
+  lateRunningReasons  *bolt.Bucket
   // Reasons for a train being cancelled at a location
-  cancellationReasons map[int]string
+  cancellationReasons *bolt.Bucket
   // CIS source
   cisSource           map[string]string
   // via texts, map of at+","+ dest then array of possibilities
@@ -167,6 +167,8 @@ func (r *DarwinReference) internalUpdate( f func(*bolt.Tx) error ) error {
     r.tiploc = tx.Bucket( []byte("DarwinTiploc") )
     r.crs = tx.Bucket( []byte("DarwinCrs") )
     r.toc = tx.Bucket( []byte("DarwinToc") )
+    r.cancellationReasons = tx.Bucket( []byte("DarwinCancelReason") )
+    r.lateRunningReasons = tx.Bucket( []byte("DarwinLateReason") )
 
     return f(tx)
   })

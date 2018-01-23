@@ -9,7 +9,7 @@ import (
 type CrsResponse struct {
   XMLName     xml.Name  `json:"-" xml:"crs"`
   Crs         string    `json:"crs" xml:"crs,attr"`
-  Tiploc   []*Location  `json:"locations,omitempty" xml:"locations>LocationRef"`
+  Tiploc   []*Location  `json:"locations,omitempty" xml:"LocationRef"`
   Self        string    `json:"self,omitempty" xml:"self,attr,omitempty"`
 }
 

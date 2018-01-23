@@ -15,12 +15,11 @@ func (r *DarwinReference) UnmarshalXML( decoder *xml.Decoder, start xml.StartEle
 }
 
 func (r *DarwinReference) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start xml.StartElement ) error {
+  date := time.Now()
   crs := r.newCrsImport()
   tplCount := 0
   tocCount := 0
 
-  r.lateRunningReasons = make( map[int]string )
-  r.cancellationReasons = make( map[int]string )
   r.cisSource = make( map[string]string )
   r.via = make( map[string][]*Via )
 
@@ -49,7 +48,7 @@ func (r *DarwinReference) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start
         if err = decoder.DecodeElement( loc, &tok ); err != nil {
           return err
         }
-        loc.Date = time.Now()
+        loc.Date = date
 
         if err, updated := r.addTiploc( loc ); err != nil {
           return err
@@ -86,10 +85,17 @@ func (r *DarwinReference) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start
           if err = decoder.DecodeElement( reason, &tok ); err != nil {
             return err
           }
+
+          reason.Cancelled = !late
+          reason.Date = date
           if late {
-            r.lateRunningReasons[ reason.Code ] = reason.Text
+            if err = addReason( r.lateRunningReasons, reason ); err != nil {
+              return err
+            }
           } else {
-            r.cancellationReasons[ reason.Code ] = reason.Text
+            if err = addReason( r.cancellationReasons, reason ); err != nil {
+              return err
+            }
           }
         }
 
