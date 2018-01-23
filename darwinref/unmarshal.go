@@ -16,6 +16,8 @@ func (r *DarwinReference) UnmarshalXML( decoder *xml.Decoder, start xml.StartEle
 
 func (r *DarwinReference) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start xml.StartElement ) error {
   r.toc = make( map[string]*Toc )
+  crs := r.newCrsImport()
+  tplcount := 0
   r.lateRunningReasons = make( map[int]string )
   r.cancellationReasons = make( map[int]string )
   r.cisSource = make( map[string]string )
@@ -48,11 +50,14 @@ func (r *DarwinReference) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start
         }
         loc.Date = time.Now()
 
-        if err := r.addTiploc( loc ); err != nil {
+        if err, updated := r.addTiploc( loc ); err != nil {
           return err
+        } else if updated {
+          tplcount ++
         }
 
-        //r.addCrs( loc )
+        // Append to CRS map
+        crs.append( loc )
 
       case "TocRef":
         var toc *Toc = &Toc{}
@@ -120,6 +125,14 @@ func (r *DarwinReference) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start
 
     case xml.EndElement:
       if !inReason {
+        log.Printf( "Imported %d Tiplocs", tplcount )
+
+        if err, count := crs.write(); err != nil {
+          return err
+        } else {
+          log.Printf( "Imported %d CRS", count )
+        }
+
         return nil
       }
       inReason = false

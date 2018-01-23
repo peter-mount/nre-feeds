@@ -63,7 +63,7 @@ func main() {
     log.Fatal( err )
   }
 
-  log.Printf( "Imported %v\n", &ref )
+  log.Println( "Reference file imported" )
 
   log.Printf( "Via %v\n", test( &ref, "AFK", "VICTRIE" ) )
   log.Printf( "Via %v\n", test( &ref, "AFK", "CANONST" ) )

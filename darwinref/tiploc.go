@@ -35,17 +35,21 @@ func (r *DarwinReference) GetTiplocBucket( bucket *bolt.Bucket, tpl string ) ( *
   return loc, true
 }
 
-func (r *DarwinReference) addTiploc( loc *Location ) error{
+func (r *DarwinReference) addTiploc( loc *Location ) ( error, bool ) {
   // Update only if it does not exist or is different
   if old, exists := r.getTiploc( loc.Tiploc ); !exists || !loc.Equals( old ) {
     codec := codec.NewBinaryCodec()
     codec.Write( loc )
     if codec.Error() != nil {
-      return codec.Error()
+      return codec.Error(), false
     }
 
-    return r.tiploc.Put( []byte( loc.Tiploc ), codec.Bytes() )
+    if err := r.tiploc.Put( []byte( loc.Tiploc ), codec.Bytes() ); err != nil {
+      return err, false
+    }
+
+    return nil, true
   }
 
-  return nil
+  return nil, false
 }
