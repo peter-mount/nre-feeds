@@ -5,6 +5,12 @@ docker build -t test . || exit 1
 
 #rm -fv /home/peter/tmp/darwin.db
 
+# If first parameter is present then it's the National Rail ftp password
+if [ -n "$1" ]
+then
+  FTP="-ftp $1"
+fi
+
 docker run -it --rm \
   --name test \
   -v /home/peter/tmp/:/database \
@@ -12,7 +18,7 @@ docker run -it --rm \
   -p 8081:8081 \
   test \
   darwin \
-    -p 8081 \
+    -p 8081 $FTP \
     -ref /database/dwref.db \
     -timetable /database/dwtt.db
 

@@ -17,6 +17,7 @@ RUN go get -v \
       flag \
       github.com/coreos/bbolt/... \
       github.com/gorilla/mux \
+      github.com/jlaffaye/ftp \
       github.com/peter-mount/golib/codec \
       github.com/peter-mount/golib/rabbitmq \
       github.com/peter-mount/golib/rest \

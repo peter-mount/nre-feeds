@@ -4,6 +4,7 @@ package main
 import (
   "darwinref"
   "darwintimetable"
+  "darwinupdate"
   "flag"
   "github.com/peter-mount/golib/rest"
   "github.com/peter-mount/golib/statistics"
@@ -19,6 +20,7 @@ func main() {
 
   refFile := flag.String( "ref", "", "The reference database file" )
   ttFile := flag.String( "timetable", "", "The timetable database file" )
+  ftpPassword := flag.String( "ftp", "", "The FTP Password at National Rail" )
 
   // Port for the webserver
   port := flag.Int( "p", 8080, "Port to use" )
@@ -54,6 +56,15 @@ func main() {
     tt.RegisterRest( server.Context( "/timetable" ) )
 
     tt.ScheduleCleanup( crontab )
+  }
+
+  if *ftpPassword != "" {
+    ftp := &darwinupdate.DarwinUpdate{
+      Ref: ref,
+      Pass: *ftpPassword,
+    }
+
+    ftp.Setup( server.Context( "/update" ), crontab )
   }
 
   // Listen to signals & close the db before exiting
