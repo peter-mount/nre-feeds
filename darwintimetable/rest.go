@@ -11,4 +11,5 @@ func (r *DarwinTimetable) RegisterRest( c *rest.ServerContext ) {
 
   // Data import
   c.Handle( "/import", r.ImportHandler ).Methods( "POST" )
+  c.Handle( "/prune/schedules", r.PruneSchedulesHandler ).Methods( "GET" )
 }

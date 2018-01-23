@@ -14,7 +14,7 @@ type Journey struct {
   RID             string        `json:"rid" xml:"rid,attr"`
   UID             string        `json:"uid" xml:"uid,attr"`
   TrainID         string        `json:"trainId" xml:"trainId"`
-  SSD             string        `json:"ssd" xml:"ssd,attr"`
+  SSD             SSD           `json:"ssd" xml:"ssd,attr"`
   Toc             string        `json:"toc" xml:"toc,attr"`
   TrainCat        string        `json:"trainCat" xml:"trainCat,attr"`
   Passenger       bool          `json:"isPassengerSvc" xml:"isPassengerSvc,attr"`
@@ -51,7 +51,7 @@ func (t *Journey) Write( c *codec.BinaryCodec ) {
   c.WriteString( t.RID ).
     WriteString( t.UID ).
     WriteString( t.TrainID ).
-    WriteString( t.SSD ).
+    Write( &t.SSD ).
     WriteString( t.Toc ).
     WriteString( t.TrainCat ).
     WriteBool( t.Passenger ).
@@ -68,7 +68,7 @@ func (t *Journey) Read( c *codec.BinaryCodec ) {
   c.ReadString( &t.RID ).
     ReadString( &t.UID ).
     ReadString( &t.TrainID ).
-    ReadString( &t.SSD ).
+    Read( &t.SSD ).
     ReadString( &t.Toc ).
     ReadString( &t.TrainCat ).
     ReadBool( &t.Passenger ).

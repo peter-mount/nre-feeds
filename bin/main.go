@@ -7,6 +7,7 @@ import (
   "flag"
   "github.com/peter-mount/golib/rest"
   "github.com/peter-mount/golib/statistics"
+  "gopkg.in/robfig/cron.v2"
   "log"
   "os"
   "os/signal"
@@ -23,6 +24,8 @@ func main() {
   port := flag.Int( "p", 8080, "Port to use" )
 
   flag.Parse()
+
+  crontab := cron.New()
 
   stats := statistics.Statistics{ Log: true }
   stats.Configure()
@@ -49,6 +52,8 @@ func main() {
     }
 
     tt.RegisterRest( server.Context( "/timetable" ) )
+
+    tt.ScheduleCleanup( crontab )
   }
 
   // Listen to signals & close the db before exiting
@@ -59,8 +64,14 @@ func main() {
     sig := <-sigs
     log.Println( "Signal", sig )
 
+    crontab.Stop()
+
     if( ref != nil ) {
       ref.Close()
+    }
+
+    if( tt != nil ) {
+      tt.Close()
     }
 
     log.Println( "Database closed" )
@@ -68,5 +79,6 @@ func main() {
     os.Exit( 0 )
   }()
 
+  crontab.Start()
   server.Start()
 }

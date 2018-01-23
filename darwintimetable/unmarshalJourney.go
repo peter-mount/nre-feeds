@@ -18,7 +18,7 @@ func (j *Journey) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) e
     case "trainId":
       j.TrainID = attr.Value
     case "ssd":
-      j.SSD = attr.Value
+      j.SSD.Parse( attr.Value )
     case "toc":
       j.Toc = attr.Value
     case "trainCat":
