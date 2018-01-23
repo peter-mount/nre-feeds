@@ -9,12 +9,22 @@ docker run -it --rm \
   --name test \
   -v /home/peter/tmp/:/database \
   -v /home/peter/Downloads:/data:ro \
+  -p 8081:8081 \
+  test \
+  darwin \
+    -p 8081 \
+    -d /database/darwin.db
+
+exit
+
+docker run -it --rm \
+  --name test \
+  -v /home/peter/tmp/:/database \
+  -v /home/peter/Downloads:/data:ro \
   test \
   loaddarwinref \
     -d /database/darwin.db \
     -f /data/20180103020732_ref_v3.xml
-
-exit
 
 docker run -it --rm \
   --name test \

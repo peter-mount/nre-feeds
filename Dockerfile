@@ -34,12 +34,15 @@ RUN go get -v \
 WORKDIR /go/src
 ADD . .
 
-# Now each binary
 RUN go build -v -x \
-      -o /dest/bin/loaddarwinref bin/loaddarwinref
+      -o /dest/bin/darwin bin
 
-RUN go build -v -x \
-      -o /dest/bin/loaddarwintimetable bin/loaddarwintimetable
+# Now each binary
+#RUN go build -v -x \
+#      -o /dest/bin/loaddarwinref bin/loaddarwinref
+
+#RUN go build -v -x \
+#      -o /dest/bin/loaddarwintimetable bin/loaddarwintimetable
 
 # Finally build the final runtime container will all required files
 FROM scratch
