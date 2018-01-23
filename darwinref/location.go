@@ -8,13 +8,14 @@ import (
 )
 // Defines a location, i.e. Station or passing point
 type Location struct {
-  XMLName     xml.Name  `json:"-" xml:"location"`
+  XMLName     xml.Name  `json:"-" xml:"LocationRef"`
   Tiploc      string    `json:"tpl" xml:"tpl,attr"`
   Crs         string    `json:"crs,omitempty" xml:"crs,attr,omitempty"`
   Toc         string    `json:"toc,omitempty" xml:"toc,attr,omitempty"`
   Name        string    `json:"locname" xml:"locname,attr"`
-  // The CIF extract this entry is from
+  // Date entry was inserted into the database
   Date        time.Time `json:"date" xml:"date,attr"`
+  // URL to this entity
   Self        string    `json:"self" xml:"self,attr,omitempty"`
 }
 

@@ -10,6 +10,9 @@ func (r DarwinReference) RegisterRest( c *rest.ServerContext ) {
   c.Handle( "/crs/{id}", r.CrsHandler ).Methods( "GET" )
   c.Handle( "/tiploc/{id}", r.TiplocHandler ).Methods( "GET" )
 
+  c.Handle( "/toc", r.AllTocsHandler ).Methods( "GET" )
+  c.Handle( "/toc/{id}", r.TocHandler ).Methods( "GET" )
+
   // Data import
   c.Handle( "/import", r.ImportHandler ).Methods( "POST" )
 }

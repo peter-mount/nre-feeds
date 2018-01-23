@@ -18,12 +18,12 @@ func (r *DarwinReference) getTiploc( tpl string ) ( *Location, bool ) {
 }
 
 func (r *DarwinReference) GetTiplocBucket( bucket *bolt.Bucket, tpl string ) ( *Location, bool ) {
-  var loc *Location = &Location{}
-
   b := bucket.Get( []byte( tpl ) )
   if b == nil {
     return nil, false
   }
+
+  var loc *Location = &Location{}
 
   codec.NewBinaryCodecFrom( b ).Read( loc )
 

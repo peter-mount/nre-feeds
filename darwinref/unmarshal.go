@@ -15,9 +15,10 @@ func (r *DarwinReference) UnmarshalXML( decoder *xml.Decoder, start xml.StartEle
 }
 
 func (r *DarwinReference) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start xml.StartElement ) error {
-  r.toc = make( map[string]*Toc )
   crs := r.newCrsImport()
-  tplcount := 0
+  tplCount := 0
+  tocCount := 0
+
   r.lateRunningReasons = make( map[int]string )
   r.cancellationReasons = make( map[int]string )
   r.cisSource = make( map[string]string )
@@ -53,7 +54,7 @@ func (r *DarwinReference) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start
         if err, updated := r.addTiploc( loc ); err != nil {
           return err
         } else if updated {
-          tplcount ++
+          tplCount ++
         }
 
         // Append to CRS map
@@ -65,10 +66,10 @@ func (r *DarwinReference) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start
           return err
         }
 
-        if _, exists := r.toc[ toc.Toc ]; exists {
-          log.Println( "Toc", toc.Toc, "duplicated" )
-        } else {
-          r.toc[ toc.Toc ] = toc
+        if err, updated := r.addToc( toc ); err != nil {
+          return err
+        } else if updated {
+          tocCount ++
         }
 
       case "LateRunningReasons":
@@ -125,13 +126,15 @@ func (r *DarwinReference) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start
 
     case xml.EndElement:
       if !inReason {
-        log.Printf( "Imported %d Tiplocs", tplcount )
+        log.Printf( "Imported %d Tiplocs", tplCount )
 
         if err, count := crs.write(); err != nil {
           return err
         } else {
           log.Printf( "Imported %d CRS", count )
         }
+
+        log.Printf( "Imported %d TOC's", tocCount )
 
         return nil
       }
