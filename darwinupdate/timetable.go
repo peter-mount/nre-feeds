@@ -82,5 +82,5 @@ func (u *DarwinUpdate) TimetableUpdate( con *ftp.ServerConn ) error {
   // Run a prune afterwards
   u.TT.PruneSchedules()
 
-  return nil
+  return resp.Close()
 }

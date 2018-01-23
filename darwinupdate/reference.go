@@ -75,5 +75,5 @@ func (u *DarwinUpdate) ReferenceUpdate( con *ftp.ServerConn ) error {
     return err
   }
 
-  return nil
+  return resp.Close()
 }
