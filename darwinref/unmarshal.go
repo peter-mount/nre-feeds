@@ -2,15 +2,19 @@
 package darwinref
 
 import (
+  bolt "github.com/coreos/bbolt"
   "encoding/xml"
   "log"
-  //"strconv"
-  //"time"
+  "time"
 )
 
 func (r *DarwinReference) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error {
-  r.tiploc = make( map[string]*Location )
-  r.crs = make( map[string][]*Location )
+  return r.internalUpdate( func( tx *bolt.Tx ) error {
+    return r.unmarshalXML( tx, decoder, start )
+  })
+}
+
+func (r *DarwinReference) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start xml.StartElement ) error {
   r.toc = make( map[string]*Toc )
   r.lateRunningReasons = make( map[int]string )
   r.cancellationReasons = make( map[int]string )
@@ -42,16 +46,13 @@ func (r *DarwinReference) UnmarshalXML( decoder *xml.Decoder, start xml.StartEle
         if err = decoder.DecodeElement( loc, &tok ); err != nil {
           return err
         }
+        loc.Date = time.Now()
 
-        if _, exists := r.tiploc[ loc.Tiploc ]; exists {
-          log.Println( "Tiploc", loc.Tiploc, "duplicated" )
-        } else {
-          r.tiploc[ loc.Tiploc ] = loc
+        if err := r.addTiploc( loc ); err != nil {
+          return err
         }
 
-        if loc.Crs != "" {
-          r.crs[ loc.Crs ] = append( r.crs[ loc.Crs ], loc )
-        }
+        //r.addCrs( loc )
 
       case "TocRef":
         var toc *Toc = &Toc{}

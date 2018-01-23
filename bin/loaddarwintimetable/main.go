@@ -48,4 +48,6 @@ func main() {
 
   log.Printf(  "\n%v\n", timetable.Journeys[ "201801048014393" ] )
 
+  log.Printf(  "\n%v\n", timetable.Journeys[ "201801038010002" ] )
+
 }

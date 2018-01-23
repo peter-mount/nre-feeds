@@ -15,9 +15,13 @@ RUN mkdir -p /dest/etc &&\
 # Ensure we have the libraries - docker will cache these between builds
 RUN go get -v \
       flag \
+      github.com/coreos/bbolt/... \
       github.com/gorilla/mux \
+      github.com/peter-mount/golib/codec \
       github.com/peter-mount/golib/rabbitmq \
+      github.com/peter-mount/golib/rest \
       github.com/peter-mount/golib/statistics \
+      github.com/peter-mount/golib/util \
       gopkg.in/robfig/cron.v2 \
       gopkg.in/yaml.v2 \
       io/ioutil \
@@ -27,7 +31,7 @@ RUN go get -v \
       time
 
 # Import the source and compile
-WORKDIR /usr/local/go/src
+WORKDIR /go/src
 ADD . .
 
 # Now each binary
