@@ -3,6 +3,7 @@ package darwinref
 import (
   bolt "github.com/coreos/bbolt"
   "errors"
+  "github.com/peter-mount/golib/codec"
   "log"
   "time"
 )
@@ -16,6 +17,7 @@ type DarwinReference struct {
   tx                   *bolt.Tx
   // timetableId of the latest import
   timetableId           string
+  importDate            time.Time
   // Map of all locations by tiploc
   tiploc               *bolt.Bucket
   // Map of all locations by CRS/3Alpha code
@@ -30,6 +32,16 @@ type DarwinReference struct {
   cisSource             map[string]string
   // via texts, map of at+","+ dest then array of possibilities
   via                  *bolt.Bucket
+}
+
+func (t *DarwinReference) Write( c *codec.BinaryCodec ) {
+  c.WriteString( t.timetableId ).
+    WriteTime( t.importDate )
+}
+
+func (t *DarwinReference) Read( c *codec.BinaryCodec ) {
+  c.ReadString( &t.timetableId ).
+    ReadTime( &t.importDate )
 }
 
 // OpenDB opens a DarwinReference database.
@@ -60,7 +72,6 @@ func (r *DarwinReference) UseDB( db *bolt.DB ) error {
 
 // common to OpenDB() && UseDB()
 func (r *DarwinReference) useDB( db *bolt.DB ) error {
-
   r.db = db
 
   // Now ensure the DB is initialised with the required buckets
@@ -68,22 +79,21 @@ func (r *DarwinReference) useDB( db *bolt.DB ) error {
     return err
   }
 
-  /* FIXME read metadata
-  if h, err := r.GetHD(); err != nil {
-    return err
-  } else {
-    r.header = h
-
-    if h.Id == "" {
-      log.Println( "NOTICE: Database requires a full DarwinReference import" )
-    } else {
-      log.Println( "Database:", h )
+  // Read metadata
+  return r.View( func( tx *bolt.Tx ) error {
+    b := tx.Bucket( []byte( "Meta" ) ).Get( []byte( "DarwinReference" ) )
+    if b != nil {
+      codec.NewBinaryCodecFrom( b ).Read( r )
     }
-  }
-  */
 
-  return nil
+    if r.timetableId == "" {
+      log.Println( "DarwinReference needs importing" )
+    } else {
+      log.Println( "DarwinReference", r.timetableId, "imported", r.importDate )
+    }
 
+    return nil
+  })
 }
 
 // Close the database.
@@ -118,7 +128,6 @@ func (r *DarwinReference) initDB() error {
     for _, n := range buckets {
       var nb []byte = []byte(n)
       if bucket := tx.Bucket( nb ); bucket == nil {
-        log.Println( "Creating bucket", n )
         if _, err := tx.CreateBucket( nb ); err != nil {
           return err
         }

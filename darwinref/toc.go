@@ -68,7 +68,7 @@ func (t *Toc) fromBytes( b []byte ) bool {
 
 func (r *DarwinReference) GetTocBucket( bucket *bolt.Bucket, tpl string ) ( *Toc, bool ) {
   b := bucket.Get( []byte( tpl ) )
-  
+
   if b != nil {
     var toc *Toc = &Toc{}
     if toc.fromBytes( b ) {

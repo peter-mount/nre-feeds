@@ -13,7 +13,7 @@ docker run -it --rm \
   test \
   darwin \
     -p 8081 \
-    -d /database/darwin.db
+    -ref /database/dwref.db
 
 exit
 
