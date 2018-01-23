@@ -9,27 +9,27 @@ import (
 
 // Processed reference format
 type DarwinReference struct {
-  db                 *bolt.DB
+  db                   *bolt.DB
   // Allow CIF.Close() to close the database.
-  allowClose    bool
+  allowClose            bool
   // Transaction used during import only
-  tx                 *bolt.Tx
+  tx                   *bolt.Tx
   // timetableId of the latest import
-  timetableId         string
+  timetableId           string
   // Map of all locations by tiploc
-  tiploc              *bolt.Bucket
+  tiploc               *bolt.Bucket
   // Map of all locations by CRS/3Alpha code
-  crs                 *bolt.Bucket
+  crs                  *bolt.Bucket
   // Map of Toc (Operator) codes
-  toc                 *bolt.Bucket
+  toc                  *bolt.Bucket
   // Reasons for a train being late
-  lateRunningReasons  *bolt.Bucket
+  lateRunningReasons   *bolt.Bucket
   // Reasons for a train being cancelled at a location
-  cancellationReasons *bolt.Bucket
+  cancellationReasons  *bolt.Bucket
   // CIS source
-  cisSource           map[string]string
+  cisSource             map[string]string
   // via texts, map of at+","+ dest then array of possibilities
-  via                 map[string][]*Via
+  via                  *bolt.Bucket
 }
 
 // OpenDB opens a DarwinReference database.
@@ -129,27 +129,6 @@ func (r *DarwinReference) initDB() error {
   })
 }
 
-// Clear out a bucket
-func (r *DarwinReference) clearBucket( bucket *bolt.Bucket ) error {
-  return bucket.ForEach( func( k, v []byte) error {
-    return bucket.Delete( k )
-  })
-}
-
-// Used in full imports, clears the relevant buckets
-func (r *DarwinReference) resetDB() error {
-
-  if err := r.clearBucket( r.tiploc ); err != nil {
-    return err
-  }
-
-  if err := r.clearBucket( r.crs ); err != nil {
-    return err
-  }
-
-  return nil
-}
-
 // View performs a readonly operation on the database
 func (r *DarwinReference) View( f func(*bolt.Tx) error ) error {
   return r.db.View( f )
@@ -169,6 +148,7 @@ func (r *DarwinReference) internalUpdate( f func(*bolt.Tx) error ) error {
     r.toc = tx.Bucket( []byte("DarwinToc") )
     r.cancellationReasons = tx.Bucket( []byte("DarwinCancelReason") )
     r.lateRunningReasons = tx.Bucket( []byte("DarwinLateReason") )
+    r.via = tx.Bucket( []byte("DarwinVia") )
 
     return f(tx)
   })

@@ -19,9 +19,9 @@ func (r *DarwinReference) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start
   crs := r.newCrsImport()
   tplCount := 0
   tocCount := 0
+  viaCount := 0
 
   r.cisSource = make( map[string]string )
-  r.via = make( map[string][]*Via )
 
   for _, attr := range start.Attr {
     switch attr.Name.Local {
@@ -112,18 +112,10 @@ func (r *DarwinReference) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start
           return err
         }
 
-        var key string = via.At + "," + via.Dest
-        if  arr, exists := r.via[ key ]; exists {
-          // To complicate things there are some duplicate entries
-          exists = false
-          for _, ent := range arr {
-            exists = exists || via.Equals( ent )
-          }
-          if !exists {
-            r.via[ key ] = append( arr, via )
-          }
-        } else {
-          r.via[ key ] = append( r.via[ key ], via )
+        if err, updated := r.addVia( via ); err != nil {
+          return err
+        } else if updated {
+          viaCount ++
         }
 
       default:
@@ -141,6 +133,8 @@ func (r *DarwinReference) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start
         }
 
         log.Printf( "Imported %d TOC's", tocCount )
+
+        log.Printf( "Imported %d Via's", viaCount )
 
         return nil
       }
