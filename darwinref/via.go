@@ -1,5 +1,14 @@
 package darwinref
 
+// Via text
+type Via struct {
+  At      string        `xml:"at,attr"`
+  Dest    string        `xml:"dest,attr"`
+  Loc1    string        `xml:"loc1,attr"`
+  Loc2    string        `xml:"loc2,attr"`
+  Text    string        `xml:"viatext,attr"`
+}
+
 // Are two Via's equal
 func (v *Via) Equals( o *Via ) bool {
   if o == nil {
