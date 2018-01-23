@@ -11,7 +11,7 @@ import (
   "strings"
 )
 
-func (u *DarwinUpdate) ReferenceHandler( r *rest.Rest ) error {
+func (u *DarwinUpdate) TimetableHandler( r *rest.Rest ) error {
   if err := u.ftp( u.ReferenceUpdate ); err != nil {
     return err
   }
@@ -20,15 +20,15 @@ func (u *DarwinUpdate) ReferenceHandler( r *rest.Rest ) error {
   return nil
 }
 
-func (u *DarwinUpdate) ReferenceUpdate( con *ftp.ServerConn ) error {
-  log.Println( "Looking for reference files" )
+func (u *DarwinUpdate) TimetableUpdate( con *ftp.ServerConn ) error {
+  log.Println( "Looking for timetable files" )
 
   entries, err := con.List( "." )
   if err != nil {
     return err
   }
 
-  re := regexp.MustCompile( ".*_ref_v3.xml.gz" )
+  re := regexp.MustCompile( ".*_v8.xml.gz" )
 
   var files []*ftp.Entry
 
@@ -44,12 +44,13 @@ func (u *DarwinUpdate) ReferenceUpdate( con *ftp.ServerConn ) error {
   })
 
   if len( files ) < 1 {
-    log.Println( "No reference files found" )
+    log.Println( "No timetable files found" )
     return nil
   }
 
   file := files[ len(files)-1 ]
-  tid := u.Ref.TimetableId()
+  tid := u.TT.TimetableId()
+
   if tid != "" && strings.Compare( file.Name[:len(tid)], tid ) <= 0 {
     log.Println( "Ignoring", file.Name, "timetableId", tid )
     return nil
@@ -69,11 +70,17 @@ func (u *DarwinUpdate) ReferenceUpdate( con *ftp.ServerConn ) error {
     return err
   }
 
-  if err := xml.NewDecoder( gr ).Decode( u.Ref ); err != nil {
+  // Run a prune first
+  u.TT.PruneSchedules()
+
+  if err := xml.NewDecoder( gr ).Decode( u.TT ); err != nil {
     log.Println( err )
     resp.Close()
     return err
   }
+
+  // Run a prune afterwards
+  u.TT.PruneSchedules()
 
   return nil
 }

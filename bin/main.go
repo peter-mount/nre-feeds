@@ -61,6 +61,7 @@ func main() {
   if *ftpPassword != "" {
     ftp := &darwinupdate.DarwinUpdate{
       Ref: ref,
+      TT: tt,
       Pass: *ftpPassword,
     }
 
