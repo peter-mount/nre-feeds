@@ -9,24 +9,24 @@ import (
 
 // Common location object used in persistence
 type Location struct {
-    XMLName     xml.Name  `json:"-" xml:"location"`
-    Type      string      `json:"type" xml:"type,attr"`
-    Tiploc    string      `json:"tpl" xml:"tpl,attr"`
-    Act       string      `json:"act,omitempty" xml:"act,attr,omitempty"`
-    PlanAct   string      `json:"planAct,omitempty" xml:"planAct,attr,omitempty"`
-    Cancelled bool        `json:"cancelled,omitempty" xml:"can,attr,omitempty"`
-    Platform  string      `json:"plat,omitempty" xml:"plat,attr,omitempty"`
+    XMLName     xml.Name    `json:"-" xml:"location"`
+    Type        string      `json:"type" xml:"type,attr"`
+    Tiploc      string      `json:"tpl" xml:"tpl,attr"`
+    Act         string      `json:"act,omitempty" xml:"act,attr,omitempty"`
+    PlanAct     string      `json:"planAct,omitempty" xml:"planAct,attr,omitempty"`
+    Cancelled   bool        `json:"cancelled,omitempty" xml:"can,attr,omitempty"`
+    Platform    string      `json:"plat,omitempty" xml:"plat,attr,omitempty"`
     // CallPtAttributes
-    Pta       string      `json:"pta,omitempty" xml:"pta,attr,omitempty"`
-    Ptd       string      `json:"ptd,omitempty" xml:"ptd,attr,omitempty"`
+    Pta        *PublicTime  `json:"pta,omitempty" xml:"pta,attr,omitempty"`
+    Ptd        *PublicTime  `json:"ptd,omitempty" xml:"ptd,attr,omitempty"`
     // Working times
-    Wta       string      `json:"wta,omitempty" xml:"wta,attr,omitempty"`
-    Wtd       string      `json:"wtd,omitempty" xml:"wtd,attr,omitempty"`
-    Wtp       string      `json:"wtp,omitempty" xml:"wtp,attr,omitempty"`
+    Wta        *WorkingTime `json:"wta,omitempty" xml:"wta,attr,omitempty"`
+    Wtd        *WorkingTime `json:"wtd,omitempty" xml:"wtd,attr,omitempty"`
+    Wtp        *WorkingTime `json:"wtp,omitempty" xml:"wtp,attr,omitempty"`
     // Delay implied by a change to the services route
-    RDelay    string      `json:"rdelay,omitempty" xml:"rdelay,attr,omitempty"`
+    RDelay      string      `json:"rdelay,omitempty" xml:"rdelay,attr,omitempty"`
     // False destination to be used at this location
-    FalseDest string      `json:"fd,omitempty" xml:"fd,attr,omitempty"`
+    FalseDest   string      `json:"fd,omitempty" xml:"fd,attr,omitempty"`
 }
 
 func (t *Location) Write( c *codec.BinaryCodec ) {
@@ -36,13 +36,13 @@ func (t *Location) Write( c *codec.BinaryCodec ) {
     WriteString( t.PlanAct ).
     WriteBool( t.Cancelled ).
     WriteString( t.Platform ).
-    WriteString( t.Pta ).
-    WriteString( t.Ptd ).
-    WriteString( t.Wta ).
-    WriteString( t.Wtd ).
-    WriteString( t.Wtp ).
     WriteString( t.RDelay ).
     WriteString( t.FalseDest )
+  PublicTimeWrite( c, t.Pta )
+  PublicTimeWrite( c, t.Ptd )
+  WorkingTimeWrite( c, t.Wta )
+  WorkingTimeWrite( c, t.Wtd )
+  WorkingTimeWrite( c, t.Wtp )
 }
 
 func (t *Location) Read( c *codec.BinaryCodec ) {
@@ -52,13 +52,13 @@ func (t *Location) Read( c *codec.BinaryCodec ) {
     ReadString( &t.PlanAct ).
     ReadBool( &t.Cancelled ).
     ReadString( &t.Platform ).
-    ReadString( &t.Pta ).
-    ReadString( &t.Ptd ).
-    ReadString( &t.Wta ).
-    ReadString( &t.Wtd ).
-    ReadString( &t.Wtp ).
     ReadString( &t.RDelay ).
     ReadString( &t.FalseDest )
+  t.Pta = PublicTimeRead( c )
+  t.Ptd = PublicTimeRead( c )
+  t.Wta = WorkingTimeRead( c )
+  t.Wtd = WorkingTimeRead( c )
+  t.Wtp = WorkingTimeRead( c )
 }
 
 type OR struct {
@@ -86,10 +86,10 @@ func (s *OR ) Location() *Location {
     PlanAct: s.PlanAct,
     Cancelled: s.Cancelled,
     Platform: s.Platform,
-    Pta: s.Pta,
-    Ptd: s.Ptd,
-    Wta: s.Wta,
-    Wtd: s.Wtd,
+    Pta: NewPublicTime( s.Pta ),
+    Ptd: NewPublicTime( s.Ptd ),
+    Wta: NewWorkingTime( s.Wta ),
+    Wtd: NewWorkingTime( s.Wtd ),
     FalseDest: s.FalseDest,
   }
 }
@@ -114,8 +114,8 @@ func (s *OPOR ) Location() *Location {
     PlanAct: s.PlanAct,
     Cancelled: s.Cancelled,
     Platform: s.Platform,
-    Wta: s.Wta,
-    Wtd: s.Wtd,
+    Wta: NewWorkingTime( s.Wta ),
+    Wtd: NewWorkingTime( s.Wtd ),
   }
 }
 
@@ -146,10 +146,10 @@ func (s *IP ) Location() *Location {
     PlanAct: s.PlanAct,
     Cancelled: s.Cancelled,
     Platform: s.Platform,
-    Pta: s.Pta,
-    Ptd: s.Ptd,
-    Wta: s.Wta,
-    Wtd: s.Wtd,
+    Pta: NewPublicTime( s.Pta ),
+    Ptd: NewPublicTime( s.Ptd ),
+    Wta: NewWorkingTime( s.Wta ),
+    Wtd: NewWorkingTime( s.Wtd ),
     RDelay: s.RDelay,
     FalseDest: s.FalseDest,
   }
@@ -177,8 +177,8 @@ func (s *OPIP ) Location() *Location {
     PlanAct: s.PlanAct,
     Cancelled: s.Cancelled,
     Platform: s.Platform,
-    Wta: s.Wta,
-    Wtd: s.Wtd,
+    Wta: NewWorkingTime( s.Wta ),
+    Wtd: NewWorkingTime( s.Wtd ),
     RDelay: s.RDelay,
   }
 }
@@ -204,7 +204,7 @@ func (s *PP ) Location() *Location {
     PlanAct: s.PlanAct,
     Cancelled: s.Cancelled,
     Platform: s.Platform,
-    Wtp: s.Wtp,
+    Wtp: NewWorkingTime( s.Wtp ),
     RDelay: s.RDelay,
   }
 }
@@ -234,10 +234,10 @@ func (s *DT ) Location() *Location {
     PlanAct: s.PlanAct,
     Cancelled: s.Cancelled,
     Platform: s.Platform,
-    Pta: s.Pta,
-    Ptd: s.Ptd,
-    Wta: s.Wta,
-    Wtd: s.Wtd,
+    Pta: NewPublicTime( s.Pta ),
+    Ptd: NewPublicTime( s.Ptd ),
+    Wta: NewWorkingTime( s.Wta ),
+    Wtd: NewWorkingTime( s.Wtd ),
     RDelay: s.RDelay,
   }
 }
@@ -264,8 +264,8 @@ func (s *OPDT ) Location() *Location {
     PlanAct: s.PlanAct,
     Cancelled: s.Cancelled,
     Platform: s.Platform,
-    Wta: s.Wta,
-    Wtd: s.Wtd,
+    Wta: NewWorkingTime( s.Wta ),
+    Wtd: NewWorkingTime( s.Wtd ),
     RDelay: s.RDelay,
   }
 }
