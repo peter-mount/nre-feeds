@@ -48,7 +48,7 @@ func main() {
       log.Fatal( err )
     }
 
-    //tt.RegisterRest( server.Context( "/timetable" ) )
+    tt.RegisterRest( server.Context( "/timetable" ) )
   }
 
   // Listen to signals & close the db before exiting

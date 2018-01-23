@@ -23,11 +23,13 @@ type DarwinTimetable struct {
 }
 
 func (t *DarwinTimetable) Write( c *codec.BinaryCodec ) {
-  c.WriteString( t.timetableId )
+  c.WriteString( t.timetableId ).
+    WriteTime( t.importDate )
 }
 
 func (t *DarwinTimetable) Read( c *codec.BinaryCodec ) {
-  c.ReadString( &t.timetableId )
+  c.ReadString( &t.timetableId ).
+    ReadTime( &t.importDate )
 }
 
 // OpenDB opens a DarwinReference database.
@@ -101,6 +103,7 @@ func (r *DarwinTimetable) initDB() error {
 
   buckets := []string {
     "Meta",
+    "DarwinAssoc",
     "DarwinJourney" }
 
   return r.db.Update( func( tx *bolt.Tx ) error {

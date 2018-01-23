@@ -1,7 +1,16 @@
 // Reference timetable
 package darwintimetable
 
+import (
+  bolt "github.com/coreos/bbolt"
+  "encoding/xml"
+  "github.com/peter-mount/golib/codec"
+  "github.com/peter-mount/golib/rest"
+  "time"
+)
+
 type Journey struct {
+  XMLName         xml.Name      `json:"-" xml:"Journey"`
   RID             string        `xml:"rid,attr"`
   UID             string        `xml:"uid,attr"`
   TrainID         string        `xml:"trainId"`
@@ -14,132 +23,106 @@ type Journey struct {
   CancelReason    int           `xml:"cancelReason"`
   // Associations
   Associations  []*Association  `xml:"-"`
-}
-
-type OR struct {
-  // SchedLocAttributes
-  Tiploc    string      `xml:"tpl,attr"`
-  Act       string      `xml:"act,attr"`
-  PlanAct   string      `xml:"planAct,attr"`
-  Cancelled bool        `xml:"can,attr"`
-  Platform  string      `xml:"plat,attr"`
-  // CallPtAttributes
-  Pta       string      `xml:"pta,attr"`
-  Ptd       string      `xml:"ptd,attr"`
-  // Working times
-  Wta       string      `xml:"wta,attr"`
-  Wtd       string      `xml:"wtd,attr"`
-  // False destination to be used at this location
-  FalseDest string      `xml:"fd,attr"`
-}
-
-type OPOR struct {
-  // SchedLocAttributes
-  Tiploc    string      `xml:"tpl,attr"`
-  Act       string      `xml:"act,attr"`
-  PlanAct   string      `xml:"planAct,attr"`
-  Cancelled bool        `xml:"can,attr"`
-  Platform  string      `xml:"plat,attr"`
-  // Working times
-  Wta       string      `xml:"wta,attr"`
-  Wtd       string      `xml:"wtd,attr"`
-}
-
-type IP struct {
-  // SchedLocAttributes
-  Tiploc    string      `xml:"tpl,attr"`
-  Act       string      `xml:"act,attr"`
-  PlanAct   string      `xml:"planAct,attr"`
-  Cancelled bool        `xml:"can,attr"`
-  Platform  string      `xml:"plat,attr"`
-  // CallPtAttributes
-  Pta       string      `xml:"pta,attr"`
-  Ptd       string      `xml:"ptd,attr"`
-  // Working times
-  Wta       string      `xml:"wta,attr"`
-  Wtd       string      `xml:"wtd,attr"`
-  // Delay implied by a change to the services route
-  RDelay    string      `xml:"rdelay,attr"`
-  // False destination to be used at this location
-  FalseDest string      `xml:"fd,attr"`
-}
-
-type OPIP struct {
-  // SchedLocAttributes
-  Tiploc    string      `xml:"tpl,attr"`
-  Act       string      `xml:"act,attr"`
-  PlanAct   string      `xml:"planAct,attr"`
-  Cancelled bool        `xml:"can,attr"`
-  Platform  string      `xml:"plat,attr"`
-  // Working times
-  Wta       string      `xml:"wta,attr"`
-  Wtd       string      `xml:"wtd,attr"`
-  // Delay implied by a change to the services route
-  RDelay    string      `xml:"rdelay,attr"`
-}
-
-type PP struct {
-  // SchedLocAttributes
-  Tiploc    string      `xml:"tpl,attr"`
-  Act       string      `xml:"act,attr"`
-  PlanAct   string      `xml:"planAct,attr"`
-  Cancelled bool        `xml:"can,attr"`
-  Platform  string      `xml:"plat,attr"`
-  // Working times
-  Wtp       string      `xml:"wtp,attr"`
-  // Delay implied by a change to the services route
-  RDelay    string      `xml:"rdelay,attr"`
-}
-
-type DT struct {
-  // SchedLocAttributes
-  Tiploc    string      `xml:"tpl,attr"`
-  Act       string      `xml:"act,attr"`
-  PlanAct   string      `xml:"planAct,attr"`
-  Cancelled bool        `xml:"can,attr"`
-  Platform  string      `xml:"plat,attr"`
-  // CallPtAttributes
-  Pta       string      `xml:"pta,attr"`
-  Ptd       string      `xml:"ptd,attr"`
-  // Working times
-  Wta       string      `xml:"wta,attr"`
-  Wtd       string      `xml:"wtd,attr"`
-  // Delay implied by a change to the services route
-  RDelay    string      `xml:"rdelay,attr"`
-}
-
-type OPDT struct {
-  // SchedLocAttributes
-  Tiploc    string      `xml:"tpl,attr"`
-  Act       string      `xml:"act,attr"`
-  PlanAct   string      `xml:"planAct,attr"`
-  Cancelled bool        `xml:"can,attr"`
-  Platform  string      `xml:"plat,attr"`
-  // Working times
-  Wta       string      `xml:"wta,attr"`
-  Wtd       string      `xml:"wtd,attr"`
-  // Delay implied by a change to the services route
-  RDelay    string      `xml:"rdelay,attr"`
+  // Date entry was inserted into the database
+  Date        time.Time `json:"date" xml:"date,attr"`
+  // URL to this entity
+  Self        string    `json:"self" xml:"self,attr,omitempty"`
 }
 
 type cancelReason struct {
   text string `xml:",chardata"`
 }
 
-type Association struct {
-  Main      AssocService  `xml:"main"`
-  Assoc     AssocService  `xml:"assoc"`
-  Tiploc    string        `xml:"tiploc,attr"`
-  Category  string        `xml:"category,attr"`
-  Cancelled bool          `xml:"isCancelled,attr"`
-  Deleted   bool          `xml:"isDeleted,attr"`
+func (a *Journey) Equals( b *Journey ) bool {
+  if b == nil {
+    return false
+  }
+  return a.RID == b.RID &&
+    a.UID == b.UID &&
+    a.TrainID == b.TrainID &&
+    a.SSD == b.SSD &&
+    a.Toc == b.Toc &&
+    a.TrainCat == b.TrainCat &&
+    a.Passenger == b.Passenger &&
+    a.CancelReason == b.CancelReason
 }
 
-type AssocService struct {
-  RID   string    `xml:"rid,attr"`
-  Wta   string      `xml:"wta,attr"`
-  Wtd   string      `xml:"wtd,attr"`
-  Wtp   string      `xml:"wtp,attr"`
-  Pta   string      `xml:"pta,attr"`
-  Ptd   string      `xml:"ptd,attr"`
+func (t *Journey) Write( c *codec.BinaryCodec ) {
+  c.WriteString( t.RID ).
+    WriteString( t.UID ).
+    WriteString( t.TrainID ).
+    WriteString( t.SSD ).
+    WriteString( t.Toc ).
+    WriteString( t.TrainCat ).
+    WriteBool( t.Passenger ).
+    WriteInt( t.CancelReason ).
+    WriteTime( t.Date )
+}
+
+func (t *Journey) Read( c *codec.BinaryCodec ) {
+  c.ReadString( &t.RID ).
+    ReadString( &t.UID ).
+    ReadString( &t.TrainID ).
+    ReadString( &t.SSD ).
+    ReadString( &t.Toc ).
+    ReadString( &t.TrainCat ).
+    ReadBool( &t.Passenger ).
+    ReadInt( &t.CancelReason ).
+    ReadTime( &t.Date )
+}
+
+func (t *Journey) SetSelf( r *rest.Rest ) {
+  t.Self = r.Self( r.Context() + "/journey/" + t.RID )
+}
+
+// GetJourney returns details of a Journey
+func (r *DarwinTimetable) GetJourney( tx *bolt.Tx, rid string ) ( *Journey, bool ) {
+  loc, exists := r.GetJourneyBucket( tx.Bucket( []byte("DarwinJourney") ), rid )
+  return loc, exists
+}
+
+// Internal method that uses the shared writable transaction
+func (r *DarwinTimetable) getJourney( rid string ) ( *Journey, bool ) {
+  loc, exists := r.GetJourneyBucket( r.journeys, rid )
+  return loc, exists
+}
+
+func (t *Journey) fromBytes( b []byte ) bool {
+  if b != nil {
+    codec.NewBinaryCodecFrom( b ).Read( t )
+  }
+  return t.RID != ""
+}
+
+func (r *DarwinTimetable) GetJourneyBucket( bucket *bolt.Bucket, rid string ) ( *Journey, bool ) {
+  b := bucket.Get( []byte( rid ) )
+
+  if b != nil {
+    var journey *Journey = &Journey{}
+    if journey.fromBytes( b ) {
+      return journey, true
+    }
+  }
+
+  return nil, false
+}
+
+func (r *DarwinTimetable) addJourney( journey *Journey ) ( error, bool ) {
+  // Update only if it does not exist or is different
+  if old, exists := r.getJourney( journey.RID ); !exists || !journey.Equals( old ) {
+    journey.Date = time.Now()
+    codec := codec.NewBinaryCodec()
+    codec.Write( journey )
+    if codec.Error() != nil {
+      return codec.Error(), false
+    }
+
+    if err := r.journeys.Put( []byte( journey.RID ), codec.Bytes() ); err != nil {
+      return err, false
+    }
+
+    return nil, true
+  }
+
+  return nil, false
 }

@@ -16,7 +16,8 @@ func (t *DarwinTimetable) UnmarshalXML( decoder *xml.Decoder, start xml.StartEle
 }
 
 func (t *DarwinTimetable) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start xml.StartElement ) error {
-  //t.Journeys = make( map[string]*Journey )
+  journeyCount := 0
+
   var assocs []*Association
 
   for _, attr := range start.Attr {
@@ -43,7 +44,11 @@ func (t *DarwinTimetable) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start
           return err
         }
 
-        // TODO persist
+        if err, updated := t.addJourney( j ); err != nil {
+          return err
+        } else if updated {
+          journeyCount ++
+        }
 
       case "Association":
         var a *Association = &Association{}
@@ -60,6 +65,8 @@ func (t *DarwinTimetable) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start
 
     case xml.EndElement:
 
+      log.Println( "Journey's", journeyCount )
+      
       /*
       for _, a := range assocs {
         if j1, ok := t.Journeys[a.Main.RID]; ok {
