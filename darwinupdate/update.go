@@ -35,7 +35,7 @@ func (u *DarwinUpdate) setupRest( c *rest.ServerContext ) {
 
   // Expose Update()
   c.Handle( "/all", func( r *rest.Rest ) error {
-    if err := u.Update(); err != nil {
+    if err := u.Update( true ); err != nil {
       return err
     }
 
@@ -45,6 +45,12 @@ func (u *DarwinUpdate) setupRest( c *rest.ServerContext ) {
 }
 
 func (u *DarwinUpdate) setupCron( cr *cron.Cron ) {
+  // From 0230 - 06:30 once an hour check ftp for updates
+  cr.AddFunc( "0 30 2-6 * * *", func () {
+    if err := u.Update( true ); err != nil {
+      log.Println( "Failed import:", err )
+    }
+  })
 }
 
 // Is an update required
@@ -64,23 +70,23 @@ func importRequiredTimetable( v interface{ TimetableId() string } ) bool {
 func (u *DarwinUpdate) initialImport() {
   if  (u.Ref != nil && importRequiredTimetable( u.Ref )) ||
       (u.TT != nil && importRequiredTimetable( u.TT )) {
-    if err := u.Update(); err != nil {
+    if err := u.Update( false ); err != nil {
       log.Println( "Failed import:", err )
     }
   }
 }
 
 // Update performs an update of all data
-func (u *DarwinUpdate) Update() error {
+func (u *DarwinUpdate) Update( force bool ) error {
   return u.ftp( func( con *ftp.ServerConn ) error {
 
-    if u.Ref != nil && importRequiredTimetable( u.Ref ) {
+    if u.Ref != nil && (force || importRequiredTimetable( u.Ref ) ) {
       if err:= u.ReferenceUpdate( con ); err != nil {
         return err
       }
     }
 
-    if u.TT != nil && importRequiredTimetable( u.TT ) {
+    if u.TT != nil && (force || importRequiredTimetable( u.TT ) ) {
       if err:= u.TimetableUpdate( con ); err != nil {
         return err
       }
