@@ -2,19 +2,27 @@
 package darwintimetable
 
 import (
+  bolt "github.com/coreos/bbolt"
   "encoding/xml"
+  "github.com/peter-mount/golib/codec"
   "log"
-  //"time"
+  "time"
 )
 
-func (t *Timetable) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error {
-  t.Journeys = make( map[string]*Journey )
+func (t *DarwinTimetable) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error {
+  return t.internalUpdate( func( tx *bolt.Tx ) error {
+    return t.unmarshalXML( tx, decoder, start )
+  })
+}
+
+func (t *DarwinTimetable) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start xml.StartElement ) error {
+  //t.Journeys = make( map[string]*Journey )
   var assocs []*Association
 
   for _, attr := range start.Attr {
     switch attr.Name.Local {
     case "timetableID":
-      t.TimetableId = attr.Value
+      t.timetableId = attr.Value
     }
   }
 
@@ -35,11 +43,7 @@ func (t *Timetable) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement )
           return err
         }
 
-        if _, ok := t.Journeys[ j.RID ]; ok {
-          log.Println( "RID", j.RID, "duplicated" )
-        } else {
-          t.Journeys[ j.RID ] = j
-        }
+        // TODO persist
 
       case "Association":
         var a *Association = &Association{}
@@ -56,6 +60,7 @@ func (t *Timetable) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement )
 
     case xml.EndElement:
 
+      /*
       for _, a := range assocs {
         if j1, ok := t.Journeys[a.Main.RID]; ok {
           if j2, ok := t.Journeys[a.Assoc.RID]; ok {
@@ -68,8 +73,17 @@ func (t *Timetable) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement )
               log.Println( "Main", a.Main.RID, "not found, Assoc", a.Assoc.RID )
             }
           }
+          */
 
-      return nil
+
+      // Finally update the meta data
+      t.importDate = time.Now()
+      codec := codec.NewBinaryCodec()
+      codec.Write( t )
+      if codec.Error() != nil {
+        return codec.Error()
+      }
+      return tx.Bucket( []byte( "Meta" ) ).Put( []byte( "DarwinTimetable" ), codec.Bytes() )
     }
   }
 }

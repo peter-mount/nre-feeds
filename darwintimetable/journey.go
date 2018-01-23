@@ -1,12 +1,6 @@
 // Reference timetable
 package darwintimetable
 
-type Timetable struct {
-  TimetableId     string              `xml:"timetableID,attr"`
-  //Journeys      []*Journey            `xml:"Journey"`
-  Journeys        map[string]*Journey `xml:"-"`
-}
-
 type Journey struct {
   RID             string        `xml:"rid,attr"`
   UID             string        `xml:"uid,attr"`

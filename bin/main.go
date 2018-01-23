@@ -3,6 +3,7 @@ package main
 
 import (
   "darwinref"
+  "darwintimetable"
   "flag"
   "github.com/peter-mount/golib/rest"
   "github.com/peter-mount/golib/statistics"
@@ -16,7 +17,7 @@ func main() {
   log.Println( "darwin v0.1" )
 
   refFile := flag.String( "ref", "", "The reference database file" )
-  //ttFile := flag.String( "timetable", "", "The timetable database file" )
+  ttFile := flag.String( "timetable", "", "The timetable database file" )
 
   // Port for the webserver
   port := flag.Int( "p", 8080, "Port to use" )
@@ -29,7 +30,6 @@ func main() {
   server := rest.NewServer( *port )
 
   var ref *darwinref.DarwinReference
-
   if *refFile != "" {
     ref = &darwinref.DarwinReference{}
 
@@ -38,6 +38,17 @@ func main() {
     }
 
     ref.RegisterRest( server.Context( "/ref" ) )
+  }
+
+  var tt *darwintimetable.DarwinTimetable
+  if *ttFile != "" {
+    tt = &darwintimetable.DarwinTimetable{}
+
+    if err := tt.OpenDB( *ttFile ); err != nil {
+      log.Fatal( err )
+    }
+
+    //tt.RegisterRest( server.Context( "/timetable" ) )
   }
 
   // Listen to signals & close the db before exiting

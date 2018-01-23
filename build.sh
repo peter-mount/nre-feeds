@@ -13,7 +13,8 @@ docker run -it --rm \
   test \
   darwin \
     -p 8081 \
-    -ref /database/dwref.db
+    -ref /database/dwref.db \
+    -timetable /database/dwtt.db
 
 exit
 
