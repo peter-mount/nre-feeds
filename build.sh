@@ -3,7 +3,7 @@
 clear
 docker build -t test . || exit 1
 
-rm -fv /home/peter/tmp/darwin.db
+#rm -fv /home/peter/tmp/darwin.db
 
 docker run -it --rm \
   --name test \

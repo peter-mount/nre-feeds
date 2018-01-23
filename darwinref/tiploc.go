@@ -3,7 +3,6 @@ package darwinref
 import (
   bolt "github.com/coreos/bbolt"
   "github.com/peter-mount/golib/codec"
-  //"time"
 )
 
 // Return a *Location for a tiploc

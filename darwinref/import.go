@@ -6,7 +6,6 @@ import (
 )
 
 func (dr *DarwinReference) ImportHandler( r *rest.Rest ) error {
-  log.Println( r.Request().Header )
   log.Println( "DarwinReference import: started" )
 
   if err := r.Body( dr ); err != nil {
