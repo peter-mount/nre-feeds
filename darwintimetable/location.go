@@ -1,6 +1,66 @@
 // Reference timetable
 package darwintimetable
 
+import (
+  //bolt "github.com/coreos/bbolt"
+  "encoding/xml"
+  "github.com/peter-mount/golib/codec"
+)
+
+// Common location object used in persistence
+type Location struct {
+    XMLName     xml.Name  `json:"-" xml:"location"`
+    Type      string      `json:"type" xml:"type,attr"`
+    Tiploc    string      `json:"tpl" xml:"tpl,attr"`
+    Act       string      `json:"act,omitempty" xml:"act,attr,omitempty"`
+    PlanAct   string      `json:"planAct,omitempty" xml:"planAct,attr,omitempty"`
+    Cancelled bool        `json:"cancelled,omitempty" xml:"can,attr,omitempty"`
+    Platform  string      `json:"plat,omitempty" xml:"plat,attr,omitempty"`
+    // CallPtAttributes
+    Pta       string      `json:"pta,omitempty" xml:"pta,attr,omitempty"`
+    Ptd       string      `json:"ptd,omitempty" xml:"ptd,attr,omitempty"`
+    // Working times
+    Wta       string      `json:"wta,omitempty" xml:"wta,attr,omitempty"`
+    Wtd       string      `json:"wtd,omitempty" xml:"wtd,attr,omitempty"`
+    Wtp       string      `json:"wtp,omitempty" xml:"wtp,attr,omitempty"`
+    // Delay implied by a change to the services route
+    RDelay    string      `json:"rdelay,omitempty" xml:"rdelay,attr,omitempty"`
+    // False destination to be used at this location
+    FalseDest string      `json:"fd,omitempty" xml:"fd,attr,omitempty"`
+}
+
+func (t *Location) Write( c *codec.BinaryCodec ) {
+  c.WriteString( t.Type ).
+    WriteString( t.Tiploc ).
+    WriteString( t.Act ).
+    WriteString( t.PlanAct ).
+    WriteBool( t.Cancelled ).
+    WriteString( t.Platform ).
+    WriteString( t.Pta ).
+    WriteString( t.Ptd ).
+    WriteString( t.Wta ).
+    WriteString( t.Wtd ).
+    WriteString( t.Wtp ).
+    WriteString( t.RDelay ).
+    WriteString( t.FalseDest )
+}
+
+func (t *Location) Read( c *codec.BinaryCodec ) {
+  c.ReadString( &t.Type ).
+    ReadString( &t.Tiploc ).
+    ReadString( &t.Act ).
+    ReadString( &t.PlanAct ).
+    ReadBool( &t.Cancelled ).
+    ReadString( &t.Platform ).
+    ReadString( &t.Pta ).
+    ReadString( &t.Ptd ).
+    ReadString( &t.Wta ).
+    ReadString( &t.Wtd ).
+    ReadString( &t.Wtp ).
+    ReadString( &t.RDelay ).
+    ReadString( &t.FalseDest )
+}
+
 type OR struct {
   // SchedLocAttributes
   Tiploc    string      `xml:"tpl,attr"`
@@ -18,6 +78,22 @@ type OR struct {
   FalseDest string      `xml:"fd,attr"`
 }
 
+func (s *OR ) Location() *Location {
+  return &Location{
+    Type: "OR",
+    Tiploc: s.Tiploc,
+    Act: s.Act,
+    PlanAct: s.PlanAct,
+    Cancelled: s.Cancelled,
+    Platform: s.Platform,
+    Pta: s.Pta,
+    Ptd: s.Ptd,
+    Wta: s.Wta,
+    Wtd: s.Wtd,
+    FalseDest: s.FalseDest,
+  }
+}
+
 type OPOR struct {
   // SchedLocAttributes
   Tiploc    string      `xml:"tpl,attr"`
@@ -28,6 +104,19 @@ type OPOR struct {
   // Working times
   Wta       string      `xml:"wta,attr"`
   Wtd       string      `xml:"wtd,attr"`
+}
+
+func (s *OPOR ) Location() *Location {
+  return &Location{
+    Type: "OPOR",
+    Tiploc: s.Tiploc,
+    Act: s.Act,
+    PlanAct: s.PlanAct,
+    Cancelled: s.Cancelled,
+    Platform: s.Platform,
+    Wta: s.Wta,
+    Wtd: s.Wtd,
+  }
 }
 
 type IP struct {
@@ -49,6 +138,23 @@ type IP struct {
   FalseDest string      `xml:"fd,attr"`
 }
 
+func (s *IP ) Location() *Location {
+  return &Location{
+    Type: "IP",
+    Tiploc: s.Tiploc,
+    Act: s.Act,
+    PlanAct: s.PlanAct,
+    Cancelled: s.Cancelled,
+    Platform: s.Platform,
+    Pta: s.Pta,
+    Ptd: s.Ptd,
+    Wta: s.Wta,
+    Wtd: s.Wtd,
+    RDelay: s.RDelay,
+    FalseDest: s.FalseDest,
+  }
+}
+
 type OPIP struct {
   // SchedLocAttributes
   Tiploc    string      `xml:"tpl,attr"`
@@ -63,6 +169,20 @@ type OPIP struct {
   RDelay    string      `xml:"rdelay,attr"`
 }
 
+func (s *OPIP ) Location() *Location {
+  return &Location{
+    Type: "OPIP",
+    Tiploc: s.Tiploc,
+    Act: s.Act,
+    PlanAct: s.PlanAct,
+    Cancelled: s.Cancelled,
+    Platform: s.Platform,
+    Wta: s.Wta,
+    Wtd: s.Wtd,
+    RDelay: s.RDelay,
+  }
+}
+
 type PP struct {
   // SchedLocAttributes
   Tiploc    string      `xml:"tpl,attr"`
@@ -74,6 +194,19 @@ type PP struct {
   Wtp       string      `xml:"wtp,attr"`
   // Delay implied by a change to the services route
   RDelay    string      `xml:"rdelay,attr"`
+}
+
+func (s *PP ) Location() *Location {
+  return &Location{
+    Type: "PP",
+    Tiploc: s.Tiploc,
+    Act: s.Act,
+    PlanAct: s.PlanAct,
+    Cancelled: s.Cancelled,
+    Platform: s.Platform,
+    Wtp: s.Wtp,
+    RDelay: s.RDelay,
+  }
 }
 
 type DT struct {
@@ -93,6 +226,22 @@ type DT struct {
   RDelay    string      `xml:"rdelay,attr"`
 }
 
+func (s *DT ) Location() *Location {
+  return &Location{
+    Type: "DT",
+    Tiploc: s.Tiploc,
+    Act: s.Act,
+    PlanAct: s.PlanAct,
+    Cancelled: s.Cancelled,
+    Platform: s.Platform,
+    Pta: s.Pta,
+    Ptd: s.Ptd,
+    Wta: s.Wta,
+    Wtd: s.Wtd,
+    RDelay: s.RDelay,
+  }
+}
+
 type OPDT struct {
   // SchedLocAttributes
   Tiploc    string      `xml:"tpl,attr"`
@@ -105,4 +254,18 @@ type OPDT struct {
   Wtd       string      `xml:"wtd,attr"`
   // Delay implied by a change to the services route
   RDelay    string      `xml:"rdelay,attr"`
+}
+
+func (s *OPDT ) Location() *Location {
+  return &Location{
+    Type: "OPDT",
+    Tiploc: s.Tiploc,
+    Act: s.Act,
+    PlanAct: s.PlanAct,
+    Cancelled: s.Cancelled,
+    Platform: s.Platform,
+    Wta: s.Wta,
+    Wtd: s.Wtd,
+    RDelay: s.RDelay,
+  }
 }

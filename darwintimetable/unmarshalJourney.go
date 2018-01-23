@@ -40,22 +40,42 @@ func (j *Journey) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) e
 
     switch tok := token.(type) {
     case xml.StartElement:
-      var elementStruct interface{}
       switch tok.Name.Local {
       case "OR":
-        elementStruct = &OR{}
+        if err = decodeAndAppendLocation( decoder, &tok, j, &OR{} ); err != nil {
+          return err
+        }
+
       case "OPOR":
-        elementStruct = &OPOR{}
+        if err = decodeAndAppendLocation( decoder, &tok, j, &OPOR{} ); err != nil {
+          return err
+        }
+
       case "IP":
-        elementStruct = &IP{}
+        if err = decodeAndAppendLocation( decoder, &tok, j, &IP{} ); err != nil {
+          return err
+        }
+
       case "OPIP":
-        elementStruct = &OPIP{}
+        if err = decodeAndAppendLocation( decoder, &tok, j, &OPIP{} ); err != nil {
+          return err
+        }
+
       case "PP":
-        elementStruct = &PP{}
+        if err = decodeAndAppendLocation( decoder, &tok, j, &PP{} ); err != nil {
+          return err
+        }
+
       case "DT":
-        elementStruct = &DT{}
+        if err = decodeAndAppendLocation( decoder, &tok, j, &DT{} ); err != nil {
+          return err
+        }
+
       case "OPDT":
-        elementStruct = &OPDT{}
+        if err = decodeAndAppendLocation( decoder, &tok, j, &OPDT{} ); err != nil {
+          return err
+        }
+
       case "cancelReason":
         var cr *cancelReason = &cancelReason{}
         if err = decoder.DecodeElement( cr, &tok ); err != nil {
@@ -69,18 +89,8 @@ func (j *Journey) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) e
             }
         }
 
-        elementStruct = nil
       default:
         log.Println( "Unknown element", tok.Name.Local, j.RID, j.SSD )
-        elementStruct = nil
-      }
-
-      if elementStruct != nil {
-        if err = decoder.DecodeElement( elementStruct, &tok ); err != nil {
-          return err
-        }
-
-        j.Schedule = append( j.Schedule, elementStruct )
       }
 
     case xml.EndElement:
@@ -88,4 +98,12 @@ func (j *Journey) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) e
     }
   }
 
+}
+
+func decodeAndAppendLocation( decoder *xml.Decoder, tok *xml.StartElement, j *Journey, v interface{ Location() *Location } ) error {
+  if err := decoder.DecodeElement( v, tok ); err != nil {
+    return err
+  }
+  j.Schedule = append( j.Schedule, v.Location() )
+  return nil
 }

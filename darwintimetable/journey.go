@@ -11,18 +11,18 @@ import (
 
 type Journey struct {
   XMLName         xml.Name      `json:"-" xml:"Journey"`
-  RID             string        `xml:"rid,attr"`
-  UID             string        `xml:"uid,attr"`
-  TrainID         string        `xml:"trainId"`
-  SSD             string        `xml:"ssd,attr"`
-  Toc             string        `xml:"toc,attr"`
-  TrainCat        string        `xml:"trainCat,attr"`
-  Passenger       bool          `xml:"isPassengerSvc,attr"`
+  RID             string        `json:"rid" xml:"rid,attr"`
+  UID             string        `json:"uid" xml:"uid,attr"`
+  TrainID         string        `json:"trainId" xml:"trainId"`
+  SSD             string        `json:"ssd" xml:"ssd,attr"`
+  Toc             string        `json:"toc" xml:"toc,attr"`
+  TrainCat        string        `json:"trainCat" xml:"trainCat,attr"`
+  Passenger       bool          `json:"isPassengerSvc" xml:"isPassengerSvc,attr"`
   // The schedule
-  Schedule      []interface{}   `xml:,any`
-  CancelReason    int           `xml:"cancelReason"`
+  Schedule      []*Location     `json:"locations" xml:location`
+  CancelReason    int           `json:"cancelReason" xml:"cancelReason,attr"`
   // Associations
-  Associations  []*Association  `xml:"-"`
+  //Associations  []*Association  `xml:"-"`
   // Date entry was inserted into the database
   Date        time.Time `json:"date" xml:"date,attr"`
   // URL to this entity
@@ -57,6 +57,11 @@ func (t *Journey) Write( c *codec.BinaryCodec ) {
     WriteBool( t.Passenger ).
     WriteInt( t.CancelReason ).
     WriteTime( t.Date )
+
+  c.WriteInt16( int16( len( t.Schedule ) ) )
+  for _, l := range t.Schedule {
+    c.Write( l )
+  }
 }
 
 func (t *Journey) Read( c *codec.BinaryCodec ) {
@@ -69,6 +74,14 @@ func (t *Journey) Read( c *codec.BinaryCodec ) {
     ReadBool( &t.Passenger ).
     ReadInt( &t.CancelReason ).
     ReadTime( &t.Date )
+
+  var lc int16
+  c.ReadInt16( &lc )
+  for i := 0; i < int(lc); i++ {
+    l := &Location{}
+    c.Read( l )
+    t.Schedule = append( t.Schedule, l )
+  }
 }
 
 func (t *Journey) SetSelf( r *rest.Rest ) {
