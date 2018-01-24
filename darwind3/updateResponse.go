@@ -2,7 +2,6 @@ package darwind3
 
 import (
   "encoding/xml"
-  "fmt"
 )
 
 // Update Response
@@ -11,25 +10,65 @@ type UR struct {
   UpdateOrigin        string              `xml:"updateOrigin,attr,omitempty"`
   RequestSource       string              `xml:"requestSource,attr,omitempty"`
   RequestId           string              `xml:"requestId,attr,omitempty"`
-  // extension tns:DataResponse
-  Schedule         []*Schedule            `xml:"schedule"`
-  Deactivated      []*DeactivatedSchedule `xml:"deactivated"`
-  /*
-  Association      []*Association         `xml:"association"`
-  TS     []*Schedule                      `xml:"TS"`
-  StationMessage   []*StationMessage      `xml:"OW"`
-  TrainAlert       []*TrainAlert          `xml:"trainAlert"`
-  TrainOrder       []*TrainOrder          `xml:"trainOrder"`
-  TrackingID       []*TrackingID          `xml:"trackingID"`
-  Alarm            []*Alarm               `xml:"alarm"`
-  */
+  Actions          []Processor
+}
+
+func (s *UR) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error {
+
+  for _, attr := range start.Attr {
+    switch attr.Name.Local {
+      case "updateOrigin":
+        s.UpdateOrigin = attr.Value
+      case "requestSource":
+        s.RequestSource = attr.Value
+      case "requestId":
+        s.RequestId = attr.Value
+    }
+  }
+
+  for {
+    token, err := decoder.Token()
+    if err != nil {
+      return err
+    }
+
+    switch tok := token.(type) {
+      case xml.StartElement:
+        var elem Processor
+        switch tok.Name.Local {
+          case "schedule":
+            elem = &Schedule{}
+
+          case "deactivated":
+            elem = &DeactivatedSchedule{}
+
+          case "TS":
+            elem = &TS{}
+
+          default:
+            if err := decoder.Skip(); err != nil {
+              return err
+            }
+        }
+
+        if elem != nil {
+          if err := decoder.DecodeElement( elem, &tok ); err != nil {
+            return err
+          }
+          s.Actions = append( s.Actions, elem )
+        }
+
+      case xml.EndElement:
+        return nil
+    }
+  }
 }
 
 // Process this message
 func (p *UR) Process( d3 *DarwinD3, r *Pport ) error {
 
-  if len( p.Schedule ) > 0 {
-    for _, s := range p.Schedule {
+  if len( p.Actions ) > 0 {
+    for _, s := range p.Actions {
       if err:= s.Process( d3, r ); err != nil {
         return err
       }
@@ -37,16 +76,4 @@ func (p *UR) Process( d3 *DarwinD3, r *Pport ) error {
   }
 
   return nil
-}
-
-func (p *UR) String() string {
-  s := fmt.Sprintf("UR updateOrigin=%s requestSource=%s requestId=%s\n", p.UpdateOrigin, p.RequestSource, p.RequestId )
-
-  if len( p.Schedule ) > 0 {
-    for _, e := range p.Schedule {
-      s += e.String()
-    }
-  }
-
-  return s
 }

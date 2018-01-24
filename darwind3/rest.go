@@ -11,16 +11,14 @@ func (d *DarwinD3) SetupRest( c *rest.ServerContext ) {
 
 // Test handle used to test xml locally via rest
 func (d *DarwinD3) TestHandler( r *rest.Rest ) error {
-  pp := &Pport{}
+  p := &Pport{}
 
-  if err := r.Body( pp ); err != nil {
+  if err := r.Body( p ); err != nil {
     log.Println( err )
     return err
   }
 
-  //log.Printf( "Pport %v\n", pp )
-
-  if err := pp.Process( d ); err != nil {
+  if err := p.Process( d, p ); err != nil {
     log.Println( err )
     return err
   }

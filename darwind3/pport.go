@@ -2,8 +2,8 @@ package darwind3
 
 import (
   "encoding/xml"
-  "fmt"
   "time"
+  "log"
 )
 
 // The Pport element
@@ -11,27 +11,68 @@ type Pport struct {
   XMLName     xml.Name  `json:"-" xml:"Pport"`
   TS          time.Time `json:"ts" xml:"ts,attr"`
   Version     string    `json:"version" xml:"version,attr"`
-  UR         *UR        `json:"uR" xml:"uR"`
+  Actions     []Processor
+}
+
+func (s *Pport) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error {
+
+  for _, attr := range start.Attr {
+    switch attr.Name.Local {
+      case "ts":
+        if t, err := time.Parse( time.RFC3339Nano, attr.Value ); err != nil {
+          return err
+        } else {
+          s.TS = t
+        }
+
+      case "requestSource":
+        s.Version = attr.Value
+    }
+  }
+
+  for {
+    token, err := decoder.Token()
+    if err != nil {
+      return err
+    }
+
+    switch tok := token.(type) {
+      case xml.StartElement:
+        var elem Processor
+        switch tok.Name.Local {
+          case "uR":
+            elem = &UR{}
+
+          default:
+            if err := decoder.Skip(); err != nil {
+              return err
+            }
+        }
+
+        if elem != nil {
+          if err := decoder.DecodeElement( elem, &tok ); err != nil {
+            return err
+          }
+          s.Actions = append( s.Actions, elem )
+        }
+
+      case xml.EndElement:
+        return nil
+    }
+  }
 }
 
 // Process this message
-func (p *Pport) Process( d3 *DarwinD3 ) error {
+func (p *Pport) Process( d3 *DarwinD3, r *Pport ) error {
+  log.Printf(" Pport %s %s", p.TS.Format( time.RFC3339Nano ), p.Version )
 
-  if p.UR != nil {
-    if err := p.UR.Process( d3, p ); err != nil {
-      return err
+  if len( p.Actions ) > 0 {
+    for _, s := range p.Actions {
+      if err:= s.Process( d3, r ); err != nil {
+        return err
+      }
     }
   }
 
   return nil
-}
-
-func (p *Pport) String() string {
-  s := fmt.Sprintf("Pport ts=%s version=%s\n", p.TS, p.Version )
-
-  if p.UR != nil {
-    s += p.UR.String()
-  }
-
-  return s
 }
