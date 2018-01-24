@@ -22,6 +22,7 @@ func main() {
   refFile := flag.String( "ref", "", "The reference database file" )
   ttFile := flag.String( "timetable", "", "The timetable database file" )
   ftpPassword := flag.String( "ftp", "", "The FTP Password at National Rail" )
+  context := flag.String( "context", "", "Base context path of services" )
 
   // Port for the webserver
   port := flag.Int( "p", 8080, "Port to use" )
@@ -34,6 +35,7 @@ func main() {
   stats.Configure()
 
   server := rest.NewServer( *port )
+  ctx := server.Context( *context )
 
   var ref *darwinref.DarwinReference
   if *refFile != "" {
@@ -43,7 +45,7 @@ func main() {
       log.Fatal( err )
     }
 
-    ref.RegisterRest( server.Context( "/ref" ) )
+    ref.RegisterRest( ctx.Context( "/ref" ) )
   }
 
   var tt *darwintimetable.DarwinTimetable
@@ -54,7 +56,7 @@ func main() {
       log.Fatal( err )
     }
 
-    tt.RegisterRest( server.Context( "/timetable" ) )
+    tt.RegisterRest( ctx.Context( "/timetable" ) )
 
     tt.ScheduleCleanup( crontab )
   }
@@ -66,7 +68,7 @@ func main() {
       Pass: *ftpPassword,
     }
 
-    ftp.Setup( server.Context( "/update" ), crontab )
+    ftp.Setup( ctx.Context( "/update" ), crontab )
   }
 
   rst := &darwinrest.DarwinRest{
@@ -74,7 +76,7 @@ func main() {
     TT: tt,
   }
   // These apply to the root
-  rst.RegisterRest( server.Context( "" ) )
+  rst.RegisterRest( ctx )
 
   // Listen to signals & close the db before exiting
   // SIGINT for ^C, SIGTERM for docker stopping the container
