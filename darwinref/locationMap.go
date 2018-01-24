@@ -56,10 +56,10 @@ func (r *LocationMap) Get( n string ) ( *Location, bool ) {
   return t, e
 }
 
-// SetSelf sets the Self field to match this request
-func (r *LocationMap) SetSelf( rs *rest.Rest ) {
+// Self sets the Self field to match this request
+func (r *LocationMap) Self( rs *rest.Rest ) {
   for _, v := range r.m {
-    v.SetSelf( rs )
+    v.Self = rs.Self( rs.Context() + "/ref/tiploc/" + v.Tiploc )
   }
 }
 

@@ -50,6 +50,7 @@ func (rs *DarwinRest) JourneyHandler( r *rest.Rest ) error {
     return err
   }
 
+  res.Locations.Self( r )
   res.Self = r.Self( r.Context() + "/journey/" + res.RID )
   r.Status( 200 ).Value( res )
   return nil

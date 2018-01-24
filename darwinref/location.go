@@ -16,7 +16,7 @@ type Location struct {
   // Date entry was inserted into the database
   Date        time.Time `json:"date" xml:"date,attr"`
   // URL to this entity
-  Self        string    `json:"self" xml:"self,attr,omitempty"`
+  Self        string    `json:"self,omitempty" xml:"self,attr,omitempty"`
 }
 
 // SetSelf sets the Self field to match this request
