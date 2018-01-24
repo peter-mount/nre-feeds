@@ -76,4 +76,6 @@ the monitoring is hidden.
 
 * log set to true then once a minute statistics are logged to the console. This is useful when used with docker as you can export the logs to a remote service like AWS CloudWatch and extract those values.
 
+* rest if set the path to expose a rest service which returns the statistics in JSON.
+
 * schedule defines how often the statistics are captured & reported. By default this is once per minute.

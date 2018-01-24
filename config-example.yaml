@@ -50,6 +50,9 @@ statistics:
   # If true then log statistics to stdout
   log: true
 
+  # If set the path to expose a rest service returning statistics
+  rest: /stats
+
   # Schedule used when capturing & Logging statistics.
   # Defaults to once per minute
   #schedule: "0 * * * * *"

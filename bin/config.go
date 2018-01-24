@@ -41,6 +41,7 @@ type Config struct {
   }                         `yaml:"server"`
   Statistics struct {
     Log           bool      `yaml:"log"`
+    Rest          string    `yaml:"rest"`
     Schedule      string    `yaml:"schedule"`
     statistics   *statistics.Statistics
   }                         `yaml:"statistics"`

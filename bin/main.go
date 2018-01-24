@@ -27,11 +27,11 @@ func main() {
     log.Fatal( err )
   }
 
-  if err := config.initStats(); err != nil {
+  if err := config.initServer(); err != nil {
     log.Fatal( err )
   }
 
-  if err := config.initServer(); err != nil {
+  if err := config.initStats(); err != nil {
     log.Fatal( err )
   }
 
