@@ -3,6 +3,7 @@ package main
 
 import (
   "darwinref"
+  "darwinrest"
   "darwintimetable"
   "darwinupdate"
   "flag"
@@ -67,6 +68,13 @@ func main() {
 
     ftp.Setup( server.Context( "/update" ), crontab )
   }
+
+  rst := &darwinrest.DarwinRest{
+    Ref: ref,
+    TT: tt,
+  }
+  // These apply to the root
+  rst.RegisterRest( server.Context( "" ) )
 
   // Listen to signals & close the db before exiting
   // SIGINT for ^C, SIGTERM for docker stopping the container
