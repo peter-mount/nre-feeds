@@ -48,4 +48,4 @@ RUN go build -v -x \
 # Finally build the final runtime container will all required files
 FROM scratch
 COPY --from=build /dest/ /
-#CMD ["td"]
+CMD ["darwin", "-c", "/config.yaml"]

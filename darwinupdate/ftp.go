@@ -8,11 +8,11 @@ import (
 
 func (u *DarwinUpdate) ftp( f func( *ftp.ServerConn ) error ) error {
   log.Println( "FTP: Connecting" )
-  if con, err := ftp.DialTimeout( "datafeeds.nationalrail.co.uk:21", time.Minute ); err != nil {
+  if con, err := ftp.DialTimeout( u.Server, time.Minute ); err != nil {
     return err
   } else {
     log.Println( "FTP: Login" )
-    if err := con.Login( "ftpuser", u.Pass ); err != nil {
+    if err := con.Login( u.User, u.Pass ); err != nil {
       log.Println( "FTP:", err )
       con.Quit()
       return nil

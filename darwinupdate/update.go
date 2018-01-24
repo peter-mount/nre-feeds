@@ -16,20 +16,15 @@ type DarwinUpdate struct {
   Ref    *darwinref.DarwinReference
   // DarwinTimetable instance or nil
   TT     *darwintimetable.DarwinTimetable
+  // The server name
+  Server  string
+  // The ftp user
+  User    string
   // The ftp password for the NRE ftp server
   Pass    string
 }
 
-// Setup sets up the DarwinUpdate service
-func (u *DarwinUpdate) Setup( c *rest.ServerContext, cr *cron.Cron ) {
-  u.setupRest( c )
-  u.setupCron( cr )
-  log.Println( "FTP Client enabled" )
-
-  u.initialImport()
-}
-
-func (u *DarwinUpdate) setupRest( c *rest.ServerContext ) {
+func (u *DarwinUpdate) SetupRest( c *rest.ServerContext ) {
   c.Handle( "/reference", u.ReferenceHandler ).Methods( "GET" )
   c.Handle( "/timetable", u.TimetableHandler ).Methods( "GET" )
 
@@ -44,9 +39,8 @@ func (u *DarwinUpdate) setupRest( c *rest.ServerContext ) {
   })
 }
 
-func (u *DarwinUpdate) setupCron( cr *cron.Cron ) {
-  // From 0230 - 06:30 once an hour check ftp for updates
-  cr.AddFunc( "0 30 2-6 * * *", func () {
+func (u *DarwinUpdate) SetupSchedule( cr *cron.Cron, schedule string ) {
+  cr.AddFunc( schedule, func () {
     if err := u.Update( true ); err != nil {
       log.Println( "Failed import:", err )
     }
@@ -67,7 +61,7 @@ func importRequiredTimetable( v interface{ TimetableId() string } ) bool {
   return err != nil || tid.Before( limit )
 }
 
-func (u *DarwinUpdate) initialImport() {
+func (u *DarwinUpdate) InitialImport() {
   if  (u.Ref != nil && importRequiredTimetable( u.Ref )) ||
       (u.TT != nil && importRequiredTimetable( u.TT )) {
     if err := u.Update( false ); err != nil {

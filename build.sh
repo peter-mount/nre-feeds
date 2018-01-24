@@ -14,6 +14,14 @@ fi
 docker run -it --rm \
   --name test \
   -v /home/peter/tmp/:/database \
+  -v $(pwd)/config.yaml:/config.yaml:ro \
+  -p 8081:8081 \
+  test
+
+exit
+docker run -it --rm \
+  --name test \
+  -v /home/peter/tmp/:/database \
   -v /home/peter/Downloads:/data:ro \
   -p 8081:8081 \
   test \

@@ -2,105 +2,52 @@
 package main
 
 import (
-  "darwinref"
-  "darwinrest"
-  "darwintimetable"
-  "darwinupdate"
   "flag"
-  "github.com/peter-mount/golib/rest"
-  "github.com/peter-mount/golib/statistics"
-  "gopkg.in/robfig/cron.v2"
   "log"
-  "os"
-  "os/signal"
-  "syscall"
 )
 
 func main() {
   log.Println( "darwin v0.1" )
 
-  refFile := flag.String( "ref", "", "The reference database file" )
-  ttFile := flag.String( "timetable", "", "The timetable database file" )
-  ftpPassword := flag.String( "ftp", "", "The FTP Password at National Rail" )
-  context := flag.String( "context", "", "Base context path of services" )
-
-  // Port for the webserver
-  port := flag.Int( "p", 8080, "Port to use" )
+  configFile := flag.String( "c", "", "The config file to use" )
 
   flag.Parse()
 
-  crontab := cron.New()
-
-  stats := statistics.Statistics{ Log: true }
-  stats.Configure()
-
-  server := rest.NewServer( *port )
-  ctx := server.Context( *context )
-
-  var ref *darwinref.DarwinReference
-  if *refFile != "" {
-    ref = &darwinref.DarwinReference{}
-
-    if err := ref.OpenDB( *refFile ); err != nil {
-      log.Fatal( err )
-    }
-
-    ref.RegisterRest( ctx.Context( "/ref" ) )
+  if *configFile == "" {
+    log.Fatal( "No default config defined, provide with -c" )
   }
 
-  var tt *darwintimetable.DarwinTimetable
-  if *ttFile != "" {
-    tt = &darwintimetable.DarwinTimetable{}
+  config := &Config{}
 
-    if err := tt.OpenDB( *ttFile ); err != nil {
-      log.Fatal( err )
-    }
-
-    tt.RegisterRest( ctx.Context( "/timetable" ) )
-
-    tt.ScheduleCleanup( crontab )
+  if err := config.ReadFile( *configFile ); err != nil {
+    log.Fatal( err )
   }
 
-  if *ftpPassword != "" {
-    ftp := &darwinupdate.DarwinUpdate{
-      Ref: ref,
-      TT: tt,
-      Pass: *ftpPassword,
-    }
-
-    ftp.Setup( ctx.Context( "/update" ), crontab )
+  if err := config.initCron(); err != nil {
+    log.Fatal( err )
   }
 
-  rst := &darwinrest.DarwinRest{
-    Ref: ref,
-    TT: tt,
+  if err := config.initStats(); err != nil {
+    log.Fatal( err )
   }
-  // These apply to the root
-  rst.RegisterRest( ctx )
 
-  // Listen to signals & close the db before exiting
-  // SIGINT for ^C, SIGTERM for docker stopping the container
-  sigs := make( chan os.Signal, 1 )
-  signal.Notify( sigs, syscall.SIGINT, syscall.SIGTERM )
-  go func() {
-    sig := <-sigs
-    log.Println( "Signal", sig )
+  if err := config.initServer(); err != nil {
+    log.Fatal( err )
+  }
 
-    crontab.Stop()
+  if err := config.initDb(); err != nil {
+    log.Fatal( err )
+  }
 
-    if( ref != nil ) {
-      ref.Close()
-    }
+  if err := config.initFtp(); err != nil {
+    log.Fatal( err )
+  }
 
-    if( tt != nil ) {
-      tt.Close()
-    }
+  if err := config.initShutdown(); err != nil {
+    log.Fatal( err )
+  }
 
-    log.Println( "Database closed" )
-
-    os.Exit( 0 )
-  }()
-
-  crontab.Start()
-  server.Start()
+  if err := config.start(); err != nil {
+    log.Fatal( err )
+  }
 }
