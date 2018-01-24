@@ -10,74 +10,68 @@ import (
   "strings"
 )
 
-type LocationMap struct {
-  m map[string]*Location
+type TocMap struct {
+  m map[string]*Toc
 }
 
-func NewLocationMap() *LocationMap {
-  return &LocationMap{ m: make( map[string]*Location ) }
+func NewTocMap() *TocMap {
+  return &TocMap{ m: make( map[string]*Toc ) }
 }
 
 // AddTiploc adds a Tiploc to the response
-func (r *LocationMap) Add( t *Location ) {
-  if _, ok := r.m[ t.Tiploc ]; !ok {
-    r.m[ t.Tiploc ] = t
+func (r *TocMap) Add( t *Toc ) {
+  if _, ok := r.m[ t.Toc ]; !ok {
+    r.m[ t.Toc ] = t
   }
 }
 
 // AddTiplocs adds an array of Tiploc's to the response
-func (r *LocationMap) AddAll( t []*Location ) {
+func (r *TocMap) AddAll( t []*Toc ) {
   for _, e := range t {
     r.Add( e )
   }
 }
 
-func (r *LocationMap) AddTiploc( dr *DarwinReference, tx *bolt.Tx, t string ) {
+func (r *TocMap) AddToc( dr *DarwinReference, tx *bolt.Tx, t string ) {
   if _, ok := r.m[ t ]; !ok {
-    if loc, exists := dr.GetTiploc( tx, t ); exists {
+    if loc, exists := dr.GetToc( tx, t ); exists {
       r.m[ t ] = loc
     }
   }
 }
 
-func (r *LocationMap) AddTiplocs( dr *DarwinReference, tx *bolt.Tx, ts []string ) {
-  bucket := tx.Bucket( []byte("DarwinTiploc") )
+func (r *TocMap) AddTocs( dr *DarwinReference, tx *bolt.Tx, ts []string ) {
+  bucket := tx.Bucket( []byte("DarwinToc") )
   for _, t := range ts {
     if _, ok := r.m[ t ]; !ok {
-      if loc, exists := dr.GetTiplocBucket( bucket, t ); exists {
+      if loc, exists := dr.GetTocBucket( bucket, t ); exists {
         r.m[ t ] = loc
       }
     }
   }
 }
 
-func (r *LocationMap) Get( n string ) ( *Location, bool ) {
+func (r *TocMap) Get( n string ) ( *Toc, bool ) {
   t, e := r.m[ n ]
   return t, e
 }
 
 // Self sets the Self field to match this request
-func (r *LocationMap) Self( rs *rest.Rest ) {
+func (r *TocMap) Self( rs *rest.Rest ) {
   for _, v := range r.m {
-    v.Self = rs.Self( rs.Context() + "/ref/tiploc/" + v.Tiploc )
+    v.Self = rs.Self( rs.Context() + "/ref/toc/" + v.Toc )
   }
 }
 
-func (r *LocationMap) ForEach( f func( *Location ) ) {
-  for _, v := range r.m {
-    f( v )
-  }
-}
-
-func (t *LocationMap) MarshalJSON() ( []byte, error ) {
+func (t *TocMap) MarshalJSON() ( []byte, error ) {
   // Tiploc sorted by NLC
-  var vals []*Location
+  var vals []*Toc
   for _, v := range t.m {
     vals = append( vals, v )
   }
 
   sort.SliceStable( vals, func( i, j int ) bool {
-    return strings.Compare( vals[i].Tiploc, vals[j].Tiploc ) < 0
+    return strings.Compare( vals[i].Toc, vals[j].Toc ) < 0
   })
 
   b := &bytes.Buffer{}
@@ -88,7 +82,7 @@ func (t *LocationMap) MarshalJSON() ( []byte, error ) {
       b.WriteByte( ',' )
     }
     b.WriteByte( '"' )
-    b.WriteString( v.Tiploc )
+    b.WriteString( v.Toc )
     b.WriteByte( '"' )
     b.WriteByte( ':' )
 
