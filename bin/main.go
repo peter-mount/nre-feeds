@@ -43,6 +43,10 @@ func main() {
     log.Fatal( err )
   }
 
+  if err := config.initPushPort(); err != nil {
+    log.Fatal( err )
+  }
+
   if err := config.initShutdown(); err != nil {
     log.Fatal( err )
   }

@@ -1,8 +1,8 @@
 package main
 
 import (
+  "darwind3"
   "darwinref"
-  //"darwinrest"
   "darwintimetable"
   "darwinupdate"
   "github.com/peter-mount/golib/rest"
@@ -23,6 +23,7 @@ type Config struct {
     Timetable     string    `yaml:"timetable"`
     timetable    *darwintimetable.DarwinTimetable
   }                         `yaml:"database"`
+
   Ftp struct {
     Enabled       bool      `yaml:"enabled"`
     Server        string    `yaml:"server"`
@@ -31,6 +32,12 @@ type Config struct {
     Schedule      string    `yaml:"schedule"`
     update       *darwinupdate.DarwinUpdate
   }                         `yaml:"ftp"`
+
+  PushPort struct {
+    Enabled       bool      `yaml:"enabled"`
+    d3           *darwind3.DarwinD3
+  }                         `yaml:"pushPort"`
+
   Server struct {
     Context       string    `yaml:"context"`
     Port          int       `yaml:"port"`
@@ -39,12 +46,14 @@ type Config struct {
     // Base Context
     ctx          *rest.ServerContext
   }                         `yaml:"server"`
+
   Statistics struct {
     Log           bool      `yaml:"log"`
     Rest          string    `yaml:"rest"`
     Schedule      string    `yaml:"schedule"`
     statistics   *statistics.Statistics
   }                         `yaml:"statistics"`
+
   // Cron
   cron         *cron.Cron
 }
