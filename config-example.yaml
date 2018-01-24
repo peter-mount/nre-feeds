@@ -1,0 +1,55 @@
+# Example config.yaml file
+
+# The embedded webserver
+server:
+  # The port to listen on, defaults to 8080
+  port: 8081
+
+  # Optional context path to prefix all rest endpoints
+  #context: /path
+
+# The database
+database:
+  # If set the path to the directory to hold the database files.
+  # This is only used if any of the database names are not defined or if they
+  # don't start with /
+  path: /database
+
+  # The name of the file to hold the Darwin Reference database
+  # If not defined then this defaults to dwref.db
+  #reference: dwref.db
+
+  # The name of the file to hold the Darwin Timetable
+  #timetable: dwtt.db
+
+# Details about the National Rail FTP server
+# To use this you need to register at http://datafeeds.nationalrail.co.uk/
+# See also http://nrodwiki.rockshore.net/index.php/About_the_NRE_Feeds
+ftp:
+  # Is the ftp functionality enabled
+  enabled: false
+
+  # The server to connect to. Defaults to "datafeeds.nationalrail.co.uk:21"
+  #server: "datafeeds.nationalrail.co.uk:21"
+
+  # The user to connect to, defaults to "ftpuser"
+  #user: "ftpuser"
+
+  # The password to use, if this is not defined then ftp is disabled
+  password: "your ftp password here"
+
+  # The schedule to perform automatic updates.
+  # If this is not present then automatic updates is disabled.
+  # In this example we update every hour between 2 & 6 am at 30 minutes past the hour.
+  # We do this so that if the first update fails (i.e. they are not ready) we
+  # hopefully get an update in a subsequent attempt.
+  schedule: "0 30 2-6 * * *"
+
+# Statistics management
+statistics:
+  # If true then log statistics to stdout
+  log: true
+
+  # Schedule used when capturing & Logging statistics.
+  # Defaults to once per minute
+  #schedule: "0 * * * * *"
