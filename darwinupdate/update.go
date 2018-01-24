@@ -64,9 +64,14 @@ func importRequiredTimetable( v interface{ TimetableId() string } ) bool {
 func (u *DarwinUpdate) InitialImport() {
   if  (u.Ref != nil && importRequiredTimetable( u.Ref )) ||
       (u.TT != nil && importRequiredTimetable( u.TT )) {
-    if err := u.Update( false ); err != nil {
-      log.Println( "Failed import:", err )
-    }
+
+    // Run in the background
+    go func() {
+      if err := u.Update( false ); err != nil {
+        log.Println( "Failed import:", err )
+      }
+    }()
+
   }
 }
 
