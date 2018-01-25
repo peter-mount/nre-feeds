@@ -11,7 +11,7 @@ type Pport struct {
   XMLName     xml.Name  `json:"-" xml:"Pport"`
   TS          time.Time `json:"ts" xml:"ts,attr"`
   Version     string    `json:"version" xml:"version,attr"`
-  Actions     []Processor
+  Actions   []Processor
 }
 
 func (s *Pport) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error {
@@ -63,12 +63,15 @@ func (s *Pport) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) err
 }
 
 // Process this message
-func (p *Pport) Process( d3 *DarwinD3, r *Pport ) error {
+func (p *Pport) Process( d3 *DarwinD3 ) error {
   log.Printf(" Pport %s %s", p.TS.Format( time.RFC3339Nano ), p.Version )
 
   if len( p.Actions ) > 0 {
     for _, s := range p.Actions {
-      if err:= s.Process( d3, r ); err != nil {
+      // Use a write transaction for each action
+      if err := d3.ProcessUpdate( p, func( tx *Transaction ) error {
+        return s.Process( tx )
+      }); err != nil {
         return err
       }
     }

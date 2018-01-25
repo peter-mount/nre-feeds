@@ -5,7 +5,7 @@ import (
   "log"
 )
 
-func (d *DarwinD3) SetupRest( c *rest.ServerContext ) {
+func (d *DarwinD3) RegisterRest( c *rest.ServerContext ) {
   c.Handle( "/test", d.TestHandler ).Methods( "POST" )
 }
 
@@ -18,7 +18,7 @@ func (d *DarwinD3) TestHandler( r *rest.Rest ) error {
     return err
   }
 
-  if err := p.Process( d, p ); err != nil {
+  if err := p.Process( d ); err != nil {
     log.Println( err )
     return err
   }

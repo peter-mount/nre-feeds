@@ -12,7 +12,7 @@ type DeactivatedSchedule struct {
 }
 
 // Processor interface
-func (p *DeactivatedSchedule) Process( d3 *DarwinD3, r *Pport ) error {
+func (p *DeactivatedSchedule) Process( tx *Transaction ) error {
   log.Printf( "Deactivated rid=%s\n", p.RID )
 
   /*

@@ -65,11 +65,11 @@ func (s *UR) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error 
 }
 
 // Process this message
-func (p *UR) Process( d3 *DarwinD3, r *Pport ) error {
+func (p *UR) Process( tx *Transaction ) error {
 
   if len( p.Actions ) > 0 {
     for _, s := range p.Actions {
-      if err:= s.Process( d3, r ); err != nil {
+      if err:= s.Process( tx ); err != nil {
         return err
       }
     }

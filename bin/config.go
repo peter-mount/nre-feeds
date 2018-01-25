@@ -22,6 +22,9 @@ type Config struct {
     // Darwin Timetable
     Timetable     string    `yaml:"timetable"`
     timetable    *darwintimetable.DarwinTimetable
+    // Darwin PushPort
+    PushPort      string    `yaml:"pushPort"`
+    pushPort     *darwind3.DarwinD3
   }                         `yaml:"database"`
 
   Ftp struct {
@@ -35,7 +38,6 @@ type Config struct {
 
   PushPort struct {
     Enabled       bool      `yaml:"enabled"`
-    d3           *darwind3.DarwinD3
   }                         `yaml:"pushPort"`
 
   Server struct {

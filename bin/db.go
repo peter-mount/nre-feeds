@@ -1,6 +1,7 @@
 package main
 
 import (
+  "darwind3"
   "darwinref"
   "darwintimetable"
   "path/filepath"
@@ -45,6 +46,16 @@ func (c *Config) initDb() error {
   }
   c.Database.timetable.RegisterRest( c.Server.ctx.Context( "/timetable" ) )
   c.Database.timetable.ScheduleCleanup( c.cron )
+
+
+  if( c.PushPort.Enabled ) {
+    c.dbPath( &c.Database.PushPort, "dwlive.db" )
+    c.Database.pushPort = &darwind3.DarwinD3{}
+    if err := c.Database.pushPort.OpenDB( c.Database.PushPort ); err != nil {
+      return err
+    }
+    c.Database.pushPort.RegisterRest( c.Server.ctx.Context( "/live" ) )
+  }
 
   return nil
 }
