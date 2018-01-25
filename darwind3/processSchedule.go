@@ -1,12 +1,7 @@
 package darwind3
 
-import (
-  "log"
-)
-
 // Processor interface
 func (p *Schedule) Process( tx *Transaction ) error {
-  log.Println( p )
 
   old := tx.GetSchedule( p.RID )
   if old == nil {
@@ -14,18 +9,42 @@ func (p *Schedule) Process( tx *Transaction ) error {
     return tx.PutSchedule( p )
   }
 
-  log.Println( "Found existing", old )
-
-  // Use the new entry but merge in the locations from the old one so we keep
-  // any forecasts
-  
-
+  // If they are completely the same do nothing
   if p.Equals( old ) {
     // They are identical so bail out
-    log.Println( "Bailing as equal")
     return nil
   }
 
-  // Merge into old & persist
-  return tx.PutSchedule( old )
+  // Use the new entry but merge in the locations from the old one so we keep
+  // any forecasts
+  ary := p.Locations
+
+  // Run through old locations, any that match the new ones preserve the forecast
+  for _, b := range old.Locations {
+    for _, a := range ary {
+      if a.EqualInSchedule( b ) {
+        // Copy old forecast to new entry then append
+        a.Forecast = b.Forecast
+      }
+    }
+  }
+
+  // Append any old locations not in the new one - we'll never remove a Location
+  for _, b := range old.Locations {
+    f := true
+    for _, a := range ary {
+      if a.EqualInSchedule( b ) {
+        f = false
+      }
+    }
+    if f {
+      ary = append( ary, b)
+    }
+  }
+
+  // Sort then persist
+  p.Locations = ary
+  p.Sort()
+
+  return tx.PutSchedule( p )
 }
