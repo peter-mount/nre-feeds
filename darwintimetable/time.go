@@ -81,7 +81,7 @@ func NewPublicTime( s string ) *PublicTime {
   } else {
     a, _ := strconv.Atoi( s[0:2] )
     b, _ := strconv.Atoi( s[3:5] )
-    v.Set( (a *3600) + (b * 60) )
+    v.Set( (a *60) + b )
   }
   return v
 }
@@ -226,7 +226,7 @@ func NewWorkingTime( s string ) *WorkingTime {
   } else {
     a, _ := strconv.Atoi( s[0:2] )
     b, _ := strconv.Atoi( s[3:5] )
-    if len( s ) > 6 {
+    if len( s ) > 5 {
       c, _ := strconv.Atoi( s[6:8] )
       v.Set( (a *3600) + (b * 60) + c )
     } else {
