@@ -14,25 +14,73 @@ type PublicTime struct {
   t int
 }
 
+func (a *PublicTime) Equals( b *PublicTime ) bool {
+  return b != nil && a.t == b.t
+}
+
+// Compare a PublicTime against another, accounting for crossing midnight.
+// The rules for handling crossing midnight are:
+// < -6 hours = crossed midnight
+// < 0 back in time
+// < 18 hours increasing time
+// > 18 hours back in time & crossing midnight
+func (a *PublicTime) Compare( b *PublicTime ) bool {
+  if b == nil {
+    return false
+  }
+
+  d := a.t - b.t
+
+  if d < -360 || d >1080 {
+    return d > 0
+  }
+
+  return d < 0
+}
+
+// PublicTimeEquals compares equality between two PublicTime.
+// Unlike PublicTime.Equals() this will return true if both are null, otherwise
+// both must not be null and equal to be true
+
+func PublicTimeEquals( a *PublicTime, b *PublicTime ) bool {
+  return ( a == nil && b == nil ) ||
+         ( a != nil && a.Equals( b ) )
+}
+
 // BinaryCodec writer
 func (t *PublicTime) Write( c *codec.BinaryCodec ) {
-  c.WriteInt32( int32( t.t ) )
+  if t.IsZero() {
+    // If zero then write a single byte value 255
+    c.WriteByte( byte(255) )
+  } else {
+    // 16 bit number, Big endian so we should not hit 255,xxx in the stream
+    c.WriteByte( byte( t.t >> 8 ) ).
+      WriteByte( byte( t.t ) )
+  }
 }
 
 // BinaryCodec reader
 func (t *PublicTime) Read( c *codec.BinaryCodec ) {
-  var i int32
-  c.ReadInt32( &i )
-  t.t = int(i)
+  var b byte
+
+  c.ReadByte( &b )
+  if b == byte(255) {
+    t.t = -1
+  } else {
+    var i uint64 = uint64(b)<<8
+    c.ReadByte( &b )
+    t.t = int( i | uint64(b) )
+  }
 }
 
+// NewPublicTime returns a new PublicTime instance from a string of format "HH:MM"
 func NewPublicTime( s string ) *PublicTime {
   v := &PublicTime{}
   if s == "" {
     v.t = -1
   } else {
     a, _ := strconv.Atoi( s[0:2] )
-    b, _ := strconv.Atoi( s[2:4] )
+    b, _ := strconv.Atoi( s[3:5] )
     v.Set( (a *3600) + (b * 60) )
   }
   return v
@@ -55,7 +103,8 @@ func PublicTimeRead( c *codec.BinaryCodec ) *PublicTime {
 // If the pointer is null then a time is written where IsZero()==true
 func PublicTimeWrite( c *codec.BinaryCodec, t *PublicTime ) {
   if t == nil {
-    c.WriteInt32( -1 )
+    // Null so mark as zero
+    c.WriteByte( byte(255) )
   } else {
     c.Write( t )
   }
@@ -108,18 +157,68 @@ type WorkingTime struct {
   t int
 }
 
+func (a *WorkingTime) Equals( b *WorkingTime ) bool {
+  return b != nil && a.t == b.t
+}
+
+// Compare a WorkingTime against another, accounting for crossing midnight.
+// The rules for handling crossing midnight are:
+// < -6 hours = crossed midnight
+// < 0 back in time
+// < 18 hours increasing time
+// > 18 hours back in time & crossing midnight
+func (a *WorkingTime) Compare( b *WorkingTime ) bool {
+  if b == nil {
+    return false
+  }
+
+  d := a.t - b.t
+
+  if d < -21600 || d >64800 {
+    return d > 0
+  }
+
+  return d < 0
+}
+
+// WorkingTimeEquals compares equality between two WorkingTimes.
+// Unlike WorkingTime.Equals() this will return true if both are null, otherwise
+// both must not be null and equal to be true
+func WorkingTimeEquals( a *WorkingTime, b *WorkingTime ) bool {
+  return ( a == nil && b == nil ) ||
+         ( a != nil && a.Equals( b ) )
+}
+
 // BinaryCodec writer
 func (t *WorkingTime) Write( c *codec.BinaryCodec ) {
-  c.WriteInt32( int32( t.t ) )
+  if t.IsZero() {
+    // If zero then write a single byte value 255
+    c.WriteByte( byte(255) )
+  } else {
+    // 24 bit number, Big endian so we should not hit 255,xxx,xxx in the stream
+    c.WriteByte( byte( t.t >> 16 ) ).
+      WriteByte( byte( t.t >> 8 ) ).
+      WriteByte( byte( t.t ) )
+  }
 }
 
 // BinaryCodec reader
 func (t *WorkingTime) Read( c *codec.BinaryCodec ) {
-  var i int32
-  c.ReadInt32( &i )
-  t.t = int(i)
+  var b byte
+
+  c.ReadByte( &b )
+  if b == byte(255) {
+    t.t = -1
+  } else {
+    var i uint64 = uint64(b)<<16
+    c.ReadByte( &b )
+    i |= uint64(b)<<8
+    c.ReadByte( &b )
+    t.t = int( i | uint64(b) )
+  }
 }
 
+// NewWorkingTime returns a new WorkingTime instance from a string of format "HH:MM:SS"
 func NewWorkingTime( s string ) *WorkingTime {
   v := &WorkingTime{}
   if s == "" {
@@ -154,7 +253,8 @@ func WorkingTimeRead( c *codec.BinaryCodec ) *WorkingTime {
 // If the pointer is null then a time is written where IsZero()==true
 func WorkingTimeWrite( c *codec.BinaryCodec, t *WorkingTime ) {
   if t == nil {
-    c.WriteInt32( -1 )
+    // Null so mark as zero
+    c.WriteByte( byte(255) )
   } else {
     c.Write( t )
   }

@@ -11,6 +11,10 @@ type SSD struct {
   t time.Time
 }
 
+func (a *SSD) Equals( b *SSD ) bool {
+  return b != nil && a.t == b.t
+}
+
 func (t *SSD) Parse( s string ) {
   t.t, _ = time.Parse( "2006-01-02", s )
 }
