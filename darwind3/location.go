@@ -1,7 +1,6 @@
 package darwind3
 
 import (
-  "darwintimetable"
   "encoding/xml"
   "fmt"
   "github.com/peter-mount/golib/codec"
@@ -184,21 +183,6 @@ func (s *Location) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) 
       case "Cancelled":
         s.Cancelled = attr.Value == "true"
 
-      case "pta":
-        s.Times.Pta = darwintimetable.NewPublicTime( attr.Value )
-
-      case "ptd":
-        s.Times.Ptd = darwintimetable.NewPublicTime( attr.Value )
-
-      case "wta":
-        s.Times.Wta = darwintimetable.NewWorkingTime( attr.Value )
-
-      case "wtd":
-        s.Times.Wtd = darwintimetable.NewWorkingTime( attr.Value )
-
-      case "wtp":
-        s.Times.Wtp = darwintimetable.NewWorkingTime( attr.Value )
-
       case "fd":
         s.FalseDestination = attr.Value
 
@@ -210,6 +194,9 @@ func (s *Location) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) 
         }
     }
   }
+
+  // Parse CircularTimes attributes
+  s.Times.UnmarshalXMLAttributes( start )
 
   for {
     token, err := decoder.Token()
@@ -264,8 +251,6 @@ func (s *Location) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) 
         }
 
       case xml.EndElement:
-        // Update the time field
-        s.Times.UpdateTime()
         return nil
     }
   }
