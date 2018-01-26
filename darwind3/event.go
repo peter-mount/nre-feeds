@@ -2,6 +2,7 @@ package darwind3
 
 import (
   "log"
+  "sync"
 )
 
 // The possible types of DarwinEvent
@@ -30,8 +31,9 @@ type DarwinEvent struct {
 
 // The core of the eventing system
 type DarwinEventManager struct {
-  listeners             map[int][]*darwinEventListener
-  listenerSeq           int
+  mutex        *sync.Mutex
+  listeners     map[int][]*darwinEventListener
+  listenerSeq   int
 }
 
 type darwinEventListener struct {
@@ -43,6 +45,7 @@ type darwinEventListener struct {
 // NewDarwinEventManager creates a new DarwinEventManager
 func NewDarwinEventManager() *DarwinEventManager {
   d := &DarwinEventManager{}
+  d.mutex = &sync.Mutex{}
   d.listeners = make( map[int][]*darwinEventListener )
   return d
 }
@@ -50,7 +53,10 @@ func NewDarwinEventManager() *DarwinEventManager {
 // ListenToEvents will run a function which will reveive DarwinEvent's for the
 // specified type until it exists.
 func (d *DarwinEventManager) ListenToEvents( eventType int, f func( chan *DarwinEvent ) ) {
-  // TODO make thread safe
+
+  d.mutex.Lock()
+  defer d.mutex.Unlock()
+
   listeners := d.listeners[ eventType ]
 
   l := &darwinEventListener{
@@ -80,7 +86,10 @@ func (d *DarwinEventManager) ListenToEvents( eventType int, f func( chan *Darwin
 
 // DeregisterEventListener removes a channel from receiving events
 func (d *DarwinEventManager) deregisterEventListener( l *darwinEventListener ) {
-  // TODO make thread safe
+
+  d.mutex.Lock()
+  defer d.mutex.Unlock()
+
   if listeners, ok := d.listeners[ l.eventType ]; ok {
     var arr []*darwinEventListener
     for _, oc := range listeners {
@@ -94,8 +103,12 @@ func (d *DarwinEventManager) deregisterEventListener( l *darwinEventListener ) {
 
 // PostEvent posts a DarwinEvent to all listeners listening for that specific type
 func (d *DarwinEventManager) PostEvent( e *DarwinEvent ) {
-  // TODO make thread safe
-  if listeners, ok := d.listeners[ e.Type ]; ok {
+
+  d.mutex.Lock()
+  listeners, ok := d.listeners[ e.Type ]
+  d.mutex.Unlock()
+
+  if ok {
     for _, l := range listeners {
       l.channel <- e
     }
