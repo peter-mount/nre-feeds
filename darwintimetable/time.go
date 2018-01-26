@@ -132,15 +132,15 @@ func (t *PublicTime) String() string {
     return "     "
   }
 
-  return fmt.Sprintf( "%02d:%02d", t.t/3600, (t.t/60)%60 )
+  return fmt.Sprintf( "%02d:%02d", t.t/60, t.t%60 )
 }
 
-// Get returns the PublicTime in seconds of the day
+// Get returns the PublicTime in minutes of the day
 func (t *PublicTime) Get() int {
   return t.t
 }
 
-// Set sets the PublicTime in seconds of the day
+// Set sets the PublicTime in minutes of the day
 func (t *PublicTime) Set( v int ) {
   t.t = v
 }

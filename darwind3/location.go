@@ -8,33 +8,32 @@ import (
   "strconv"
 )
 
+// A location in a schedule.
+// This is formed of the entries from a schedule and is updated by any incoming
+// Forecasts.
+//
+// As schedules can be circular (i.e. start and end at the same station) then
+// the unique key is Tiploc and CircularTimes.Time.
+//
+// Location's within a Schedule are sorted by CircularTimes.Time accounting for
+// crossing over midnight.
 type Location struct {
   // Type of location, OR OPOR IP OPIP PP DT or OPDT
   Type              string
   // Tiploc of this location
   Tiploc            string
+  // The times for this entry
+  Times             CircularTimes
   // TIPLOC of False Destination to be used at this location
   FalseDestination  string
   // Is this service cancelled at this location
   Cancelled         bool
-  // The time for this location
-  Time                darwintimetable.WorkingTime
   // The scheduled data for this location
   Planned struct {
     // Current Activity Codes
     ActivityType      string
     // Planned Activity Codes (if different to current activities)
     PlannedActivity   string
-    // Public Scheduled Time of Arrival
-    Pta              *darwintimetable.PublicTime
-    // Public Scheduled Time of Departure
-    Ptd              *darwintimetable.PublicTime
-    // Working Scheduled Time of Arrival
-    Wta              *darwintimetable.WorkingTime
-    // Working Scheduled Time of Departure
-    Wtd              *darwintimetable.WorkingTime
-    // Working Scheduled Time of Passing
-    Wtp              *darwintimetable.WorkingTime
     // A delay value that is implied by a change to the service's route.
     // This value has been added to the forecast lateness of the service at
     // the previous schedule location when calculating the expected lateness
@@ -67,23 +66,9 @@ type Location struct {
   }
 }
 
-// UpdateTime updates the Time field used for sequencing the location.
-// This is the the first one of these set in the following order:
-// Wtd, Wta, Wtp
-// Note this value is not persisted as it's a generated value
-func (l *Location) UpdateTime() {
-  if l.Planned.Wtd != nil {
-    l.Time = *l.Planned.Wtd
-  } else if l.Planned.Wta != nil {
-    l.Time = *l.Planned.Wta
-  } else {
-    l.Time = *l.Planned.Wtp
-  }
-}
-
 // Compare compares two Locations by their times
 func (a *Location) Compare( b *Location ) bool {
-  return b != nil && a.Time.Compare( &b.Time )
+  return b != nil && a.Times.Compare( &b.Times )
 }
 
 // Equals compares two Locations based on their Tiploc & time.
@@ -91,7 +76,7 @@ func (a *Location) Compare( b *Location ) bool {
 func (a *Location) EqualInSchedule( b *Location ) bool {
   return b != nil &&
          a.Tiploc == b.Tiploc &&
-         a.Time.Equals( &b.Time )
+         a.Times.Time.Equals( &b.Times.Time )
 }
 
 // Equals compares two Locations in their entirety
@@ -99,15 +84,11 @@ func (a *Location) Equals( b *Location ) bool {
   return b != nil &&
          a.Type == b.Type &&
          a.Tiploc == b.Tiploc &&
+         a.Times.Equals( &b.Times ) &&
          a.FalseDestination == b.FalseDestination &&
          a.Cancelled == b.Cancelled &&
          a.Planned.ActivityType == b.Planned.ActivityType &&
          a.Planned.PlannedActivity == b.Planned.PlannedActivity &&
-         darwintimetable.PublicTimeEquals( a.Planned.Pta, b.Planned.Pta ) &&
-         darwintimetable.PublicTimeEquals( a.Planned.Ptd, b.Planned.Ptd ) &&
-         darwintimetable.WorkingTimeEquals( a.Planned.Wta, b.Planned.Wta ) &&
-         darwintimetable.WorkingTimeEquals( a.Planned.Wtd, b.Planned.Wtd ) &&
-         darwintimetable.WorkingTimeEquals( a.Planned.Wtp, b.Planned.Wtp ) &&
          a.Planned.RDelay == b.Planned.RDelay &&
          a.Forecast.Arrival.Equals( &b.Forecast.Arrival ) &&
          a.Forecast.Departure.Equals( &b.Forecast.Departure ) &&
@@ -123,15 +104,13 @@ func (t *Location) Write( c *codec.BinaryCodec ) {
     WriteString( t.FalseDestination ).
     WriteBool( t.Cancelled )
 
+  // CircularTimes
+  c.Write( &t.Times )
+
   // Planned
   c.WriteString( t.Planned.ActivityType ).
     WriteString( t.Planned.PlannedActivity ).
     WriteInt( t.Planned.RDelay )
-  darwintimetable.PublicTimeWrite( c, t.Planned.Pta )
-  darwintimetable.PublicTimeWrite( c, t.Planned.Ptd )
-  darwintimetable.WorkingTimeWrite( c, t.Planned.Wta )
-  darwintimetable.WorkingTimeWrite( c, t.Planned.Wtd )
-  darwintimetable.WorkingTimeWrite( c, t.Planned.Wtp )
 
   // Forecast
   c.Write( &t.Forecast.Arrival ).
@@ -149,15 +128,13 @@ func (t *Location) Read( c *codec.BinaryCodec ) {
     ReadString( &t.FalseDestination ).
     ReadBool( &t.Cancelled )
 
+  // CircularTimes
+  c.Read( &t.Times )
+
   // Planned
   c.ReadString( &t.Planned.ActivityType ).
     ReadString( &t.Planned.PlannedActivity ).
     ReadInt( &t.Planned.RDelay )
-  t.Planned.Pta = darwintimetable.PublicTimeRead( c )
-  t.Planned.Ptd = darwintimetable.PublicTimeRead( c )
-  t.Planned.Wta = darwintimetable.WorkingTimeRead( c )
-  t.Planned.Wtd = darwintimetable.WorkingTimeRead( c )
-  t.Planned.Wtp = darwintimetable.WorkingTimeRead( c )
 
   // Forecast
   c.Read( &t.Forecast.Arrival ).
@@ -171,9 +148,6 @@ func (t *Location) Read( c *codec.BinaryCodec ) {
   t.Forecast.Length = int(l)
 
   c.ReadBool( &t.Forecast.DetachFront )
-
-  // Update the time field
-  t.UpdateTime()
 }
 
 func (s *Location) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error {
@@ -193,19 +167,19 @@ func (s *Location) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) 
         s.Cancelled = attr.Value == "true"
 
       case "pta":
-        s.Planned.Pta = darwintimetable.NewPublicTime( attr.Value )
+        s.Times.Pta = darwintimetable.NewPublicTime( attr.Value )
 
       case "ptd":
-        s.Planned.Ptd = darwintimetable.NewPublicTime( attr.Value )
+        s.Times.Ptd = darwintimetable.NewPublicTime( attr.Value )
 
       case "wta":
-        s.Planned.Wta = darwintimetable.NewWorkingTime( attr.Value )
+        s.Times.Wta = darwintimetable.NewWorkingTime( attr.Value )
 
       case "wtd":
-        s.Planned.Wtd = darwintimetable.NewWorkingTime( attr.Value )
+        s.Times.Wtd = darwintimetable.NewWorkingTime( attr.Value )
 
       case "wtp":
-        s.Planned.Wtp = darwintimetable.NewWorkingTime( attr.Value )
+        s.Times.Wtp = darwintimetable.NewWorkingTime( attr.Value )
 
       case "fd":
         s.FalseDestination = attr.Value
@@ -219,29 +193,76 @@ func (s *Location) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) 
     }
   }
 
-  // TODO parse body. Under schedule there is none but under TS there are
+  for {
+    token, err := decoder.Token()
+    if err != nil {
+      return err
+    }
 
-  // Update the time field
-  s.UpdateTime()
+    switch tok := token.(type) {
+      case xml.StartElement:
+        var elem interface{}
+        switch tok.Name.Local {
+          case "arr":
+            elem = &s.Forecast.Arrival
 
-  return decoder.Skip()
+          case "dep":
+            elem = &s.Forecast.Departure
+
+          case "pass":
+            elem = &s.Forecast.Pass
+
+          case "plat":
+            elem = &s.Forecast.Platform
+
+          case "suppr":
+            // TODO implement
+            if err := decoder.Skip(); err != nil {
+              return err
+            }
+
+          case "length":
+            // TODO implement
+            if err := decoder.Skip(); err != nil {
+              return err
+            }
+
+          case "detachFront":
+            // TODO implement
+            if err := decoder.Skip(); err != nil {
+              return err
+            }
+
+          default:
+            if err := decoder.Skip(); err != nil {
+              return err
+            }
+        }
+
+        if elem != nil {
+          if err := decoder.DecodeElement( elem, &tok ); err != nil {
+            return err
+          }
+        }
+
+      case xml.EndElement:
+        // Update the time field
+        s.Times.UpdateTime()
+        return nil
+    }
+  }
 }
 
 func (l *Location) String() string {
   return fmt.Sprintf(
-    "%2s %7s %7s %5v %s %s %s %v %v %v %v %v %d %v %v %v %v %v %d %v",
+    "%2s %7s %7s %5v %s %s %s %d %v %v %v %v %v %d %v",
     l.Type,
     l.Tiploc,
     l.FalseDestination,
     l.Cancelled,
-    l.Time.String(),
+    l.Times.String(),
     l.Planned.ActivityType,
     l.Planned.PlannedActivity,
-    l.Planned.Pta,
-    l.Planned.Ptd,
-    l.Planned.Wta,
-    l.Planned.Wtd,
-    l.Planned.Wtp,
     l.Planned.RDelay,
     l.Forecast.Arrival,
     l.Forecast.Departure,

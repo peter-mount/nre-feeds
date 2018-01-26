@@ -135,12 +135,16 @@ func (t *Schedule) Read( c *codec.BinaryCodec ) {
   }
 }
 
-func (s *Schedule) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error {
-  // Defaults
+// Defaults sets the default values for a schedule
+func (s *Schedule) Defaults() {
   s.Status = "P"
   s.TrainCat = "OO"
   s.PassengerService = true
   s.Active = true
+}
+
+func (s *Schedule) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error {
+  s.Defaults()
 
   for _, attr := range start.Attr {
     switch attr.Name.Local {

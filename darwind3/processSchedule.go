@@ -1,6 +1,7 @@
 package darwind3
 
-// Processor interface
+// Process processes an inbound schedule importing or merging it with the
+// current Schedule in the database
 func (p *Schedule) Process( tx *Transaction ) error {
 
   old := tx.GetSchedule( p.RID )
@@ -23,7 +24,6 @@ func (p *Schedule) Process( tx *Transaction ) error {
   for _, b := range old.Locations {
     for _, a := range ary {
       if a.EqualInSchedule( b ) {
-        // Copy old forecast to new entry then append
         a.Forecast = b.Forecast
       }
     }
