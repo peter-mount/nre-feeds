@@ -38,6 +38,7 @@ type Config struct {
 
   PushPort struct {
     Enabled       bool      `yaml:"enabled"`
+    ResolveSched  bool      `yaml:"resolveSchedules"`
   }                         `yaml:"pushPort"`
 
   Server struct {

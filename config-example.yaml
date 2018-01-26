@@ -45,6 +45,16 @@ ftp:
   # hopefully get an update in a subsequent attempt.
   schedule: "0 30 2-6 * * *"
 
+# Details on handling the realtime pushPort D3 feed
+pushPort:
+  # Is the d3 feed enabled
+  enabled: true
+
+  # If true then if we get a Train Status update for an unknown schedule then
+  # attempt to retrieve it from the timetable. If that fails or this is disabled
+  # then a new blank schedule is created.
+  resolveSchedules: true
+
 # Statistics management
 statistics:
   # If true then log statistics to stdout

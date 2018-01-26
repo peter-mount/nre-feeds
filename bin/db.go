@@ -54,6 +54,12 @@ func (c *Config) initDb() error {
     if err := c.Database.pushPort.OpenDB( c.Database.PushPort ); err != nil {
       return err
     }
+
+    if c.PushPort.ResolveSched {
+      // Allow D3 to resolve schedules from the timetable
+      c.Database.pushPort.Timetable = c.Database.timetable
+    }
+
     c.Database.pushPort.RegisterRest( c.Server.ctx.Context( "/live" ) )
   }
 

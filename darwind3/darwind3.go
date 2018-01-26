@@ -3,6 +3,7 @@ package darwind3
 
 import (
   bolt "github.com/coreos/bbolt"
+  "darwintimetable"
   "errors"
   "time"
 )
@@ -14,6 +15,8 @@ type DarwinD3 struct {
   allowClose            bool
   // Transaction used during import only
   tx                   *bolt.Tx
+  // Optional link to DarwinTimetable for resolving schedules.
+  Timetable            *darwintimetable.DarwinTimetable
 }
 
 // OpenDB opens a DarwinReference database.
@@ -27,44 +30,24 @@ func (r *DarwinD3) OpenDB( dbFile string ) error {
     } ); err != nil {
       return err
   } else {
-    r.allowClose = true
-    return r.useDB( db )
+    r.db = db
+
+    // Now ensure the DB is initialised with the required buckets
+    if err := r.initDB(); err != nil {
+      return err
+    }
+
+    return nil
   }
-}
-
-// UseDB Allows an already open database to be used with DarwinReference.
-func (r *DarwinD3) UseDB( db *bolt.DB ) error {
-  if r.db != nil {
-    return errors.New( "DarwinReference Already attached to a Database" )
-  }
-
-  r.allowClose = false
-  return r.useDB( db )
-}
-
-// common to OpenDB() && UseDB()
-func (r *DarwinD3) useDB( db *bolt.DB ) error {
-  r.db = db
-
-  // Now ensure the DB is initialised with the required buckets
-  if err := r.initDB(); err != nil {
-    return err
-  }
-
-  return nil
 }
 
 // Close the database.
 // If OpenDB() was used to open the db then that db is closed.
 // If UseDB() was used this simply detaches the DarwinReference from that DB. The DB is not closed()
 func (r *DarwinD3) Close() {
-
-  // Only close if we own the DB, e.g. via OpenDB()
-  if r.allowClose && r.db != nil {
+  if r.db != nil {
     r.db.Close()
   }
-
-  // Detach
   r.db = nil
 }
 

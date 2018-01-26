@@ -7,7 +7,12 @@ func (p *TS) Process( tx *Transaction ) error {
   // Retrieve the schedule to be updated
   sched := tx.GetSchedule( p.RID )
 
-  // We've got a TS for a train with no known schedule so create one
+  // No schedule then try to fetch it from the timetable
+  if sched == nil {
+    sched = tx.ResolveSchedule( p.RID )
+  }
+
+  // Still no schedule then We've got a TS for a train with no known schedule so create one
   if sched == nil {
     sched = &Schedule{
       RID: p.RID,
