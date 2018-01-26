@@ -19,51 +19,51 @@ import (
 // crossing over midnight.
 type Location struct {
   // Type of location, OR OPOR IP OPIP PP DT or OPDT
-  Type              string
+  Type              string        `json:"type"`
   // Tiploc of this location
-  Tiploc            string
+  Tiploc            string        `json:"tiploc"`
   // The times for this entry
-  Times             CircularTimes
+  Times             CircularTimes `json:"timetable"`
   // TIPLOC of False Destination to be used at this location
-  FalseDestination  string
+  FalseDestination  string        `json:"FalseDestination,omitempty"`
   // Is this service cancelled at this location
-  Cancelled         bool
+  Cancelled         bool          `json:"cancelled,omitempty"`
   // The scheduled data for this location
   Planned struct {
     // Current Activity Codes
-    ActivityType      string
+    ActivityType      string      `json:"activity,omitempty"`
     // Planned Activity Codes (if different to current activities)
-    PlannedActivity   string
+    PlannedActivity   string      `json:"plannedActivity,omitempty"`
     // A delay value that is implied by a change to the service's route.
     // This value has been added to the forecast lateness of the service at
     // the previous schedule location when calculating the expected lateness
     // of arrival at this location.
-    RDelay            int
-  }
+    RDelay            int         `json:"rDelay,omitempty"`
+  }                               `json:"planned"`
   // The Forecast data at this location
   Forecast struct {
     // Forecast data for the arrival at this location
-    Arrival           TSTime
+    Arrival           TSTime      `json:"arr"`
     // Forecast data for the departure at this location
-    Departure         TSTime
+    Departure         TSTime      `json:"dep"`
     // Forecast data for the pass of this location
-    Pass              TSTime
+    Pass              TSTime      `json:"pass"`
     // Current platform number
-    Platform          Platform
+    Platform          Platform    `json:"plat"`
     // The service is suppressed at this location.
-    Suppressed        bool
+    Suppressed        bool        `json:"suppressed,omitempty"`
     // The length of the service at this location on departure
     // (or arrival at destination).
     // The default value of zero indicates that the length is unknown.
-    Length            int
+    Length            int         `json:"length,omitempty"`
     // Indicates from which end of the train stock will be detached.
     // The value is set to “true” if stock will be detached from the front of
     // the train at this location. It will be set at each location where stock
     // will be detached from the front.
     // Darwin will not validate that a stock detachment activity code applies
     // at this location.
-    DetachFront       bool
-  }
+    DetachFront       bool        `json:"detachFront,omitempty"`
+  }                               `json:"forecast"`
 }
 
 // Compare compares two Locations by their times

@@ -22,6 +22,12 @@ func (p *TS) Process( tx *Transaction ) error {
     sched.Defaults()
   }
 
+  // If the TS is older than what's in the schedule then then do nothing as it's
+  // presumably old data thats sent out of sync
+  if tx.pport.TS.Before( sched.Date ) {
+    return nil
+  }
+
   // Run through schedule locations, any that match the new ones update the forecast
   for _, a := range sched.Locations {
     for _, b := range p.Locations {
@@ -45,7 +51,9 @@ func (p *TS) Process( tx *Transaction ) error {
     }
   }
 
-  // Sort the locations then persist
+  // Finally sort the locations, set the date to that at Darwin then persist
   sched.Sort()
+  sched.Date = tx.pport.TS
+
   return tx.PutSchedule( sched )
 }

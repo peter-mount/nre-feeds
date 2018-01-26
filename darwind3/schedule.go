@@ -5,32 +5,43 @@ import (
   "encoding/xml"
   "fmt"
   "github.com/peter-mount/golib/codec"
+  "github.com/peter-mount/golib/rest"
   "sort"
+  "time"
 )
 
 // Train Schedule
 type Schedule struct {
-  RID               string
-  UID               string
-  TrainId           string
-  SSD               darwintimetable.SSD
-  Toc               string
+  RID               string                `json:"rid"`
+  UID               string                `json:"uid"`
+  TrainId           string                `json:"trainId"`
+  SSD               darwintimetable.SSD   `json:"ssd"`
+  Toc               string                `json:"toc"`
   // Default P
-  Status            string
+  Status            string                `json:"status"`
   // Default OO
-  TrainCat          string
+  TrainCat          string                `json:"trainCat"`
   // Default true
-  PassengerService  bool
+  PassengerService  bool                  `json:"passengerService,omitempty"`
   // Default true
-  Active            bool
+  Active            bool                  `json:"active,omitempty"`
   // Default false
-  Deleted           bool
+  Deleted           bool                  `json:"deleted,omitempty"`
   // Default false
-  Charter           bool
+  Charter           bool                  `json:"charter,omitempty"`
   // Cancel reason
-  CancelReason      DisruptionReason
+  CancelReason      DisruptionReason      `json:"cancelReason"`
   // The locations in this schedule
-  Locations       []*Location
+  Locations       []*Location             `json:"locations"`
+  // Usually this is the date we insert into the db but here we use the TS time
+  // as returned from darwin
+  Date              time.Time             `json:"date,omitempty" xml:"date,attr,omitempty"`
+  // URL to this entity
+  Self              string                `json:"self,omitempty" xml:"self,attr,omitempty"`
+}
+
+func (s *Schedule) SetSelf( r *rest.Rest ) {
+  s.Self = r.Self( r.Context() + "/schedule/" + s.RID )
 }
 
 // Sort sorts the locations in a schedule by time order
@@ -54,7 +65,8 @@ func (a *Schedule) Equals( b *Schedule ) bool {
        a.Deleted == b.Deleted &&
        a.Charter == b.Charter &&
        a.CancelReason.Equals( &b.CancelReason ) &&
-       len( a.Locations ) == len( b.Locations )
+       len( a.Locations ) == len( b.Locations ) &&
+       a.Date == b.Date
 
   if r {
     // This works as we've already confirmed the length
@@ -104,7 +116,8 @@ func (t *Schedule) Write( c *codec.BinaryCodec ) {
     WriteBool( t.Active ).
     WriteBool( t.Deleted ).
     WriteBool( t.Charter ).
-    Write( &t.CancelReason )
+    Write( &t.CancelReason ).
+    WriteTime( t.Date )
 
   c.WriteInt16( int16(len( t.Locations )) )
   for _, l := range t.Locations {
@@ -124,7 +137,8 @@ func (t *Schedule) Read( c *codec.BinaryCodec ) {
     ReadBool( &t.Active ).
     ReadBool( &t.Deleted ).
     ReadBool( &t.Charter ).
-    Read( &t.CancelReason )
+    Read( &t.CancelReason ).
+    ReadTime( &t.Date )
 
   var n int16
   c.ReadInt16( &n )

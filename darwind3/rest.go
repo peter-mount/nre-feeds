@@ -6,6 +6,8 @@ import (
 )
 
 func (d *DarwinD3) RegisterRest( c *rest.ServerContext ) {
+  c.Handle( "/schedule/{rid}", d.ScheduleHandler ).Methods( "GET" )
+
   c.Handle( "/test", d.TestHandler ).Methods( "POST" )
 }
 

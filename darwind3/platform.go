@@ -7,16 +7,16 @@ import (
 // Platform number with associated flags
 type Platform struct {
   // Defines a platform number
-  Platform          string    `xml:",chardata"`
+  Platform          string    `json:"plat,omitempty" xml:",chardata"`
   // True if the platform number is confirmed.
-  Confirmed         bool      `xml:"conf,attr,omitempty"`
+  Confirmed         bool      `json:"confirmed,omitempty" xml:"conf,attr,omitempty"`
   // Platform number is suppressed and should not be displayed.
-  Suppressed        bool      `xml:"platsup,attr,omitempty"`
+  Suppressed        bool      `json:"suppressed,omitempty" xml:"platsup,attr,omitempty"`
   // Whether a CIS, or Darwin Workstation, has set platform suppression at this location.
-  CISSuppressed     bool      `xml:"cisPlatsup,attr,omitempty"`
+  CISSuppressed     bool      `json:"cisSuppressed,omitempty" xml:"cisPlatsup,attr,omitempty"`
   // The source of the platfom number. P = Planned, A = Automatic, M = Manual.
   // Default is P
-  Source            string    `xml:"platsrc,attr,omitempty"`
+  Source            string    `json:"source,omitempty" xml:"platsrc,attr,omitempty"`
 }
 
 func (a *Platform ) Equals( b *Platform ) bool {

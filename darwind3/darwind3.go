@@ -82,3 +82,12 @@ func (r *DarwinD3) View( f func(*bolt.Tx) error ) error {
 func (r *DarwinD3) Update( f func(*bolt.Tx) error ) error {
   return r.db.Update( f )
 }
+
+// GetSchedule retrieves a schedule or nil if not found
+func (r *DarwinD3) GetSchedule( tx *bolt.Tx, rid string ) *Schedule {
+  sched := ScheduleFromBytes( tx.Bucket( []byte( "DarwinRID" ) ).Get( []byte( rid ) ) )
+  if sched == nil || sched.RID != rid {
+    return nil
+  }
+  return sched
+}

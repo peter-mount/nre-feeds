@@ -17,17 +17,17 @@ type CircularTimes struct {
   // The time for this location.
   // This is calculated as the first value defined below in the following
   // sequence: Wtd, Wta, Wtp, Ptd & Pta.
-  Time              darwintimetable.WorkingTime
+  Time              darwintimetable.WorkingTime `json:"time"`
   // Public Scheduled Time of Arrival
-  Pta              *darwintimetable.PublicTime
+  Pta              *darwintimetable.PublicTime  `json:"pta,omitempty"`
   // Public Scheduled Time of Departure
-  Ptd              *darwintimetable.PublicTime
+  Ptd              *darwintimetable.PublicTime  `json:"ptd,omitempty"`
   // Working Scheduled Time of Arrival
-  Wta              *darwintimetable.WorkingTime
+  Wta              *darwintimetable.WorkingTime `json:"wta,omitempty"`
   // Working Scheduled Time of Departure
-  Wtd              *darwintimetable.WorkingTime
+  Wtd              *darwintimetable.WorkingTime `json:"wtd,omitempty"`
   // Working Scheduled Time of Passing
-  Wtp              *darwintimetable.WorkingTime
+  Wtp              *darwintimetable.WorkingTime `json:"wtp,omitempty"`
 }
 
 // Compare compares two Locations by their times

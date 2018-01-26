@@ -3,7 +3,6 @@ package darwind3
 import (
   "encoding/xml"
   "time"
-  "log"
 )
 
 // The Pport element
@@ -25,7 +24,7 @@ func (s *Pport) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) err
           s.TS = t
         }
 
-      case "requestSource":
+      case "version":
         s.Version = attr.Value
     }
   }
@@ -64,7 +63,6 @@ func (s *Pport) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) err
 
 // Process this message
 func (p *Pport) Process( d3 *DarwinD3 ) error {
-  log.Printf(" Pport %s %s", p.TS.Format( time.RFC3339Nano ), p.Version )
 
   if len( p.Actions ) > 0 {
     for _, s := range p.Actions {
