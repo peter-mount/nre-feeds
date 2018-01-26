@@ -28,7 +28,8 @@ type Location struct {
   FalseDestination  string        `json:"FalseDestination,omitempty"`
   // Is this service cancelled at this location
   Cancelled         bool          `json:"cancelled,omitempty"`
-  // The scheduled data for this location
+  // The Planned data for this location
+  // i.e. information planned in advance
   Planned struct {
     // Current Activity Codes
     ActivityType      string      `json:"activity,omitempty"`
@@ -41,6 +42,7 @@ type Location struct {
     RDelay            int         `json:"rDelay,omitempty"`
   }                               `json:"planned"`
   // The Forecast data at this location
+  // i.e. information that changes in real time
   Forecast struct {
     // Forecast data for the arrival at this location
     Arrival           TSTime      `json:"arr"`
@@ -63,6 +65,8 @@ type Location struct {
     // Darwin will not validate that a stock detachment activity code applies
     // at this location.
     DetachFront       bool        `json:"detachFront,omitempty"`
+    // The train order at this location (1, 2 or 3). 0 Means no TrainOrder has been set
+    TrainOrder       *TrainOrder  `json:"trainOrder,omitempty"`
   }                               `json:"forecast"`
 }
 
@@ -95,7 +99,8 @@ func (a *Location) Equals( b *Location ) bool {
          a.Forecast.Pass.Equals( &b.Forecast.Pass ) &&
          a.Forecast.Platform.Equals( &b.Forecast.Platform ) &&
          a.Forecast.Length == b.Forecast.Length &&
-         a.Forecast.DetachFront == b.Forecast.DetachFront
+         a.Forecast.DetachFront == b.Forecast.DetachFront &&
+         a.Forecast.TrainOrder == b.Forecast.TrainOrder
 }
 
 func (t *Location) Write( c *codec.BinaryCodec ) {
@@ -118,8 +123,15 @@ func (t *Location) Write( c *codec.BinaryCodec ) {
     Write( &t.Forecast.Pass ).
     Write( &t.Forecast.Platform ).
     WriteBool( t.Forecast.Suppressed ).
-    WriteInt16( int16( t.Forecast.Length ) ).
-    WriteBool( t.Forecast.DetachFront )
+    WriteBool( t.Forecast.DetachFront ).
+    WriteInt16( int16( t.Forecast.Length ) )
+
+  if t.Forecast.TrainOrder == nil || t.Forecast.TrainOrder.Order == 0 {
+    c.WriteByte( byte( 0 ) )
+  } else {
+    c.WriteByte( byte( t.Forecast.TrainOrder.Order ) ).
+      WriteString( t.Forecast.TrainOrder.Platform )
+  }
 }
 
 func (t *Location) Read( c *codec.BinaryCodec ) {
@@ -141,13 +153,19 @@ func (t *Location) Read( c *codec.BinaryCodec ) {
     Read( &t.Forecast.Departure ).
     Read( &t.Forecast.Pass ).
     Read( &t.Forecast.Platform ).
-    ReadBool( &t.Forecast.Suppressed )
+    ReadBool( &t.Forecast.Suppressed ).
+    ReadBool( &t.Forecast.DetachFront )
 
   var l int16
   c.ReadInt16( &l )
   t.Forecast.Length = int(l)
 
-  c.ReadBool( &t.Forecast.DetachFront )
+  var b byte
+  c.ReadByte( &b )
+  if b > 0 {
+    t.Forecast.TrainOrder = &TrainOrder{ Order: int( b ) }
+    c.ReadString( &t.Forecast.TrainOrder.Platform )
+  }
 }
 
 func (s *Location) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error {

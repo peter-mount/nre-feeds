@@ -43,9 +43,5 @@ func (p *Schedule) Process( tx *Transaction ) error {
     p.Locations = ary
   }
 
-  // Finally sort the locations, set the date to that at Darwin then persist
-  p.Sort()
-  p.Date = tx.pport.TS
-
   return tx.PutSchedule( p )
 }

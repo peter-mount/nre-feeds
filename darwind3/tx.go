@@ -45,6 +45,13 @@ func (tx *Transaction) GetSchedule( rid string ) *Schedule {
 
 // PutSchedule persists a Schedule
 func (tx *Transaction) PutSchedule( s *Schedule ) error {
+
+  // Ensure the schedule is in sequence & the Date is set
+  s.Sort()
+  if tx.pport != nil {
+    s.Date = tx.pport.TS
+  }
+
   // Check existing entry & if the same dont persit
   existing := tx.GetSchedule( s.RID )
   if s.Equals( existing ) {

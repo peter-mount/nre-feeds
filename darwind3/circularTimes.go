@@ -2,6 +2,7 @@ package darwind3
 
 import (
   "darwintimetable"
+  "encoding/xml"
   "fmt"
   "github.com/peter-mount/golib/codec"
 )
@@ -28,6 +29,29 @@ type CircularTimes struct {
   Wtd              *darwintimetable.WorkingTime `json:"wtd,omitempty"`
   // Working Scheduled Time of Passing
   Wtp              *darwintimetable.WorkingTime `json:"wtp,omitempty"`
+}
+
+// UnmarshalXMLAttributes reads from an arbitary start element
+func (t *CircularTimes) UnmarshalXMLAttributes( start xml.StartElement ) {
+  for _, attr := range start.Attr {
+    switch attr.Name.Local {
+      case "pta":
+        t.Pta = darwintimetable.NewPublicTime( attr.Value )
+
+      case "ptd":
+        t.Ptd = darwintimetable.NewPublicTime( attr.Value )
+
+      case "wta":
+        t.Wta = darwintimetable.NewWorkingTime( attr.Value )
+
+      case "wtd":
+        t.Wtd = darwintimetable.NewWorkingTime( attr.Value )
+
+      case "wtp":
+        t.Wtp = darwintimetable.NewWorkingTime( attr.Value )
+    }
+  }
+  t.UpdateTime()
 }
 
 // Compare compares two Locations by their times

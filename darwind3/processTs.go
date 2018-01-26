@@ -51,9 +51,5 @@ func (p *TS) Process( tx *Transaction ) error {
     }
   }
 
-  // Finally sort the locations, set the date to that at Darwin then persist
-  sched.Sort()
-  sched.Date = tx.pport.TS
-
   return tx.PutSchedule( sched )
 }
