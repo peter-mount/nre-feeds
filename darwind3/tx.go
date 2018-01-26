@@ -60,9 +60,13 @@ func (tx *Transaction) PutSchedule( s *Schedule ) error {
 
   if b, err := s.Bytes(); err != nil {
     return err
-  } else {
-    return tx.ridBucket.Put( []byte( s.RID ), b )
+  } else if err := tx.ridBucket.Put( []byte( s.RID ), b ); err != nil {
+    return err
   }
+
+  tx.postScheduleUpdateEvent( s )
+
+  return nil
 }
 
 // DeleteSchedule deletes a schedule from the database

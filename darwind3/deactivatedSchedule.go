@@ -12,6 +12,22 @@ type DeactivatedSchedule struct {
 
 // Processor interface
 func (p *DeactivatedSchedule) Process( tx *Transaction ) error {
-  tx.DeleteSchedule( p.RID )
+
+  // Get the affected schedule
+  sched := tx.GetSchedule( p.RID )
+
+  // Delete it if we have one
+  if sched != nil {
+    tx.DeleteSchedule( p.RID )
+  }
+
+  // Post event
+  tx.d3.EventManager.PostEvent( &DarwinEvent{
+    Type: Event_Deactivated,
+    RID: p.RID,
+    // This is ok if nil but helps listeners know what to remove
+    Schedule: sched,
+  } )
+
   return nil
 }

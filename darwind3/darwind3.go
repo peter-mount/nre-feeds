@@ -17,6 +17,8 @@ type DarwinD3 struct {
   tx                   *bolt.Tx
   // Optional link to DarwinTimetable for resolving schedules.
   Timetable            *darwintimetable.DarwinTimetable
+  // Eventing
+  EventManager         *DarwinEventManager
 }
 
 // OpenDB opens a DarwinReference database.
@@ -36,6 +38,8 @@ func (r *DarwinD3) OpenDB( dbFile string ) error {
     if err := r.initDB(); err != nil {
       return err
     }
+
+    r.EventManager = NewDarwinEventManager()
 
     return nil
   }

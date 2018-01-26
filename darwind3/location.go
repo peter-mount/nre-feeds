@@ -67,6 +67,8 @@ type Location struct {
     // The train order at this location (1, 2 or 3). 0 Means no TrainOrder has been set
     TrainOrder       *TrainOrder  `json:"trainOrder,omitempty"`
   }                               `json:"forecast"`
+  // updated if true trigger an event
+  updated             bool
 }
 
 // Compare compares two Locations by their times
@@ -168,6 +170,8 @@ func (t *Location) Read( c *codec.BinaryCodec ) {
 }
 
 func (s *Location) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error {
+  // As we are unmarshalling from xml, mark the location as updated
+  s.updated = true
 
   for _, attr := range start.Attr {
     switch attr.Name.Local {

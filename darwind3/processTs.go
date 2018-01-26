@@ -34,6 +34,8 @@ func (p *TS) Process( tx *Transaction ) error {
       if a.EqualInSchedule( b ) {
         a.Times = b.Times
         a.Forecast = b.Forecast
+        // Mark location as updated
+        a.updated = true
       }
     }
   }

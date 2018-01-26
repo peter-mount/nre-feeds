@@ -57,6 +57,9 @@ func (to *trainOrderWrapper) processOrder( tx *Transaction, order int, tod *trai
         l.Forecast.TrainOrder = &TrainOrder{ Order: order, Platform: to.Platform }
       }
 
+      // Mark as updated
+      l.updated = true
+
       return tx.PutSchedule( sched )
     }
   }

@@ -6,6 +6,20 @@ darwind3 handles the real time push port feed
 
 ## Usage
 
+```go
+const (
+	// A schedule was activated
+	Event_Activated = iota
+	// A schedule was deactivated
+	Event_Deactivated
+	// A schedule was updated
+	Event_ScheduleUpdated
+	// A location was updated
+	Event_LocationUpdated
+)
+```
+The possible types of DarwinEvent
+
 #### type CircularTimes
 
 ```go
@@ -101,6 +115,12 @@ Close the database. If OpenDB() was used to open the db then that db is closed.
 If UseDB() was used this simply detaches the DarwinReference from that DB. The
 DB is not closed()
 
+#### func (*DarwinD3) DeregisterEventListener
+
+```go
+func (d *DarwinD3) DeregisterEventListener(c chan *DarwinEvent)
+```
+
 #### func (*DarwinD3) GetSchedule
 
 ```go
@@ -115,10 +135,22 @@ func (r *DarwinD3) OpenDB(dbFile string) error
 ```
 OpenDB opens a DarwinReference database.
 
+#### func (*DarwinD3) PostEvent
+
+```go
+func (d *DarwinD3) PostEvent(e *DarwinEvent)
+```
+
 #### func (*DarwinD3) ProcessUpdate
 
 ```go
 func (d *DarwinD3) ProcessUpdate(p *Pport, f func(*Transaction) error) error
+```
+
+#### func (*DarwinD3) RegisterEventListener
+
+```go
+func (d *DarwinD3) RegisterEventListener() chan *DarwinEvent
 ```
 
 #### func (*DarwinD3) RegisterRest
@@ -153,6 +185,21 @@ Update performs a read write opertation on the database
 func (r *DarwinD3) View(f func(*bolt.Tx) error) error
 ```
 View performs a readonly operation on the database
+
+#### type DarwinEvent
+
+```go
+type DarwinEvent struct {
+	// The type of the event
+	Type int
+	// The RID of the train that caused this event
+	RID string
+	// The affected Schedule or nil if none
+	Schedule *Schedule
+}
+```
+
+An event notifying of something happening within DarwinD3
 
 #### type DeactivatedSchedule
 
