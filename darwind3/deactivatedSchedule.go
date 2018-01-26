@@ -2,7 +2,6 @@ package darwind3
 
 import (
   "encoding/xml"
-  "log"
 )
 
 // Notification that a Train Schedule is now deactivated in Darwin.
@@ -13,12 +12,6 @@ type DeactivatedSchedule struct {
 
 // Processor interface
 func (p *DeactivatedSchedule) Process( tx *Transaction ) error {
-  log.Printf( "Deactivated rid=%s\n", p.RID )
-
-  /*
-  if p.UR != nil {
-    return p.UR.Process( d3, p )
-  }
-  */
+  tx.DeleteSchedule( p.RID )
   return nil
 }

@@ -57,3 +57,8 @@ func (tx *Transaction) PutSchedule( s *Schedule ) error {
     return tx.ridBucket.Put( []byte( s.RID ), b )
   }
 }
+
+// DeleteSchedule deletes a schedule from the database
+func (tx *Transaction) DeleteSchedule( rid string ) error {
+  return tx.ridBucket.Delete( []byte( rid ) )
+}
