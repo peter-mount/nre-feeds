@@ -22,6 +22,12 @@ database:
   # The name of the file to hold the Darwin Timetable
   #timetable: dwtt.db
 
+  # The name of the file to hold the pushPort database
+  #pushPort: dwlive.db
+
+  # The name of the file to hold the LDB database
+  #ldb: dwldb.db
+
 # Details about the National Rail FTP server
 # To use this you need to register at http://datafeeds.nationalrail.co.uk/
 # See also http://nrodwiki.rockshore.net/index.php/About_the_NRE_Feeds
@@ -54,6 +60,11 @@ pushPort:
   # attempt to retrieve it from the timetable. If that fails or this is disabled
   # then a new blank schedule is created.
   resolveSchedules: true
+
+ldb:
+  # Is the live departure boards enabled
+  # Note this is only valid if pushPort.enabled is also true
+  enabled: true
 
 # Statistics management
 statistics:

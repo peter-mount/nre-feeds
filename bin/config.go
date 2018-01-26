@@ -2,6 +2,7 @@ package main
 
 import (
   "darwind3"
+  "ldb"
   "darwinref"
   "darwintimetable"
   "darwinupdate"
@@ -25,6 +26,9 @@ type Config struct {
     // Darwin PushPort
     PushPort      string    `yaml:"pushPort"`
     pushPort     *darwind3.DarwinD3
+    // Live Departure Boards
+    LDB           string    `yaml:"departures"`
+    ldb          *ldb.LDB
   }                         `yaml:"database"`
 
   Ftp struct {
@@ -40,6 +44,10 @@ type Config struct {
     Enabled       bool      `yaml:"enabled"`
     ResolveSched  bool      `yaml:"resolveSchedules"`
   }                         `yaml:"pushPort"`
+
+  LDB struct {
+    Enabled       bool      `yaml:"enabled"`
+  }                         `yaml:"ldb"`
 
   Server struct {
     Context       string    `yaml:"context"`

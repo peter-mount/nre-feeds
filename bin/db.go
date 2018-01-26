@@ -2,6 +2,7 @@ package main
 
 import (
   "darwind3"
+  "ldb"
   "darwinref"
   "darwintimetable"
   "path/filepath"
@@ -47,8 +48,7 @@ func (c *Config) initDb() error {
   c.Database.timetable.RegisterRest( c.Server.ctx.Context( "/timetable" ) )
   c.Database.timetable.ScheduleCleanup( c.cron )
 
-
-  if( c.PushPort.Enabled ) {
+  if c.PushPort.Enabled {
     c.dbPath( &c.Database.PushPort, "dwlive.db" )
     c.Database.pushPort = &darwind3.DarwinD3{}
     if err := c.Database.pushPort.OpenDB( c.Database.PushPort ); err != nil {
@@ -61,6 +61,19 @@ func (c *Config) initDb() error {
     }
 
     c.Database.pushPort.RegisterRest( c.Server.ctx.Context( "/live" ) )
+  }
+
+  // LDB only valid with pushport
+  if c.PushPort.Enabled && c.LDB.Enabled {
+    c.dbPath( &c.Database.LDB, "dwldb.db" )
+    c.Database.ldb = &ldb.LDB{
+      Darwin: c.Database.pushPort,
+      Reference: c.Database.reference,
+    }
+    if err := c.Database.ldb.OpenDB( c.Database.LDB ); err != nil {
+      return err
+    }
+    c.Database.ldb.RegisterRest( c.Server.ctx.Context( "/ldb" ) )
   }
 
   return nil
