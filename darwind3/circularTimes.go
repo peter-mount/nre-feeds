@@ -31,6 +31,16 @@ type CircularTimes struct {
   Wtp              *darwintimetable.WorkingTime `json:"wtp,omitempty"`
 }
 
+// IsPublic returns true of the instance contains public times
+func (t *CircularTimes) IsPublic() bool {
+  return t.Pta != nil || t.Ptd != nil
+}
+
+// IsPass returns true if the instance represents a pass at a station
+func (t *CircularTimes) IsPass() bool {
+  return t.Wtp != nil
+}
+
 // UnmarshalXMLAttributes reads from an arbitary start element
 func (t *CircularTimes) UnmarshalXMLAttributes( start xml.StartElement ) {
   for _, attr := range start.Attr {
