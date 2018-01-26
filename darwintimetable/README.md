@@ -18,6 +18,12 @@ Reference timetable
 
 ## Usage
 
+#### func  PublicTimeEquals
+
+```go
+func PublicTimeEquals(a *PublicTime, b *PublicTime) bool
+```
+
 #### func  PublicTimeWrite
 
 ```go
@@ -25,6 +31,15 @@ func PublicTimeWrite(c *codec.BinaryCodec, t *PublicTime)
 ```
 PublicTimeWrite is a workaround for writing null times. If the pointer is null
 then a time is written where IsZero()==true
+
+#### func  WorkingTimeEquals
+
+```go
+func WorkingTimeEquals(a *WorkingTime, b *WorkingTime) bool
+```
+WorkingTimeEquals compares equality between two WorkingTimes. Unlike
+WorkingTime.Equals() this will return true if both are null, otherwise both must
+not be null and equal to be true
 
 #### func  WorkingTimeWrite
 
@@ -509,6 +524,7 @@ Public Timetable time Note: 00:00 is not possible as in CIF that means no-time
 ```go
 func NewPublicTime(s string) *PublicTime
 ```
+NewPublicTime returns a new PublicTime instance from a string of format "HH:MM"
 
 #### func  PublicTimeRead
 
@@ -519,12 +535,27 @@ PublicTimeRead is a workaround issue where a custom type cannot be omitempty in
 JSON unless it's a nil So instead of using BinaryCodec.Read( v ), we call this &
 set the return value in the struct as a pointer.
 
+#### func (*PublicTime) Compare
+
+```go
+func (a *PublicTime) Compare(b *PublicTime) bool
+```
+Compare a PublicTime against another, accounting for crossing midnight. The
+rules for handling crossing midnight are: < -6 hours = crossed midnight < 0 back
+in time < 18 hours increasing time > 18 hours back in time & crossing midnight
+
+#### func (*PublicTime) Equals
+
+```go
+func (a *PublicTime) Equals(b *PublicTime) bool
+```
+
 #### func (*PublicTime) Get
 
 ```go
 func (t *PublicTime) Get() int
 ```
-Get returns the PublicTime in seconds of the day
+Get returns the PublicTime in minutes of the day
 
 #### func (*PublicTime) IsZero
 
@@ -559,7 +590,7 @@ BinaryCodec reader
 ```go
 func (t *PublicTime) Set(v int)
 ```
-Set sets the PublicTime in seconds of the day
+Set sets the PublicTime in minutes of the day
 
 #### func (*PublicTime) String
 
@@ -589,6 +620,12 @@ type SSD struct {
 func (s *SSD) Before(t time.Time) bool
 ```
 Before is an SSD before a specified time
+
+#### func (*SSD) Equals
+
+```go
+func (a *SSD) Equals(b *SSD) bool
+```
 
 #### func (*SSD) MarshalJSON
 
@@ -646,6 +683,8 @@ seconds. In the Working Timetable, the seconds can be either 0 or 30.
 ```go
 func NewWorkingTime(s string) *WorkingTime
 ```
+NewWorkingTime returns a new WorkingTime instance from a string of format
+"HH:MM:SS"
 
 #### func  WorkingTimeRead
 
@@ -655,6 +694,21 @@ func WorkingTimeRead(c *codec.BinaryCodec) *WorkingTime
 WorkingTimeRead is a workaround issue where a custom type cannot be omitempty in
 JSON unless it's a nil So instead of using BinaryCodec.Read( v ), we call this &
 set the return value in the struct as a pointer.
+
+#### func (*WorkingTime) Compare
+
+```go
+func (a *WorkingTime) Compare(b *WorkingTime) bool
+```
+Compare a WorkingTime against another, accounting for crossing midnight. The
+rules for handling crossing midnight are: < -6 hours = crossed midnight < 0 back
+in time < 18 hours increasing time > 18 hours back in time & crossing midnight
+
+#### func (*WorkingTime) Equals
+
+```go
+func (a *WorkingTime) Equals(b *WorkingTime) bool
+```
 
 #### func (*WorkingTime) Get
 
