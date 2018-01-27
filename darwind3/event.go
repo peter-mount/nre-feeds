@@ -62,7 +62,7 @@ func (d *DarwinEventManager) ListenToEvents( eventType int, f func( chan *Darwin
   l := &darwinEventListener{
     sequence: d.listenerSeq,
     eventType: eventType,
-    channel: make(chan *DarwinEvent),
+    channel: make( chan *DarwinEvent, 1000 ),
   }
   d.listenerSeq++
   listeners = append( listeners, l )
