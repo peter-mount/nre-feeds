@@ -1,6 +1,7 @@
 package darwind3
 
 import (
+  "darwintimetable"
   "encoding/xml"
   "fmt"
   "github.com/peter-mount/golib/codec"
@@ -43,6 +44,18 @@ type Location struct {
   // The Forecast data at this location
   // i.e. information that changes in real time
   Forecast struct {
+    // The "display" time for this location
+    // This is calculated using the first value in the following order:
+    // Departure, Arrival, Pass, or if none of those are set then the following
+    // order in CircularTimes above is used: ptd, pta, wtd, wta & wtp
+    Time              darwintimetable.WorkingTime `json:"time"`
+    // If true then delayed. This is the delayed field in one of
+    // Departure, Arrival, Pass in that order
+    Delayed           bool        `json:"delayed,omitempty"`
+    // If true then the train has arrived or passed this location
+    Arrived           bool        `json:"arrived,omitempty"`
+    // If true then the train has departed or passed this location
+    Departed          bool        `json:"departed,omitempty"`
     // Forecast data for the arrival at this location
     Arrival           TSTime      `json:"arr"`
     // Forecast data for the departure at this location
@@ -167,6 +180,8 @@ func (t *Location) Read( c *codec.BinaryCodec ) {
     t.Forecast.TrainOrder = &TrainOrder{ Order: int( b ) }
     c.ReadString( &t.Forecast.TrainOrder.Platform )
   }
+
+  t.update()
 }
 
 func (s *Location) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error {
@@ -255,9 +270,40 @@ func (s *Location) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) 
         }
 
       case xml.EndElement:
+        s.update()
         return nil
     }
   }
+}
+
+// update sets all "calculated" fields
+func (l *Location) update() {
+  passed := l.Forecast.Pass.AT != nil && !l.Forecast.Pass.AT.IsZero()
+  l.Forecast.Departed = ( l.Forecast.Departure.AT != nil && !l.Forecast.Departure.AT.IsZero() ) || passed
+  l.Forecast.Arrived = ( l.Forecast.Arrival.AT != nil && !l.Forecast.Arrival.AT.IsZero() ) || passed
+
+  if l.Forecast.Departure.IsSet() {
+    l.Forecast.Time = *l.Forecast.Departure.Time()
+  } else if l.Forecast.Arrival.IsSet() {
+    l.Forecast.Time = *l.Forecast.Arrival.Time()
+  } else if l.Forecast.Pass.IsSet() {
+    l.Forecast.Time = *l.Forecast.Pass.Time()
+  } else if l.Times.Ptd != nil {
+    l.Forecast.Time.Set( l.Times.Ptd.Get() * 60 )
+  } else if l.Times.Ptd != nil {
+    l.Forecast.Time.Set( l.Times.Pta.Get() * 60 )
+  } else if l.Times.Wtd != nil {
+    l.Forecast.Time = *l.Times.Wtd
+  } else if l.Times.Wta != nil {
+    l.Forecast.Time = *l.Times.Wta
+  } else if l.Times.Wtp != nil {
+    l.Forecast.Time = *l.Times.Wtp
+  } else {
+    // Should never happen
+    l.Forecast.Time.Set( -1 )
+  }
+
+  l.Forecast.Delayed = l.Forecast.Departure.Delayed || l.Forecast.Arrival.Delayed || l.Forecast.Pass.Delayed
 }
 
 func (l *Location) String() string {

@@ -44,6 +44,34 @@ type TSTime struct {
   SrcInst     string      `json:"srcInst,omitempty" xml:"srcInst,attr,omitempty"`
 }
 
+// IsSet returns true if at least ET or AT is set
+func (t *TSTime) IsSet() bool {
+  return ( t.ET != nil && !t.ET.IsZero() ) || ( t.AT !=nil && !t.AT.IsZero() )
+}
+
+// Compare compares two TSTime's.
+// This will use the value returned by TSTime.Time()
+func (a *TSTime) Compare( b *TSTime ) bool {
+  if b == nil {
+    return false
+  }
+  var at = a.Time()
+  var bt = b.Time()
+  return at != nil && at.Compare( bt )
+}
+
+// Time returns the appropirate time from TSTime to use in displays.
+// This is the first one set of AT, ET or nil if neither is set.
+func (t *TSTime) Time() *darwintimetable.WorkingTime {
+  if t.AT != nil {
+    return t.AT
+  }
+  if t.ET != nil {
+    return t.ET
+  }
+  return nil
+}
+
 func (a *TSTime) Equals( b *TSTime ) bool {
   return b != nil &&
          a.ET == b.ET &&
@@ -107,7 +135,7 @@ func (s *TSTime) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) er
         s.Delayed = attr.Value == "true"
 
       case "src":
-        s.SrcInst = attr.Value
+        s.Src = attr.Value
 
       case "srcInst":
         s.SrcInst = attr.Value
