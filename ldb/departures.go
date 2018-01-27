@@ -21,5 +21,12 @@ func (d *LDB) OpenDB( dbFile string ) error {
   // Add listeners
   d.Darwin.EventManager.ListenToEvents( darwind3.Event_LocationUpdated, d.locationListener )
 
+  d.init()
+
   return nil
+}
+
+// init initialises the LDB database
+func (d *LDB) init() {
+  go d.initStations()
 }
