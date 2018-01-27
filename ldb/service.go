@@ -23,8 +23,12 @@ type Service struct {
   PassengerService  bool                        `json:"passengerService,omitempty"`
   // Is a charter service
   Charter           bool                        `json:"charter,omitempty"`
-  // The cancel reason
+  // Cancel running reason for this service. The reason applies to all locations
+  // of this service which are marked as cancelled
   CancelReason      darwind3.DisruptionReason   `json:"cancelReason"`
+  // Late running reason for this service. The reason applies to all locations
+  // of this service which are not marked as cancelled
+  LateReason        darwind3.DisruptionReason   `json:"lateReason"`
   // The "time" for this service
   Location         *darwind3.Location           `json:"location"`
   // The time this entry was set
@@ -49,6 +53,7 @@ func (s *Service) update( e *darwind3.DarwinEvent ) bool {
     s.Toc = sched.Toc
     s.PassengerService = sched.PassengerService
     s.CancelReason = sched.CancelReason
+    s.LateReason = sched.LateReason
 
     // Resolve the destination
     if s.Location.FalseDestination != "" {

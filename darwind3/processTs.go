@@ -28,6 +28,9 @@ func (p *TS) Process( tx *Transaction ) error {
     return nil
   }
 
+  // Update the LateReason
+  sched.LateReason = p.LateReason
+
   // Run through schedule locations, any that match the new ones update the forecast
   for _, a := range sched.Locations {
     for _, b := range p.Locations {

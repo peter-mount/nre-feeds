@@ -29,8 +29,12 @@ type Schedule struct {
   Deleted           bool                  `json:"deleted,omitempty"`
   // Default false
   Charter           bool                  `json:"charter,omitempty"`
-  // Cancel reason
+  // Cancel running reason for this service. The reason applies to all locations
+  // of this service which are marked as cancelled
   CancelReason      DisruptionReason      `json:"cancelReason"`
+  // Late running reason for this service. The reason applies to all locations
+  // of this service which are not marked as cancelled
+  LateReason        DisruptionReason      `json:"lateReason"`
   // The locations in this schedule
   Locations       []*Location             `json:"locations"`
   // Usually this is the date we insert into the db but here we use the TS time
@@ -117,6 +121,7 @@ func (t *Schedule) Write( c *codec.BinaryCodec ) {
     WriteBool( t.Deleted ).
     WriteBool( t.Charter ).
     Write( &t.CancelReason ).
+    Write( &t.LateReason ).
     WriteTime( t.Date )
 
   c.WriteInt16( int16(len( t.Locations )) )
@@ -138,6 +143,7 @@ func (t *Schedule) Read( c *codec.BinaryCodec ) {
     ReadBool( &t.Deleted ).
     ReadBool( &t.Charter ).
     Read( &t.CancelReason ).
+    Read( &t.LateReason ).
     ReadTime( &t.Date )
 
   var n int16
