@@ -1,6 +1,8 @@
 package ldb
 
 import (
+  bolt "github.com/coreos/bbolt"
+  "darwinref"
   "darwintimetable"
   "github.com/peter-mount/golib/rest"
   "sort"
@@ -8,10 +10,18 @@ import (
 )
 
 type result struct {
-  Crs         string
-  Services []*Service
-  Date        time.Time
-  Self        string
+  // The CRS of this station
+  Crs         string                  `json:"crs"`
+  // The departures
+  Services []*Service                 `json:"departures"`
+  // Map of Tiploc's
+  Tiplocs    *darwinref.LocationMap   `json:"tiploc"`
+  // Map of Toc's
+  Tocs       *darwinref.TocMap        `json:"toc"`
+  // The date of this request
+  Date        time.Time               `json:"date"`
+  // The URL of this departure board
+  Self        string                  `json:"self"`
 }
 
 func (d *LDB) stationHandler( r *rest.Rest ) error {
@@ -29,9 +39,9 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
     now := time.Now()
     var nowt darwintimetable.WorkingTime
     nowt.Set( (now.Hour()*3600) + (now.Minute()*60) )
-    now = now.Add( time.Hour )
+    next := now.Add( time.Hour )
     var hour darwintimetable.WorkingTime
-    hour.Set( (now.Hour()*3600) + (now.Minute()*60) )
+    hour.Set( (next.Hour()*3600) + (next.Minute()*60) )
 
     // Get the services from the station
     if err := station.Update( func() error {
@@ -55,9 +65,34 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
       return services[ i ].Compare( services[ j ] )
     } )
 
+    // Now resolve the Tiplocs
+    tiplocs := darwinref.NewLocationMap()
+    tocs := darwinref.NewTocMap()
+    if err := d.Reference.View( func( tx *bolt.Tx ) error {
+      for _, s := range services {
+        // Service & location tiplocs
+        tiplocs.AddTiploc( d.Reference, tx, s.Destination )
+        tiplocs.AddTiploc( d.Reference, tx, s.Location.Tiploc )
+        // Toc running this service
+        tocs.AddToc( d.Reference, tx, s.Toc )
+      }
+
+      // Add any toc's from the locations in tiplocs
+      tocs.AddLocations( d.Reference, tx, tiplocs )
+
+      return nil
+    }); err != nil {
+      return err
+    }
+
+    tiplocs.Self( r )
+    tocs.Self( r )
+    
     res := &result{
       Crs: crs,
       Services: services,
+      Tiplocs: tiplocs,
+      Tocs: tocs,
       Date: now,
       Self: r.Self( "/ldb/boards/" + crs ),
     }
