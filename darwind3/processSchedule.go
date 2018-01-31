@@ -48,6 +48,12 @@ func (p *Schedule) Process( tx *Transaction ) error {
     return err
   }
 
+  p.Date = tx.pport.TS
   tx.d3.putSchedule( p )
+  tx.d3.EventManager.PostEvent( &DarwinEvent{
+    Type: Event_ScheduleUpdated,
+    RID: p.RID,
+    Schedule: p,
+  })
   return nil
 }

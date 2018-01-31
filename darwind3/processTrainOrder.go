@@ -68,6 +68,12 @@ func (to *trainOrderWrapper) processOrder( tx *Transaction, order int, tod *trai
     return err
   }
 
+  sched.Date = tx.pport.TS
   tx.d3.putSchedule( sched )
+  tx.d3.EventManager.PostEvent( &DarwinEvent{
+    Type: Event_ScheduleUpdated,
+    RID: sched.RID,
+    Schedule: sched,
+  })
   return nil
 }

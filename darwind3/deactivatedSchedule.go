@@ -20,6 +20,7 @@ func (p *DeactivatedSchedule) Process( tx *Transaction ) error {
   if sched != nil {
     // Mark as not active & persist
     sched.Active = false
+    sched.Date = tx.pport.TS
     tx.d3.putSchedule( sched )
   }
 
