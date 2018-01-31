@@ -108,6 +108,7 @@ func (d *LDB) createStation( locs []*darwinref.Location ) *Station {
 
   s := &Station{}
   s.Locations = locs
+  s.ldb = d
 
   // Mark public if we have a CRS & it doesn't start with X or Z
   s.public = locs[0].Crs != "" && locs[0].Crs[0] != 'X' && locs[0].Crs[0] != 'Z'

@@ -7,12 +7,12 @@ import (
 
 // The possible types of DarwinEvent
 const (
-  // A schedule was activated
-  Event_Activated = iota
   // A schedule was deactivated
-  Event_Deactivated
+  Event_Deactivated = iota
   // A schedule was updated
   Event_ScheduleUpdated
+  // A station's departure boards have been updated (LDB only)
+  Event_BoardUpdate
 )
 
 // An event notifying of something happening within DarwinD3
@@ -23,6 +23,8 @@ type DarwinEvent struct {
   RID         string
   // The affected Schedule or nil if none
   Schedule   *Schedule
+  // The CRS code of the station in this event (LDB only)
+  Crs         string
 }
 
 // The core of the eventing system
