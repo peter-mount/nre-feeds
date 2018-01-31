@@ -1,13 +1,17 @@
 package ldb
 
 import (
+  "darwintimetable"
   "github.com/peter-mount/golib/rest"
   "sort"
+  "time"
 )
 
 type result struct {
-  Crs     string
-  Services    []*Service
+  Crs         string
+  Services []*Service
+  Date        time.Time
+  Self        string
 }
 
 func (d *LDB) stationHandler( r *rest.Rest ) error {
@@ -22,10 +26,24 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
 
     var services []*Service
 
+    now := time.Now()
+    var nowt darwintimetable.WorkingTime
+    nowt.Set( (now.Hour()*3600) + (now.Minute()*60) )
+    now = now.Add( time.Hour )
+    var hour darwintimetable.WorkingTime
+    hour.Set( (now.Hour()*3600) + (now.Minute()*60) )
+
     // Get the services from the station
     if err := station.Update( func() error {
       for _,s := range station.services {
-        services = append( services, s )
+        // Limit to max 20 departures and only if within the next hour
+        if len( services ) < 20 &&
+           nowt.Compare( &s.Location.Times.Time ) &&
+           s.Location.Times.Time.Compare( &hour ) {
+          service := s.Clone()
+          service.Self = r.Self( "/ldb/service/" + service.RID )
+          services = append( services, service )
+        }
       }
       return nil
     } ); err != nil {
@@ -37,7 +55,12 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
       return services[ i ].Compare( services[ j ] )
     } )
 
-    res := &result{ Crs: crs, Services: services }
+    res := &result{
+      Crs: crs,
+      Services: services,
+      Date: now,
+      Self: r.Self( "/ldb/boards/" + crs ),
+    }
 
     r.Status( 200 ).
       Value( res )

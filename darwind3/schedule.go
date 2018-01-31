@@ -3,7 +3,6 @@ package darwind3
 import (
   "darwintimetable"
   "encoding/xml"
-  "fmt"
   "github.com/peter-mount/golib/codec"
   "github.com/peter-mount/golib/rest"
   "sort"
@@ -274,26 +273,4 @@ func (s *Schedule) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) 
         return nil
     }
   }
-}
-
-func (p *Schedule) String() string {
-  s := fmt.Sprintf(
-    "Schedule rid=%s uid=%s trainId=%s ssd=%s toc=%s status=%s trainCat=%s isPax=%v active=%v deleted=%v charter=%v cancelReason=%v locs=%d\n",
-    p.RID,
-    p.UID,
-    p.TrainId,
-    p.SSD.String(),
-    p.Toc,
-    p.Status,
-    p.TrainCat,
-    p.PassengerService,
-    p.Active,
-    p.Deleted,
-    p.Charter,
-    p.CancelReason,
-    len( p.Locations ) )
-  for i, l := range p.Locations {
-    s += fmt.Sprintf( "%02d %s\n", i, l.String() )
-  }
-  return s
 }

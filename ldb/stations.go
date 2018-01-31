@@ -115,7 +115,8 @@ func (d *LDB) createStation( locs []*darwinref.Location ) *Station {
 
   if s.public {
     // Only public entries have a crs
-    d.Stations.crs[ locs[0].Crs ] = s
+    s.Crs = locs[0].Crs
+    d.Stations.crs[ s.Crs ] = s
 
     // Only public entries are useable
     s.init()

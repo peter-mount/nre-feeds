@@ -115,3 +115,21 @@ func (s *Station) addServiceWorker() {
      })
   }
 }
+
+// Clone returns a copy of this Service
+func (a *Service) Clone() *Service {
+  return &Service{
+    RID: a.RID,
+    Destination: a.Destination,
+    SSD: a.SSD,
+    TrainId: a.TrainId,
+    Toc: a.Toc,
+    PassengerService: a.PassengerService,
+    Charter: a.Charter,
+    CancelReason: a.CancelReason,
+    LateReason: a.LateReason,
+    Location: a.Location.Clone(),
+    Date: a.Date,
+    Self: a.Self,
+  }
+}

@@ -3,7 +3,6 @@ package darwind3
 import (
   "darwintimetable"
   "encoding/xml"
-  "fmt"
   "github.com/peter-mount/golib/codec"
   "strconv"
 )
@@ -290,7 +289,7 @@ func (l *Location) update() {
     l.Forecast.Time = *l.Forecast.Pass.Time()
   } else if l.Times.Ptd != nil {
     l.Forecast.Time.Set( l.Times.Ptd.Get() * 60 )
-  } else if l.Times.Ptd != nil {
+  } else if l.Times.Pta != nil {
     l.Forecast.Time.Set( l.Times.Pta.Get() * 60 )
   } else if l.Times.Wtd != nil {
     l.Forecast.Time = *l.Times.Wtd
@@ -306,29 +305,9 @@ func (l *Location) update() {
   l.Forecast.Delayed = l.Forecast.Departure.Delayed || l.Forecast.Arrival.Delayed || l.Forecast.Pass.Delayed
 }
 
-func (l *Location) String() string {
-  return fmt.Sprintf(
-    "%2s %7s %7s %5v %s %s %s %d %v %v %v %v %v %d %v",
-    l.Type,
-    l.Tiploc,
-    l.FalseDestination,
-    l.Cancelled,
-    l.Times.String(),
-    l.Planned.ActivityType,
-    l.Planned.PlannedActivity,
-    l.Planned.RDelay,
-    l.Forecast.Arrival,
-    l.Forecast.Departure,
-    l.Forecast.Pass,
-    l.Forecast.Platform,
-    l.Forecast.Suppressed,
-    l.Forecast.Length,
-    l.Forecast.DetachFront )
-}
-
 // Clone makes a clone of a Location
 func (a *Location) Clone() *Location {
-  return &Location{
+  b := &Location{
     Type: a.Type,
     Tiploc: a.Tiploc,
     Times: a.Times,
@@ -337,4 +316,6 @@ func (a *Location) Clone() *Location {
     Planned: a.Planned,
     Forecast: a.Forecast,
   }
+  b.update()
+  return b
 }
