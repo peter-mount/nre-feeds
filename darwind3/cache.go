@@ -2,7 +2,6 @@
 package darwind3
 
 import (
-  //bolt "github.com/coreos/bbolt"
   "github.com/muesli/cache2go"
   "io/ioutil"
   "os"
@@ -10,7 +9,7 @@ import (
 )
 
 const (
-  expiryTime time.Duration = 30 * time.Second
+  expiryTime time.Duration = 120 * time.Second
   persistSize int = 100
 )
 

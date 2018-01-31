@@ -15,18 +15,14 @@ type LDB struct {
   Stations     *Stations
 }
 
-func (d *LDB) OpenDB( dbFile string ) error {
+func (d *LDB) Init() error {
   d.Stations = NewStations()
 
   // Add listeners
   d.Darwin.EventManager.ListenToEventsCapacity( darwind3.Event_ScheduleUpdated, 10000, d.locationListener )
 
-  d.init()
+  // init initialises the LDB memory structures to have the stations preloaded
+  go d.initStations()
 
   return nil
-}
-
-// init initialises the LDB database
-func (d *LDB) init() {
-  go d.initStations()
 }

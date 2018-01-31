@@ -39,6 +39,10 @@ func main() {
     log.Fatal( err )
   }
 
+  if err := config.initLdb(); err != nil {
+    log.Fatal( err )
+  }
+
   if err := config.initFtp(); err != nil {
     log.Fatal( err )
   }

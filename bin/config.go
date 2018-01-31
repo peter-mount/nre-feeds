@@ -26,9 +26,6 @@ type Config struct {
     // Darwin PushPort
     PushPort      string    `yaml:"pushPort"`
     pushPort     *darwind3.DarwinD3
-    // Live Departure Boards
-    LDB           string    `yaml:"departures"`
-    ldb          *ldb.LDB
   }                         `yaml:"database"`
 
   Ftp struct {
@@ -47,6 +44,7 @@ type Config struct {
 
   LDB struct {
     Enabled       bool      `yaml:"enabled"`
+    ldb          *ldb.LDB
   }                         `yaml:"ldb"`
 
   Server struct {
