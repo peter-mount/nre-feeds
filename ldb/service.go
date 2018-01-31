@@ -3,7 +3,7 @@ package ldb
 import (
   "darwind3"
   "darwintimetable"
-  "github.com/peter-mount/golib/statistics"
+  "log"
   "time"
 )
 
@@ -42,11 +42,11 @@ func (a *Service) Compare( b *Service ) bool {
   return b != nil && a.Location.Compare( b.Location )
 }
 
-func (s *Service) update( e *darwind3.DarwinEvent ) bool {
+func (s *Service) update( e *darwind3.DarwinEvent, loc *darwind3.Location ) bool {
   sched := e.Schedule
   if sched != nil && sched.Date.After( s.Date ) {
     s.RID = e.RID
-    s.Location = e.Location
+    s.Location = loc
 
     s.SSD = sched.SSD
     s.TrainId = sched.TrainId
@@ -76,29 +76,47 @@ func (s *Service) update( e *darwind3.DarwinEvent ) bool {
 }
 
 // Adds a service to the station
-func (s *Station) addService( e *darwind3.DarwinEvent ) {
-  statistics.Incr( "ldb.update" )
+func (s *Station) addService( e *darwind3.DarwinEvent, loc *darwind3.Location ) {
+  // Only public stations can be updated. Pass to the channel so the worker thread
+  // can read it
+  if s.public && loc.Times.IsPublic() {
+    s.addServiceChannel <- &stationAddService{ e: e, loc: loc }
+  }
+}
 
-  s.Update( func() error {
+type stationAddService struct {
+  e   *darwind3.DarwinEvent
+  loc *darwind3.Location
+}
 
-    // See if we already have this train
-    if len( s.services ) > 0 {
-      for i, l := range s.services {
-        if e.RID == l.RID && e.Location.EqualInSchedule( l.Location ) {
-          if s.services[ i ].update( e ) {
-            s.update()
-          }
-          return nil
-        }
-      }
-    }
+// Adds a service to the station
+func (s *Station) addServiceWorker() {
+  for {
+     e := <- s.addServiceChannel
 
-    service := &Service{}
-    if service.update( e ) {
-      s.services = append( s.services, service )
-      s.update()
-    }
+     cl := len( s.addServiceChannel )
+     if cl > 75 {
+       log.Println("Station", s.Locations[0].Crs, cl )
+     }
 
-    return nil
-  })
+     s.Update( func() error {
+
+       // See if we already have this train
+       if l, exists := s.services[ e.e.RID ]; exists {
+         if l.update( e.e, e.loc ) {
+           s.update()
+         }
+         return nil
+       }
+
+       // A new service
+       service := &Service{}
+       if service.update( e.e, e.loc ) {
+         s.services[ e.e.RID ] = service
+         s.update()
+       }
+
+       return nil
+     })
+  }
 }

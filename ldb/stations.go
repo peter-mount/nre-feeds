@@ -116,8 +116,8 @@ func (d *LDB) createStation( locs []*darwinref.Location ) *Station {
     // Only public entries have a crs
     d.Stations.crs[ locs[0].Crs ] = s
 
-    // Only public entries are useable so only create a mutex as needed
-    s.mutex = &sync.Mutex{}
+    // Only public entries are useable
+    s.init()
   }
 
   for _, l := range locs {

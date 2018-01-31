@@ -19,7 +19,7 @@ func (d *LDB) OpenDB( dbFile string ) error {
   d.Stations = NewStations()
 
   // Add listeners
-  d.Darwin.EventManager.ListenToEvents( darwind3.Event_LocationUpdated, d.locationListener )
+  d.Darwin.EventManager.ListenToEventsCapacity( darwind3.Event_ScheduleUpdated, 10000, d.locationListener )
 
   d.init()
 

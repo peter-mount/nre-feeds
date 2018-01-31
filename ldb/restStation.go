@@ -2,6 +2,7 @@ package ldb
 
 import (
   "github.com/peter-mount/golib/rest"
+  "sort"
 )
 
 type result struct {
@@ -21,13 +22,20 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
 
     var services []*Service
 
-    // Copy the service slice inside the loc
+    // Get the services from the station
     if err := station.Update( func() error {
-      services = append( []*Service(nil), station.services... )
+      for _,s := range station.services {
+        services = append( services, s )
+      }
       return nil
     } ); err != nil {
       return err
     }
+
+    // sort into time order
+    sort.SliceStable( services, func( i, j int ) bool {
+      return services[ i ].Compare( services[ j ] )
+    } )
 
     res := &result{ Crs: crs, Services: services }
 
