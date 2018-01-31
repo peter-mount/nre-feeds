@@ -13,8 +13,6 @@ const (
   Event_Deactivated
   // A schedule was updated
   Event_ScheduleUpdated
-  // A location was updated
-  Event_LocationUpdated
 )
 
 // An event notifying of something happening within DarwinD3
@@ -25,8 +23,6 @@ type DarwinEvent struct {
   RID         string
   // The affected Schedule or nil if none
   Schedule   *Schedule
-  // The location of this event or nil
-  Location   *Location
 }
 
 // The core of the eventing system
@@ -53,6 +49,10 @@ func NewDarwinEventManager() *DarwinEventManager {
 // ListenToEvents will run a function which will reveive DarwinEvent's for the
 // specified type until it exists.
 func (d *DarwinEventManager) ListenToEvents( eventType int, f func( chan *DarwinEvent ) ) {
+  d.ListenToEventsCapacity( eventType, 1000, f )
+}
+
+func (d *DarwinEventManager) ListenToEventsCapacity( eventType int, capacity int, f func( chan *DarwinEvent ) ) {
 
   d.mutex.Lock()
   defer d.mutex.Unlock()
@@ -62,7 +62,7 @@ func (d *DarwinEventManager) ListenToEvents( eventType int, f func( chan *Darwin
   l := &darwinEventListener{
     sequence: d.listenerSeq,
     eventType: eventType,
-    channel: make( chan *DarwinEvent, 1000 ),
+    channel: make( chan *DarwinEvent, capacity ),
   }
   d.listenerSeq++
   listeners = append( listeners, l )
@@ -108,8 +108,14 @@ func (d *DarwinEventManager) PostEvent( e *DarwinEvent ) {
   listeners, ok := d.listeners[ e.Type ]
   d.mutex.Unlock()
 
-  if ok {
+  if ok  {
+
     for _, l := range listeners {
+
+      lc := len( l.channel )
+      if lc >= 750 {
+        log.Println( "evt", l.sequence, lc )
+      }
       l.channel <- e
     }
   }

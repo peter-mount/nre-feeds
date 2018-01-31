@@ -4,7 +4,7 @@ package darwind3
 // current Schedule in the database
 func (p *Schedule) Process( tx *Transaction ) error {
 
-  old := tx.GetSchedule( p.RID )
+  old := tx.d3.GetSchedule( p.RID )
   if old != nil {
 
     // If they are completely the same or the old entry is newer than the new one
@@ -43,5 +43,6 @@ func (p *Schedule) Process( tx *Transaction ) error {
     p.Locations = ary
   }
 
-  return tx.PutSchedule( p )
+  tx.d3.putSchedule( p )
+  return nil
 }

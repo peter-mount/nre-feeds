@@ -14,11 +14,13 @@ type DeactivatedSchedule struct {
 func (p *DeactivatedSchedule) Process( tx *Transaction ) error {
 
   // Get the affected schedule
-  sched := tx.GetSchedule( p.RID )
+  sched := tx.d3.GetSchedule( p.RID )
 
   // Delete it if we have one
   if sched != nil {
-    tx.DeleteSchedule( p.RID )
+    // Mark as not active & persist
+    sched.Active = false
+    tx.d3.putSchedule( sched )
   }
 
   // Post event

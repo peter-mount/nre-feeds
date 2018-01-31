@@ -18,6 +18,7 @@ RUN go get -v \
       github.com/coreos/bbolt/... \
       github.com/gorilla/mux \
       github.com/jlaffaye/ftp \
+      github.com/muesli/cache2go \
       github.com/peter-mount/golib/codec \
       github.com/peter-mount/golib/rabbitmq \
       github.com/peter-mount/golib/rest \

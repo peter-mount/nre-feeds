@@ -13,6 +13,7 @@ do
     -X POST \
     -H "Content-Type: text/xml" \
     --data-binary "$var" \
-    http://localhost:8081/live/test
+    http://localhost:8081/live/test \
+    >/dev/null
   #echo
 done <$1

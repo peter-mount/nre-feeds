@@ -10,14 +10,4 @@ func (tx *Transaction) postScheduleUpdateEvent( s *Schedule ) {
     Schedule: s,
   } )
 
-  for _, l := range s.Locations {
-    if l.updated {
-      tx.d3.EventManager.PostEvent( &DarwinEvent{
-        Type: Event_LocationUpdated,
-        RID: s.RID,
-        Schedule: s,
-        Location: l,
-      } )
-    }
-  }
 }

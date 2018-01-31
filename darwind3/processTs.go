@@ -5,7 +5,7 @@ package darwind3
 func (p *TS) Process( tx *Transaction ) error {
 
   // Retrieve the schedule to be updated
-  sched := tx.GetSchedule( p.RID )
+  sched := tx.d3.GetSchedule( p.RID )
 
   // No schedule then try to fetch it from the timetable
   if sched == nil {
@@ -56,5 +56,6 @@ func (p *TS) Process( tx *Transaction ) error {
     }
   }
 
-  return tx.PutSchedule( sched )
+  tx.d3.putSchedule( sched )
+  return nil
 }

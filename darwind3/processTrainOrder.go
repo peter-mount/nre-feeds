@@ -34,7 +34,7 @@ func (to *trainOrderWrapper) Process( tx *Transaction ) error {
 func (to *trainOrderWrapper) processOrder( tx *Transaction, order int, tod *trainOrderItem ) error {
 
   // Retrieve the schedule to be updated
-  sched := tx.GetSchedule( tod.RID )
+  sched := tx.d3.GetSchedule( tod.RID )
 
   // No schedule then try to fetch it from the timetable
   if sched == nil {
@@ -60,7 +60,8 @@ func (to *trainOrderWrapper) processOrder( tx *Transaction, order int, tod *trai
       // Mark as updated
       l.updated = true
 
-      return tx.PutSchedule( sched )
+      tx.d3.putSchedule( sched )
+      return nil
     }
   }
 
