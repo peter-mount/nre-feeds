@@ -7,6 +7,7 @@ import (
   "github.com/peter-mount/golib/codec"
   "github.com/peter-mount/golib/rest"
   "sort"
+  "sync"
   "time"
 )
 
@@ -42,6 +43,21 @@ type Schedule struct {
   Date              time.Time             `json:"date,omitempty" xml:"date,attr,omitempty"`
   // URL to this entity
   Self              string                `json:"self,omitempty" xml:"self,attr,omitempty"`
+  mutex             sync.RWMutex
+}
+
+// Update runs a function within a Write lock within the schedule
+func (s *Schedule) Update( f func() error ) error {
+  s.mutex.Lock()
+  defer s.mutex.Unlock()
+  return f()
+}
+
+// View runs a function within a Read lock within the schedule
+func (s *Schedule) View( f func() error ) error {
+  s.mutex.RLock()
+  defer s.mutex.RUnlock()
+  return f()
 }
 
 func (s *Schedule) SetSelf( r *rest.Rest ) {
@@ -101,10 +117,14 @@ func ScheduleFromBytes( b []byte ) *Schedule {
 // Bytes returns the schedule as an encoded byte slice
 func (s *Schedule) Bytes() ( []byte, error ) {
   encoder := codec.NewBinaryCodec()
-  encoder.Write( s )
-  if encoder.Error() != nil {
-    return nil, encoder.Error()
+
+  if err := s.Update( func() error {
+    encoder.Write( s )
+    return encoder.Error()
+  }); err != nil {
+    return nil, err
   }
+
   return encoder.Bytes(), nil
 }
 

@@ -47,23 +47,27 @@ func (to *trainOrderWrapper) processOrder( tx *Transaction, order int, tod *trai
     sched.Defaults()
   }
 
-  // Locate the required location
-  for _, l := range sched.Locations {
-    if l.Tiploc == to.Tiploc && l.Times.Equals( &tod.Times ) {
+  if err := sched.Update( func() error {
+    // Locate the required location
+    for _, l := range sched.Locations {
+      if l.Tiploc == to.Tiploc && l.Times.Equals( &tod.Times ) {
 
-      if to.Clear {
-        l.Forecast.TrainOrder = nil
-      } else {
-        l.Forecast.TrainOrder = &TrainOrder{ Order: order, Platform: to.Platform }
+        if to.Clear {
+          l.Forecast.TrainOrder = nil
+          } else {
+            l.Forecast.TrainOrder = &TrainOrder{ Order: order, Platform: to.Platform }
+          }
+
+          // Mark as updated
+          l.updated = true
+        }
       }
 
-      // Mark as updated
-      l.updated = true
-
-      tx.d3.putSchedule( sched )
       return nil
-    }
+  }); err != nil {
+    return err
   }
 
+  tx.d3.putSchedule( sched )
   return nil
 }

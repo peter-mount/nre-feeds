@@ -28,33 +28,36 @@ func (p *TS) Process( tx *Transaction ) error {
     return nil
   }
 
-  // Update the LateReason
-  sched.LateReason = p.LateReason
+  sched.Update( func() error {
+    // Update the LateReason
+    sched.LateReason = p.LateReason
 
-  // Run through schedule locations, any that match the new ones update the forecast
-  for _, a := range sched.Locations {
-    for _, b := range p.Locations {
-      if a.EqualInSchedule( b ) {
-        a.Times = b.Times
-        a.Forecast = b.Forecast
-        // Mark location as updated
-        a.updated = true
+    // Run through schedule locations, any that match the new ones update the forecast
+    for _, a := range sched.Locations {
+      for _, b := range p.Locations {
+        if a.EqualInSchedule( b ) {
+          a.Times = b.Times
+          a.Forecast = b.Forecast
+          // Mark location as updated
+          a.updated = true
+        }
       }
     }
-  }
 
-  // Append any locations not in the schedule
-  for _, a := range p.Locations {
-    f := true
-    for _, b := range sched.Locations {
-      if a.EqualInSchedule( b ) {
-        f = false
+    // Append any locations not in the schedule
+    for _, a := range p.Locations {
+      f := true
+      for _, b := range sched.Locations {
+        if a.EqualInSchedule( b ) {
+          f = false
+        }
+      }
+      if f {
+        sched.Locations = append( sched.Locations, a)
       }
     }
-    if f {
-      sched.Locations = append( sched.Locations, a)
-    }
-  }
+    return nil
+  })
 
   tx.d3.putSchedule( sched )
   return nil
