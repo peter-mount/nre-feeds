@@ -3,7 +3,6 @@ package ldb
 import (
   "darwind3"
   "darwintimetable"
-  "log"
   "time"
 )
 
@@ -44,6 +43,7 @@ func (a *Service) Compare( b *Service ) bool {
 
 func (s *Service) update( e *darwind3.DarwinEvent, loc *darwind3.Location ) bool {
   sched := e.Schedule
+
   if sched != nil && sched.Date.After( s.Date ) {
     s.RID = e.RID
     s.Location = loc
@@ -93,11 +93,6 @@ type stationAddService struct {
 func (s *Station) addServiceWorker() {
   for {
      e := <- s.addServiceChannel
-
-     cl := len( s.addServiceChannel )
-     if cl > 75 {
-       log.Println("Station", s.Locations[0].Crs, cl )
-     }
 
      s.Update( func() error {
 

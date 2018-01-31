@@ -4,7 +4,7 @@ clear
 docker build -t test . || exit 1
 
 #exit
-rm -rf /home/peter/tmp/dwlive.db
+#rm -rf /home/peter/tmp/dwlive.db
 #rm -f /home/peter/tmp/dw*.db
 
 # If first parameter is present then it's the National Rail ftp password

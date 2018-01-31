@@ -19,7 +19,7 @@ func (d *LDB) locationListener( c chan *darwind3.DarwinEvent ) {
           // Retrieve the station, it should be a valid one if we have public times
           station := d.GetStationTiploc( l.Tiploc )
           if station != nil {
-            station.addService( e, l )
+            station.addService( e, l.Clone() )
           }
         }
       }

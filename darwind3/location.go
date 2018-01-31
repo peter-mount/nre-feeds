@@ -325,3 +325,16 @@ func (l *Location) String() string {
     l.Forecast.Length,
     l.Forecast.DetachFront )
 }
+
+// Clone makes a clone of a Location
+func (a *Location) Clone() *Location {
+  return &Location{
+    Type: a.Type,
+    Tiploc: a.Tiploc,
+    Times: a.Times,
+    FalseDestination: a.FalseDestination,
+    Cancelled: a.Cancelled,
+    Planned: a.Planned,
+    Forecast: a.Forecast,
+  }
+}
