@@ -116,6 +116,30 @@ func (s *Station) addServiceWorker() {
   }
 }
 
+func (s *Station) removeService( rid string ) {
+  if s.public {
+    s.removeServiceChannel <- rid
+  }
+}
+
+func (s *Station) removeServiceWorker() {
+  for {
+    rid := <- s.removeServiceChannel
+
+    s.Update( func() error {
+
+      for k, service := range s.services {
+        if service.RID == rid {
+          delete( s.services, k )
+        }
+      }
+
+      return nil
+    })
+  }
+
+}
+
 // Clone returns a copy of this Service
 func (a *Service) Clone() *Service {
   return &Service{
