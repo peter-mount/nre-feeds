@@ -10,10 +10,10 @@ import (
 )
 
 type result struct {
-  // The CRS of this station
-  Crs         string                  `json:"crs"`
   // The departures
   Services []*Service                 `json:"departures"`
+  // Details about this station
+  Station  []string                   `json:"station"`
   // Map of Tiploc's
   Tiplocs    *darwinref.LocationMap   `json:"tiploc"`
   // Map of Toc's
@@ -66,36 +66,49 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
     } )
 
     // Now resolve the Tiplocs
-    tiplocs := darwinref.NewLocationMap()
-    tocs := darwinref.NewTocMap()
+    res := &result{
+      Services: services,
+      Tiplocs: darwinref.NewLocationMap(),
+      Tocs: darwinref.NewTocMap(),
+      Date: now,
+      Self: r.Self( "/ldb/boards/" + crs ),
+    }
+
     if err := d.Reference.View( func( tx *bolt.Tx ) error {
+      // Station details
+      if sl, ok := d.Reference.GetCrs( tx, crs ); ok {
+        for _, l := range sl {
+          res.Station = append( res.Station, l.Tiploc )
+          res.Tiplocs.AddTiploc( d.Reference, tx, l.Tiploc )
+        }
+      }
+
+      // Tiplocs within the departures
       for _, s := range services {
         // Service & location tiplocs
-        tiplocs.AddTiploc( d.Reference, tx, s.Destination )
-        tiplocs.AddTiploc( d.Reference, tx, s.Location.Tiploc )
+        res.Tiplocs.AddTiploc( d.Reference, tx, s.Destination )
+        res.Tiplocs.AddTiploc( d.Reference, tx, s.Location.Tiploc )
         // Toc running this service
-        tocs.AddToc( d.Reference, tx, s.Toc )
+        res.Tocs.AddToc( d.Reference, tx, s.Toc )
+        // Tiploc in a cancel or late reason
+        if s.CancelReason.Tiploc != "" {
+          res.Tiplocs.AddTiploc( d.Reference, tx, s.CancelReason.Tiploc )
+        }
+        if s.LateReason.Tiploc != "" {
+          res.Tiplocs.AddTiploc( d.Reference, tx, s.LateReason.Tiploc )
+        }
       }
 
       // Add any toc's from the locations in tiplocs
-      tocs.AddLocations( d.Reference, tx, tiplocs )
+      res.Tocs.AddLocations( d.Reference, tx, res.Tiplocs )
 
       return nil
     }); err != nil {
       return err
     }
 
-    tiplocs.Self( r )
-    tocs.Self( r )
-    
-    res := &result{
-      Crs: crs,
-      Services: services,
-      Tiplocs: tiplocs,
-      Tocs: tocs,
-      Date: now,
-      Self: r.Self( "/ldb/boards/" + crs ),
-    }
+    res.Tiplocs.Self( r )
+    res.Tocs.Self( r )
 
     r.Status( 200 ).
       Value( res )
