@@ -32,6 +32,8 @@ type DarwinReference struct {
   cisSource             map[string]string
   // via texts, map of at+","+ dest then array of possibilities
   via                  *bolt.Bucket
+  // For speed, via's in memory
+  viaMap               *ViaMap
 }
 
 func (t *DarwinReference) Write( c *codec.BinaryCodec ) {
@@ -78,6 +80,8 @@ func (r *DarwinReference) useDB( db *bolt.DB ) error {
   if err := r.initDB(); err != nil {
     return err
   }
+
+  r.viaMap = r.NewViaMap()
 
   // Read metadata
   return r.View( func( tx *bolt.Tx ) error {

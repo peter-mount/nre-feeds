@@ -74,6 +74,32 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
       return err
     }
 
+    // Resolve vias
+    for _, s := range services {
+      sv := d.Darwin.GetSchedule( s.RID )
+      if sv != nil {sv.View( func() error {
+        // Find our Location
+        found := false
+        var locs []string
+        for _, l := range sv.Locations {
+          if found {
+            locs = append( locs, l.Tiploc )
+          } else if l.Equals( s.Location ) {
+            found = true
+          }
+        }
+
+        if len( locs ) > 0 {
+          via := d.Reference.ResolveVia( crs, s.Destination, locs )
+          if via != nil {
+            s.Via = via.Text
+          }
+        }
+        return nil
+      })
+      }
+    }
+
     // sort into time order
     sort.SliceStable( services, func( i, j int ) bool {
       return services[ i ].Compare( services[ j ] )

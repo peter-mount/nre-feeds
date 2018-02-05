@@ -12,6 +12,8 @@ type Service struct {
   RID               string                      `json:"rid"`
   // The destination
   Destination       string                      `json:"destination"`
+  // Via text
+  Via               string                      `json:"via,omitempty"`
   // Service Start Date
   SSD               darwintimetable.SSD         `json:"ssd"`
   // The trainId (headcode)
