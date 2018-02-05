@@ -1,4 +1,3 @@
-// Unmarshal the Darwin Reference XML
 package darwinref
 
 import (

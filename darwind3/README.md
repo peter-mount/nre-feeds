@@ -8,14 +8,14 @@ darwind3 handles the real time push port feed
 
 ```go
 const (
-	// A schedule was activated
-	Event_Activated = iota
 	// A schedule was deactivated
-	Event_Deactivated
+	Event_Deactivated = iota
 	// A schedule was updated
 	Event_ScheduleUpdated
-	// A location was updated
-	Event_LocationUpdated
+	// A new StationMessage
+	Event_StationMessage
+	// A station's departure boards have been updated (LDB only)
+	Event_BoardUpdate
 )
 ```
 The possible types of DarwinEvent
@@ -61,6 +61,20 @@ Compare compares two Locations by their times
 func (a *CircularTimes) Equals(b *CircularTimes) bool
 ```
 
+#### func (*CircularTimes) IsPass
+
+```go
+func (t *CircularTimes) IsPass() bool
+```
+IsPass returns true if the instance represents a pass at a station
+
+#### func (*CircularTimes) IsPublic
+
+```go
+func (t *CircularTimes) IsPublic() bool
+```
+IsPublic returns true of the instance contains public times
+
 #### func (*CircularTimes) Read
 
 ```go
@@ -99,34 +113,45 @@ func (t *CircularTimes) Write(c *codec.BinaryCodec)
 
 ```go
 type DarwinD3 struct {
-
 	// Optional link to DarwinTimetable for resolving schedules.
 	Timetable *darwintimetable.DarwinTimetable
+	// Eventing
+	EventManager *DarwinEventManager
+
+	// Station message cache
+	Messages *StationMessages
 }
 ```
 
 
-#### func (*DarwinD3) Close
+#### func (*DarwinD3) BroadcastStationMessages
 
 ```go
-func (r *DarwinD3) Close()
+func (d *DarwinD3) BroadcastStationMessages()
 ```
-Close the database. If OpenDB() was used to open the db then that db is closed.
-If UseDB() was used this simply detaches the DarwinReference from that DB. The
-DB is not closed()
+BroadcastStationMessages sends all StationMessage's to the event queue as if
+they have just been received.
 
-#### func (*DarwinD3) DeregisterEventListener
+#### func (*DarwinD3) BroadcastStationMessagesHandler
 
 ```go
-func (d *DarwinD3) DeregisterEventListener(c chan *DarwinEvent)
+func (d *DarwinD3) BroadcastStationMessagesHandler(r *rest.Rest) error
 ```
+BroadcastStationMessagesHandler allows us to re-broadcast all messages
+
+#### func (*DarwinD3) ExpireStationMessages
+
+```go
+func (d *DarwinD3) ExpireStationMessages()
+```
+ExpireStationMessages expires any old (>6 hours) station messages
 
 #### func (*DarwinD3) GetSchedule
 
 ```go
-func (r *DarwinD3) GetSchedule(tx *bolt.Tx, rid string) *Schedule
+func (d *DarwinD3) GetSchedule(rid string) *Schedule
 ```
-GetSchedule retrieves a schedule or nil if not found
+Retrieve a schedule by it's rid
 
 #### func (*DarwinD3) OpenDB
 
@@ -135,22 +160,10 @@ func (r *DarwinD3) OpenDB(dbFile string) error
 ```
 OpenDB opens a DarwinReference database.
 
-#### func (*DarwinD3) PostEvent
-
-```go
-func (d *DarwinD3) PostEvent(e *DarwinEvent)
-```
-
 #### func (*DarwinD3) ProcessUpdate
 
 ```go
 func (d *DarwinD3) ProcessUpdate(p *Pport, f func(*Transaction) error) error
-```
-
-#### func (*DarwinD3) RegisterEventListener
-
-```go
-func (d *DarwinD3) RegisterEventListener() chan *DarwinEvent
 ```
 
 #### func (*DarwinD3) RegisterRest
@@ -165,26 +178,19 @@ func (d *DarwinD3) RegisterRest(c *rest.ServerContext)
 func (d *DarwinD3) ScheduleHandler(r *rest.Rest) error
 ```
 
+#### func (*DarwinD3) StationMessageHandler
+
+```go
+func (d *DarwinD3) StationMessageHandler(r *rest.Rest) error
+```
+StationMessageHandler implements the /live/message/{id} rest endpoint
+
 #### func (*DarwinD3) TestHandler
 
 ```go
 func (d *DarwinD3) TestHandler(r *rest.Rest) error
 ```
 Test handle used to test xml locally via rest
-
-#### func (*DarwinD3) Update
-
-```go
-func (r *DarwinD3) Update(f func(*bolt.Tx) error) error
-```
-Update performs a read write opertation on the database
-
-#### func (*DarwinD3) View
-
-```go
-func (r *DarwinD3) View(f func(*bolt.Tx) error) error
-```
-View performs a readonly operation on the database
 
 #### type DarwinEvent
 
@@ -196,10 +202,53 @@ type DarwinEvent struct {
 	RID string
 	// The affected Schedule or nil if none
 	Schedule *Schedule
+	// The CRS code of the station in this event (LDB only)
+	Crs string
+	// The StationMessage that's been updated
+	NewStationMessage *StationMessage
+	// The existing message before the update (or nil)
+	ExistingStationMessage *StationMessage
 }
 ```
 
 An event notifying of something happening within DarwinD3
+
+#### type DarwinEventManager
+
+```go
+type DarwinEventManager struct {
+}
+```
+
+The core of the eventing system
+
+#### func  NewDarwinEventManager
+
+```go
+func NewDarwinEventManager() *DarwinEventManager
+```
+NewDarwinEventManager creates a new DarwinEventManager
+
+#### func (*DarwinEventManager) ListenToEvents
+
+```go
+func (d *DarwinEventManager) ListenToEvents(eventType int, f func(chan *DarwinEvent))
+```
+ListenToEvents will run a function which will reveive DarwinEvent's for the
+specified type until it exists.
+
+#### func (*DarwinEventManager) ListenToEventsCapacity
+
+```go
+func (d *DarwinEventManager) ListenToEventsCapacity(eventType int, capacity int, f func(chan *DarwinEvent))
+```
+
+#### func (*DarwinEventManager) PostEvent
+
+```go
+func (d *DarwinEventManager) PostEvent(e *DarwinEvent)
+```
+PostEvent posts a DarwinEvent to all listeners listening for that specific type
 
 #### type DeactivatedSchedule
 
@@ -224,12 +273,12 @@ Processor interface
 ```go
 type DisruptionReason struct {
 	// A Darwin Reason Code. 0 = none
-	Reason int `xml:",chardata"`
+	Reason int `json:"reason" xml:",chardata"`
 	// Optional TIPLOC where the reason refers to, e.g. "signalling failure at Cheadle Hulme"
-	Tiploc string `xml:"tiploc,attr,omitempty"`
+	Tiploc string `json:"tiploc,omitempty" xml:"tiploc,attr,omitempty"`
 	// If true, the tiploc attribute should be interpreted as "near",
 	// e.g. "signalling failure near Cheadle Hulme".
-	Near bool `xml:"near,attr,omitempty"`
+	Near bool `json:"near,omitempty" xml:"near,attr,omitempty"`
 }
 ```
 
@@ -252,6 +301,15 @@ func (t *DisruptionReason) Read(c *codec.BinaryCodec)
 ```go
 func (t *DisruptionReason) Write(c *codec.BinaryCodec)
 ```
+
+#### type KBProcessor
+
+```go
+type KBProcessor interface {
+	Process() error
+}
+```
+
 
 #### type Location
 
@@ -283,6 +341,18 @@ type Location struct {
 	// The Forecast data at this location
 	// i.e. information that changes in real time
 	Forecast struct {
+		// The "display" time for this location
+		// This is calculated using the first value in the following order:
+		// Departure, Arrival, Pass, or if none of those are set then the following
+		// order in CircularTimes above is used: ptd, pta, wtd, wta & wtp
+		Time darwintimetable.WorkingTime `json:"time"`
+		// If true then delayed. This is the delayed field in one of
+		// Departure, Arrival, Pass in that order
+		Delayed bool `json:"delayed,omitempty"`
+		// If true then the train has arrived or passed this location
+		Arrived bool `json:"arrived,omitempty"`
+		// If true then the train has departed or passed this location
+		Departed bool `json:"departed,omitempty"`
 		// Forecast data for the arrival at this location
 		Arrival TSTime `json:"arr"`
 		// Forecast data for the departure at this location
@@ -319,6 +389,13 @@ unique key is Tiploc and CircularTimes.Time.
 Location's within a Schedule are sorted by CircularTimes.Time accounting for
 crossing over midnight.
 
+#### func (*Location) Clone
+
+```go
+func (a *Location) Clone() *Location
+```
+Clone makes a clone of a Location
+
 #### func (*Location) Compare
 
 ```go
@@ -345,12 +422,6 @@ Equals compares two Locations in their entirety
 
 ```go
 func (t *Location) Read(c *codec.BinaryCodec)
-```
-
-#### func (*Location) String
-
-```go
-func (l *Location) String() string
 ```
 
 #### func (*Location) UnmarshalXML
@@ -407,10 +478,11 @@ func (t *Platform) Write(c *codec.BinaryCodec)
 
 ```go
 type Pport struct {
-	XMLName xml.Name  `json:"-" xml:"Pport"`
-	TS      time.Time `json:"ts" xml:"ts,attr"`
-	Version string    `json:"version" xml:"version,attr"`
-	Actions []Processor
+	XMLName   xml.Name  `json:"-" xml:"Pport"`
+	TS        time.Time `json:"ts" xml:"ts,attr"`
+	Version   string    `json:"version" xml:"version,attr"`
+	Actions   []Processor
+	KBActions []KBProcessor
 }
 ```
 
@@ -461,8 +533,12 @@ type Schedule struct {
 	Deleted bool `json:"deleted,omitempty"`
 	// Default false
 	Charter bool `json:"charter,omitempty"`
-	// Cancel reason
+	// Cancel running reason for this service. The reason applies to all locations
+	// of this service which are marked as cancelled
 	CancelReason DisruptionReason `json:"cancelReason"`
+	// Late running reason for this service. The reason applies to all locations
+	// of this service which are not marked as cancelled
+	LateReason DisruptionReason `json:"lateReason"`
 	// The locations in this schedule
 	Locations []*Location `json:"locations"`
 	// Usually this is the date we insert into the db but here we use the TS time
@@ -529,22 +605,141 @@ func (s *Schedule) Sort()
 ```
 Sort sorts the locations in a schedule by time order
 
-#### func (*Schedule) String
-
-```go
-func (p *Schedule) String() string
-```
-
 #### func (*Schedule) UnmarshalXML
 
 ```go
 func (s *Schedule) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error
 ```
 
+#### func (*Schedule) Update
+
+```go
+func (s *Schedule) Update(f func() error) error
+```
+Update runs a function within a Write lock within the schedule
+
+#### func (*Schedule) View
+
+```go
+func (s *Schedule) View(f func() error) error
+```
+View runs a function within a Read lock within the schedule
+
 #### func (*Schedule) Write
 
 ```go
 func (t *Schedule) Write(c *codec.BinaryCodec)
+```
+
+#### type StationMessage
+
+```go
+type StationMessage struct {
+	ID int `json:"id" xml:"id,attr"`
+	// The message
+	Message string `json:"message" xml:"message"`
+	// CRS codes for the stations this message applies
+	Station []string `json:"station" xml:"stations>station"`
+	// The category of message
+	Category string `json:"category" xml:"category,attr"`
+	// The severity of the message
+	Severity int `json:"severity" xml:"severity,attr"`
+	// Whether the train running information is suppressed to the public
+	Suppress bool `json:"suppress,omitempty" xml:"suppress,attr,omitempty"`
+	// Usually this is the date we insert into the db but here we use the TS time
+	// as returned from darwin
+	Date time.Time `json:"date,omitempty" xml:"date,attr,omitempty"`
+	// URL to this entity
+	Self string `json:"self,omitempty" xml:"self,attr,omitempty"`
+}
+```
+
+
+#### func (*StationMessage) Process
+
+```go
+func (sm *StationMessage) Process(tx *Transaction) error
+```
+Process processes an inbound StationMessage
+
+#### func (*StationMessage) Read
+
+```go
+func (t *StationMessage) Read(c *codec.BinaryCodec)
+```
+
+#### func (*StationMessage) UnmarshalXML
+
+```go
+func (s *StationMessage) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error
+```
+
+#### func (*StationMessage) Write
+
+```go
+func (t *StationMessage) Write(c *codec.BinaryCodec)
+```
+
+#### type StationMessages
+
+```go
+type StationMessages struct {
+}
+```
+
+StationMessages is an in-memory with disk backup of all received
+StationMessage's This is periodically cleared down as messages expire
+
+#### func  NewStationMessages
+
+```go
+func NewStationMessages(cacheDir string) *StationMessages
+```
+
+#### func (*StationMessages) Get
+
+```go
+func (sm *StationMessages) Get(id int) *StationMessage
+```
+Get returns the specified StationMessage or nil if none
+
+#### func (*StationMessages) Load
+
+```go
+func (sm *StationMessages) Load() error
+```
+Load reloads the station messages from disk
+
+#### func (*StationMessages) Persist
+
+```go
+func (sm *StationMessages) Persist() error
+```
+Persist stores all StationMessage's to disk
+
+#### func (*StationMessages) Put
+
+```go
+func (sm *StationMessages) Put(s *StationMessage) error
+```
+Put stores a StationMessage or deletes it if it has no applicable stations
+
+#### func (*StationMessages) Read
+
+```go
+func (sm *StationMessages) Read(c *codec.BinaryCodec)
+```
+
+#### func (*StationMessages) Update
+
+```go
+func (sm *StationMessages) Update(f func() error) error
+```
+
+#### func (*StationMessages) Write
+
+```go
+func (sm *StationMessages) Write(c *codec.BinaryCodec)
 ```
 
 #### type TS
@@ -594,11 +789,11 @@ type TSTime struct {
 	// Estimated Time. For locations with a public activity,
 	// this will be based on the "public schedule".
 	// For all other activities, it will be based on the "working schedule".
-	ET string `json:"et,omitempty" xml:"et,attr,omitempty"`
+	ET *darwintimetable.WorkingTime `json:"et,omitempty" xml:"et,attr,omitempty"`
 	// The manually applied lower limit that has been applied to the estimated
 	// time at this location. The estimated time will not be set lower than this
 	// value, but may be set higher.
-	ETMin string `json:"etMin,omitempty" xml:"etmin,attr,omitempty"`
+	ETMin *darwintimetable.WorkingTime `json:"etMin,omitempty" xml:"etmin,attr,omitempty"`
 	// Indicates that an unknown delay forecast has been set for the estimated
 	// time at this location. Note that this value indicates where a manual
 	// unknown delay forecast has been set, whereas it is the "delayed"
@@ -607,9 +802,9 @@ type TSTime struct {
 	// The estimated time based on the "working schedule".
 	// This will only be set for public activities and when it also differs
 	// from the estimated time based on the "public schedule".
-	WET string `json:"wet,omitempty" xml:"wet,attr,omitempty"`
+	WET *darwintimetable.WorkingTime `json:"wet,omitempty" xml:"wet,attr,omitempty"`
 	// Actual Time
-	AT string `json:"at,omitempty" xml:"at,attr,omitempty"`
+	AT *darwintimetable.WorkingTime `json:"at,omitempty" xml:"at,attr,omitempty"`
 	// If true, indicates that an actual time ("at") value has just been removed
 	// and replaced by an estimated time ("et").
 	// Note that this attribute will only be set to "true" once, when the actual
@@ -630,16 +825,44 @@ type TSTime struct {
 
 Type describing time-based forecast attributes for a TS arrival/departure/pass
 
+#### func (*TSTime) Compare
+
+```go
+func (a *TSTime) Compare(b *TSTime) bool
+```
+Compare compares two TSTime's. This will use the value returned by TSTime.Time()
+
 #### func (*TSTime) Equals
 
 ```go
 func (a *TSTime) Equals(b *TSTime) bool
 ```
 
+#### func (*TSTime) IsSet
+
+```go
+func (t *TSTime) IsSet() bool
+```
+IsSet returns true if at least ET or AT is set
+
 #### func (*TSTime) Read
 
 ```go
 func (t *TSTime) Read(c *codec.BinaryCodec)
+```
+
+#### func (*TSTime) Time
+
+```go
+func (t *TSTime) Time() *darwintimetable.WorkingTime
+```
+Time returns the appropirate time from TSTime to use in displays. This is the
+first one set of AT, ET or nil if neither is set.
+
+#### func (*TSTime) UnmarshalXML
+
+```go
+func (s *TSTime) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error
 ```
 
 #### func (*TSTime) Write
@@ -667,27 +890,6 @@ type Transaction struct {
 }
 ```
 
-
-#### func (*Transaction) DeleteSchedule
-
-```go
-func (tx *Transaction) DeleteSchedule(rid string) error
-```
-DeleteSchedule deletes a schedule from the database
-
-#### func (*Transaction) GetSchedule
-
-```go
-func (tx *Transaction) GetSchedule(rid string) *Schedule
-```
-GetSchedule retrieves a schedule or nil if not found
-
-#### func (*Transaction) PutSchedule
-
-```go
-func (tx *Transaction) PutSchedule(s *Schedule) error
-```
-PutSchedule persists a Schedule
 
 #### func (*Transaction) ResolveSchedule
 

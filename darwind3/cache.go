@@ -1,4 +1,3 @@
-// darwind3 handles the real time push port feed
 package darwind3
 
 import (

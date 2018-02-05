@@ -1,3 +1,4 @@
+// Handle the daily reference XML file from Darwin
 package darwinref
 
 import (

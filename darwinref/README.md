@@ -148,6 +148,12 @@ func (r *DarwinReference) GetViaBucket(bucket *bolt.Bucket, at string, dest stri
 func (dr *DarwinReference) ImportHandler(r *rest.Rest) error
 ```
 
+#### func (*DarwinReference) NewViaMap
+
+```go
+func (d *DarwinReference) NewViaMap() *ViaMap
+```
+
 #### func (*DarwinReference) OpenDB
 
 ```go
@@ -179,6 +185,12 @@ func (dr *DarwinReference) ReasonLateHandler(r *rest.Rest) error
 func (r DarwinReference) RegisterRest(c *rest.ServerContext)
 ```
 RegisterRest registers the rest endpoints into a ServerContext
+
+#### func (*DarwinReference) ResolveVia
+
+```go
+func (r *DarwinReference) ResolveVia(at string, dest string, loc []string) *Via
+```
 
 #### func (*DarwinReference) TimetableId
 
@@ -469,6 +481,12 @@ func (r *TocMap) AddAll(t []*Toc)
 ```
 AddTiplocs adds an array of Tiploc's to the response
 
+#### func (*TocMap) AddLocations
+
+```go
+func (r *TocMap) AddLocations(dr *DarwinReference, tx *bolt.Tx, lm *LocationMap)
+```
+
 #### func (*TocMap) AddToc
 
 ```go
@@ -560,4 +578,18 @@ func (v *Via) String() string
 
 ```go
 func (v *Via) Write(c *codec.BinaryCodec)
+```
+
+#### type ViaMap
+
+```go
+type ViaMap struct {
+}
+```
+
+
+#### func (*ViaMap) View
+
+```go
+func (vm *ViaMap) View(f func() error) error
 ```
