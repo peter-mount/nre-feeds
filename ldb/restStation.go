@@ -2,8 +2,10 @@ package ldb
 
 import (
   bolt "github.com/coreos/bbolt"
+  "darwind3"
   "darwinref"
   "darwintimetable"
+  "fmt"
   "github.com/peter-mount/golib/rest"
   "sort"
   "time"
@@ -18,6 +20,8 @@ type result struct {
   Tiplocs    *darwinref.LocationMap   `json:"tiploc"`
   // Map of Toc's
   Tocs       *darwinref.TocMap        `json:"toc"`
+  // StationMessages
+  Messages []*darwind3.StationMessage `json:"messages"`
   // The date of this request
   Date        time.Time               `json:"date"`
   // The URL of this departure board
@@ -36,6 +40,8 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
 
     var services []*Service
 
+    var messages []*darwind3.StationMessage
+
     now := time.Now()
     var nowt darwintimetable.WorkingTime
     nowt.Set( (now.Hour()*3600) + (now.Minute()*60) )
@@ -43,8 +49,16 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
     var hour darwintimetable.WorkingTime
     hour.Set( (next.Hour()*3600) + (next.Minute()*60) )
 
-    // Get the services from the station
     if err := station.Update( func() error {
+      // Station messages
+      for _, id := range station.messages {
+        if sm := d.Darwin.Messages.Get( id ); sm != nil {
+          sm.Self = r.Self( fmt.Sprintf( "/live/message/%d", sm.ID ) )
+          messages = append( messages, sm )
+        }
+      }
+
+      // Get the services from the station
       for _,s := range station.services {
         // Limit to max 20 departures and only if within the next hour
         if len( services ) < 20 &&
@@ -70,6 +84,7 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
       Services: services,
       Tiplocs: darwinref.NewLocationMap(),
       Tocs: darwinref.NewTocMap(),
+      Messages: messages,
       Date: now,
       Self: r.Self( "/ldb/boards/" + crs ),
     }
@@ -106,6 +121,8 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
     }); err != nil {
       return err
     }
+
+    // Station Messages
 
     res.Tiplocs.Self( r )
     res.Tocs.Self( r )

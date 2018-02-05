@@ -20,6 +20,8 @@ func (d *LDB) Init() error {
 
   // Add listeners
   d.Darwin.EventManager.ListenToEventsCapacity( darwind3.Event_ScheduleUpdated, 10000, d.locationListener )
+  d.Darwin.EventManager.ListenToEventsCapacity( darwind3.Event_Deactivated, 10000, d.deactivationListener )
+  d.Darwin.EventManager.ListenToEventsCapacity( darwind3.Event_StationMessage, 100, d.stationMessageListener )
 
   // init initialises the LDB memory structures to have the stations preloaded
   go d.initStations()

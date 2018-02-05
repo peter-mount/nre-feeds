@@ -11,6 +11,8 @@ const (
   Event_Deactivated = iota
   // A schedule was updated
   Event_ScheduleUpdated
+  // A new StationMessage
+  Event_StationMessage
   // A station's departure boards have been updated (LDB only)
   Event_BoardUpdate
 )
@@ -25,6 +27,10 @@ type DarwinEvent struct {
   Schedule   *Schedule
   // The CRS code of the station in this event (LDB only)
   Crs         string
+  // The StationMessage that's been updated
+  NewStationMessage        *StationMessage
+  // The existing message before the update (or nil)
+  ExistingStationMessage   *StationMessage
 }
 
 // The core of the eventing system

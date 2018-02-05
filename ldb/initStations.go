@@ -40,4 +40,7 @@ func (d *LDB) initStations() {
   } ); err != nil {
     log.Println( "LDB: Station import failed", err )
   }
+
+  d.Darwin.ExpireStationMessages()
+  d.Darwin.BroadcastStationMessages()
 }

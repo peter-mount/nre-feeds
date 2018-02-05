@@ -46,7 +46,10 @@ func (s *UR) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error 
             elem = &TS{}
 
           case "trainOrder":
-            elem = &trainOrderWrapper{};
+            elem = &trainOrderWrapper{}
+
+          case "OW":
+            elem = &StationMessage{}
 
           default:
             if err := decoder.Skip(); err != nil {

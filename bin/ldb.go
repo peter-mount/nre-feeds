@@ -15,7 +15,11 @@ func (c *Config) initLdb() error {
     if err := c.LDB.ldb.Init(); err != nil {
       return err
     }
+
     c.LDB.ldb.RegisterRest( c.Server.ctx.Context( "/ldb" ) )
+
+    // Expire old messages every 15 minutes
+    c.cron.AddFunc( "0 0/15 * * * *", c.LDB.ldb.Darwin.ExpireStationMessages )
   }
 
   return nil

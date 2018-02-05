@@ -6,6 +6,9 @@ import (
 )
 
 func (d *DarwinD3) RegisterRest( c *rest.ServerContext ) {
+  c.Handle( "/message/broadcast", d.BroadcastStationMessagesHandler ).Methods( "POST" )
+  c.Handle( "/message/{id}", d.StationMessageHandler ).Methods( "GET" )
+
   c.Handle( "/schedule/{rid}", d.ScheduleHandler ).Methods( "GET" )
 
   c.Handle( "/test", d.TestHandler ).Methods( "POST" )
