@@ -65,7 +65,7 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
            nowt.Compare( &s.Location.Times.Time ) &&
            s.Location.Times.Time.Compare( &hour ) {
           service := s.Clone()
-          service.Self = r.Self( "/ldb/service/" + service.RID )
+          service.Self = r.Self( "/live/schedule/" + service.RID )
           services = append( services, service )
         }
       }
