@@ -48,3 +48,7 @@ func (t *SSD) MarshalXMLAttr( name xml.Name ) ( xml.Attr, error ) {
 func (t *SSD) String() string {
   return t.t.Format( "2006-01-02" )
 }
+
+func (t *SSD) Time() time.Time {
+  return t.t
+}

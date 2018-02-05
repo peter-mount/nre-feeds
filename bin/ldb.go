@@ -20,6 +20,9 @@ func (c *Config) initLdb() error {
 
     // Expire old messages every 15 minutes
     c.cron.AddFunc( "0 0/15 * * * *", c.LDB.ldb.Darwin.ExpireStationMessages )
+
+    // Expire old schedules every 15 minutes
+    c.cron.AddFunc( "0 * * * * *", c.LDB.ldb.Stations.Cleanup )
   }
 
   return nil

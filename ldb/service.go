@@ -43,6 +43,12 @@ func (a *Service) Compare( b *Service ) bool {
   return b != nil && a.Location.Compare( b.Location )
 }
 
+// Timestamp returns the time.Time of this service based on the SSD and Location's Time.
+// TODO this does not currently handle midnight correctly
+func (s *Service) Timestamp() time.Time {
+  return s.SSD.Time().Add( time.Duration( s.Location.Forecast.Time.Get() ) * time.Second )
+}
+
 func (s *Service) update( e *darwind3.DarwinEvent, loc *darwind3.Location ) bool {
   sched := e.Schedule
 
@@ -109,7 +115,10 @@ func (s *Station) addServiceWorker() {
        // A new service
        service := &Service{}
        if service.update( e.e, e.loc ) {
-         s.services[ e.e.RID ] = service
+         // Key must be unique so to support circular routes use both the
+         // RUD and the timetable time
+         k := e.e.RID + ":" + e.loc.Times.Time.String()
+         s.services[ k ] = service
          s.update()
        }
 
