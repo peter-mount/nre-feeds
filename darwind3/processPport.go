@@ -13,6 +13,10 @@ type Processor interface {
   Process( *Transaction ) error
 }
 
+type KBProcessor interface {
+  Process() error
+}
+
 func (d *DarwinD3) ProcessUpdate( p *Pport, f func( *Transaction ) error ) error {
   t := &Transaction{
     pport: p,

@@ -1,6 +1,7 @@
 package darwind3
 
 import (
+  "darwinkb"
   "encoding/xml"
   "time"
 )
@@ -11,6 +12,7 @@ type Pport struct {
   TS          time.Time `json:"ts" xml:"ts,attr"`
   Version     string    `json:"version" xml:"version,attr"`
   Actions   []Processor
+  KBActions []KBProcessor
 }
 
 func (s *Pport) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error {
@@ -29,16 +31,18 @@ func (s *Pport) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) err
     }
   }
 
-  for {
-    token, err := decoder.Token()
-    if err != nil {
-      return err
-    }
+  switch start.Name.Local {
+    case "Pport":
+      for {
+        token, err := decoder.Token()
+        if err != nil {
+          return err
+        }
 
-    switch tok := token.(type) {
-      case xml.StartElement:
-        var elem Processor
-        switch tok.Name.Local {
+        switch tok := token.(type) {
+        case xml.StartElement:
+          var elem Processor
+          switch tok.Name.Local {
           case "uR":
             elem = &UR{}
 
@@ -46,19 +50,32 @@ func (s *Pport) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) err
             if err := decoder.Skip(); err != nil {
               return err
             }
-        }
-
-        if elem != nil {
-          if err := decoder.DecodeElement( elem, &tok ); err != nil {
-            return err
           }
-          s.Actions = append( s.Actions, elem )
-        }
 
-      case xml.EndElement:
-        return nil
-    }
+          if elem != nil {
+            if err := decoder.DecodeElement( elem, &tok ); err != nil {
+              return err
+            }
+            s.Actions = append( s.Actions, elem )
+          }
+
+        case xml.EndElement:
+          return nil
+        }
+      }
+
+    case "uk.co.nationalrail.xml.incident.PtIncidentStructure":
+      elem := &darwinkb.KBIncident{}
+      if err := decoder.DecodeElement( elem, &start ); err != nil {
+        return err
+      }
+      s.KBActions = append( s.KBActions, elem )
+      return nil
+
+    default:
+      return nil
   }
+
 }
 
 // Process this message
@@ -70,6 +87,14 @@ func (p *Pport) Process( d3 *DarwinD3 ) error {
       if err := d3.ProcessUpdate( p, func( tx *Transaction ) error {
         return s.Process( tx )
       }); err != nil {
+        return err
+      }
+    }
+  }
+
+  if len( p.KBActions ) > 0 {
+    for _, s := range p.KBActions {
+      if err := s.Process(); err != nil {
         return err
       }
     }
