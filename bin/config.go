@@ -6,6 +6,7 @@ import (
   "darwinref"
   "darwintimetable"
   "darwinupdate"
+  "github.com/peter-mount/golib/rabbitmq"
   "github.com/peter-mount/golib/rest"
   "github.com/peter-mount/golib/statistics"
   "gopkg.in/robfig/cron.v2"
@@ -40,6 +41,9 @@ type Config struct {
   PushPort struct {
     Enabled       bool      `yaml:"enabled"`
     ResolveSched  bool      `yaml:"resolveSchedules"`
+    QueueName     string    `yaml:"queueName"`
+    RoutingKey    string    `yaml:"routingKey"`
+    RabbitMQ      rabbitmq.RabbitMQ `yaml:"rabbitmq"`
   }                         `yaml:"pushPort"`
 
   LDB struct {

@@ -60,6 +60,10 @@ func (c *Config) initDb() error {
     }
 
     c.Database.pushPort.RegisterRest( c.Server.ctx.Context( "/live" ) )
+
+    if c.PushPort.RabbitMQ.Url != "" {
+      c.Database.pushPort.BindConsumer( &c.PushPort.RabbitMQ, c.PushPort.QueueName, c.PushPort.RoutingKey )
+    }
   }
 
   return nil

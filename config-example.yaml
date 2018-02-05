@@ -61,6 +61,17 @@ pushPort:
   # then a new blank schedule is created.
   resolveSchedules: true
 
+  # RabbitMQ config
+  rabbitmq:
+    # URL of the connection. If this is not set then RabbitMQ is not used
+    url: amqp://user:password@server
+    # Name to show in management describing this connection
+    connectionName: LDB Departure Boards
+  # The Queue name to create in RabbitMQ
+  queueName: ldb
+  # The routingKey to bind to the queue
+  routingKey: nre.push
+
 ldb:
   # Is the live departure boards enabled
   # Note this is only valid if pushPort.enabled is also true
