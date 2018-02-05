@@ -7,8 +7,21 @@ https://departureboards.mobi/ is an example of one of these clients.
 
 ## Running
 
-Not yet available but a pre-built image will be available on Docker Hub.
-For now see Building below.
+A pre-built image is now available:
+
+| Architecture | Image | Tags | Build Status |
+| :----------: | ----- | ---- | ------------ |
+| amd64 | [area51/amd64-darwin](https://hub.docker.com/r/area51/amd64-darwin/) | latest 0.1 | [![Build Status](http://jenkins.area51.onl/buildStatus/icon?job=Public/amd64-darwin)](http://jenkins.area51.onl/job/Public/amd64-darwin)
+
+To run a pre-built image you can easily run it with:
+
+    docker run -it --rm \
+      -v /tmp/darwin/:/database \
+      -v $(pwd)/config-example.yaml:ro \
+      -p 8081:8081 \
+      area51/amd64-darwin:0.1
+
+See below for more details on this.
 
 ## Building
 
