@@ -59,7 +59,17 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
       }
 
       // Get the services from the station
+      var sa []*Service
       for _,s := range station.services {
+        sa = append( sa, s )
+      }
+
+      // sort into time order
+      sort.SliceStable( sa, func( i, j int ) bool {
+        return sa[ i ].Compare( sa[ j ] )
+      } )
+
+      for _, s := range sa {
         // Limit to max 20 departures and only if within the next hour
         if len( services ) < 20 &&
            nowt.Compare( &s.Location.Times.Time ) &&
@@ -99,11 +109,6 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
       })
       }
     }
-
-    // sort into time order
-    sort.SliceStable( services, func( i, j int ) bool {
-      return services[ i ].Compare( services[ j ] )
-    } )
 
     // Now resolve the Tiplocs
     res := &result{
