@@ -12,6 +12,9 @@ func (c *Config) initServer() error {
 
   // The webserver & base context path
   c.Server.server = rest.NewServer( c.Server.Port )
+  c.Server.server.Headers = c.Server.Headers
+  c.Server.server.Origins = c.Server.Origins
+  c.Server.server.Methods = c.Server.Methods
 
   c.Server.ctx = c.Server.server.Context( c.Server.Context )
 

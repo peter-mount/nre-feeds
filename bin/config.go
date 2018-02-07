@@ -53,7 +53,14 @@ type Config struct {
 
   Server struct {
     Context       string    `yaml:"context"`
+    // The port to run on, defaults to 8080
     Port          int       `yaml:"port"`
+    // The permitted headers
+    Headers     []string
+    // The permitted Origins
+    Origins     []string
+    // The permitted methods
+    Methods     []string
     // Web Server
     server       *rest.Server
     // Base Context
