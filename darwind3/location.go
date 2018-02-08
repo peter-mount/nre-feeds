@@ -79,6 +79,8 @@ type Location struct {
     // The train order at this location (1, 2 or 3). 0 Means no TrainOrder has been set
     TrainOrder       *TrainOrder  `json:"trainOrder,omitempty"`
   }                               `json:"forecast"`
+  // The delay in seconds calculated as difference between forecast.time and timetable.time
+  Delay               int
   // updated if true trigger an event
   updated             bool
 }
@@ -303,6 +305,12 @@ func (l *Location) update() {
   }
 
   l.Forecast.Delayed = l.Forecast.Departure.Delayed || l.Forecast.Arrival.Delayed || l.Forecast.Pass.Delayed
+
+  if !l.Forecast.Time.IsZero() && !l.Times.Time.IsZero() {
+    l.Delay = l.Forecast.Time.Get() - l.Times.Time.Get()
+  } else {
+    l.Delay = 0
+  }
 }
 
 // Clone makes a clone of a Location
