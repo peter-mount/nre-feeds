@@ -22,6 +22,8 @@ type result struct {
   Tocs       *darwinref.TocMap        `json:"toc"`
   // StationMessages
   Messages []*darwind3.StationMessage `json:"messages"`
+  // Any reasons
+  Reasons    *darwinref.ReasonMap     `json:"reasons"`
   // The date of this request
   Date        time.Time               `json:"date"`
   // The URL of this departure board
@@ -116,6 +118,7 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
       Tiplocs: darwinref.NewLocationMap(),
       Tocs: darwinref.NewTocMap(),
       Messages: messages,
+      Reasons: darwinref.NewReasonMap(),
       Date: now,
       Self: r.Self( "/ldb/boards/" + crs ),
     }
@@ -136,12 +139,21 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
         res.Tiplocs.AddTiploc( d.Reference, tx, s.Location.Tiploc )
         // Toc running this service
         res.Tocs.AddToc( d.Reference, tx, s.Toc )
+
         // Tiploc in a cancel or late reason
         if s.CancelReason.Tiploc != "" {
           res.Tiplocs.AddTiploc( d.Reference, tx, s.CancelReason.Tiploc )
         }
         if s.LateReason.Tiploc != "" {
           res.Tiplocs.AddTiploc( d.Reference, tx, s.LateReason.Tiploc )
+        }
+
+        // Also add the reason
+        if s.CancelReason.Reason > 0 {
+          res.Reasons.Add( s.CancelReason.Reason, true, tx, d.Reference )
+        }
+        if s.LateReason.Reason > 0 {
+          res.Reasons.Add( s.LateReason.Reason, false, tx, d.Reference )
         }
       }
 
@@ -153,11 +165,12 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
       return err
     }
 
-    // Station Messages
-
+    // set Self on any maps
+    res.Reasons.Self( r )
     res.Tiplocs.Self( r )
     res.Tocs.Self( r )
 
+    // Return the response
     r.Status( 200 ).
       Value( res )
   }
