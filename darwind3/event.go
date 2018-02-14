@@ -60,12 +60,16 @@ func (d *DarwinEventManager) ListenToEvents( eventType int, f func( *DarwinEvent
   d.mq.Connect()
   seq := d.sequence
   d.sequence++
-  queueName := fmt.Sprintf( "%s.%d.%d", d.prefix, eventType, seq)
+
+  queueName := fmt.Sprintf( "%s.d3.event.%d.%d", d.prefix, eventType, seq)
   routingKey := fmt.Sprintf( "d3.event.%d", eventType )
-  d.mq.QueueDeclare( queueName, false, false, false, false, nil )
+
+  // non-durable auto-delete queue
+  d.mq.QueueDeclare( queueName, false, true, false, false, nil )
+
   d.mq.QueueBind( queueName, routingKey, "amq.topic", false, nil )
 
-  ch, _ := d.mq.Consume( queueName, "D3 Event Consumer", false, true, false, false, nil )
+  ch, _ := d.mq.Consume( queueName, "D3 Event Consumer", true, true, false, false, nil )
 
   go func() {
     for {
