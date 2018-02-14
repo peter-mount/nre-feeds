@@ -1,0 +1,342 @@
+# OpenAPI definition of the rest services
+swagger: "2.0"
+info:
+  description: "NRE Darwin Reference data providing details about the rail network, operators, station names, late/cancellation reasons, etc."
+  version: "1.0.0"
+  title: "Darwin Reference Data"
+  termsOfService: "http://area51.onl/terms/"
+  contact:
+    email: "peter@retep.org"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "loge.amsterdam.area51.onl:9888"
+basePath: "/ref"
+#host: "railref.area51.onl"
+#basePath: "/v1"
+tags:
+- name: "darwinref"
+  description: "Reference data from National Rail Enquiries"
+schemes:
+- "http"
+paths:
+  /crs/{crs}:
+    get:
+      tags:
+      - "darwinref"
+      summary: "Lookup a location by it's CRS/3Alpha code"
+      description: "This returns the TIPLOC as defined by NRE"
+      operationId: "getNRTCRS"
+      produces:
+      - "application/json"
+      - "application/xml"
+      parameters:
+      - name: "crs"
+        in: "path"
+        description: "CRS of location to return"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Array of matching Location's"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/LocationRef"
+        404:
+          description: "Invalid tiploc code"
+  /reason/cancelled:
+    get:
+      tags:
+      - "darwinref"
+      summary: "Return all cancellation reasons"
+      operationId: "getNREAllCancelled"
+      produces:
+      - "application/json"
+      - "application/xml"
+      responses:
+        200:
+          description: "An array of cancellation reasons"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Reason"
+  /reason/cancelled/{code}:
+    get:
+      tags:
+      - "darwinref"
+      summary: "Return a cancellation reason"
+      description: "Returns a cancellation reason for the code used in the feeds"
+      operationId: "getNRECancelled"
+      produces:
+      - "application/json"
+      - "application/xml"
+      parameters:
+      - name: "code"
+        in: "path"
+        description: "The code used in the feeds"
+        required: true
+        type: "integer"
+      responses:
+        200:
+          description: "A cancellation reason"
+          schema:
+            $ref: "#/definitions/Reason"
+        404:
+          description: "Invalid reason code"
+  /reason/late:
+    get:
+      tags:
+      - "darwinref"
+      summary: "Return all late reasons"
+      operationId: "getNREAllLate"
+      produces:
+      - "application/json"
+      - "application/xml"
+      responses:
+        200:
+          description: "An array of late reasons"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Reason"
+  /reason/late/{code}:
+    get:
+      tags:
+      - "darwinref"
+      summary: "Return a late reason"
+      description: "Returns a late/delay reason for the code used in the feeds"
+      operationId: "getNRELate"
+      produces:
+      - "application/json"
+      - "application/xml"
+      parameters:
+      - name: "code"
+        in: "path"
+        description: "The code used in the feeds"
+        required: true
+        type: "integer"
+      responses:
+        200:
+          description: "A late/delay reason"
+          schema:
+            $ref: "#/definitions/Reason"
+        404:
+          description: "Invalid reason code"
+  /tiploc/{tiploc}:
+    get:
+      tags:
+      - "darwinref"
+      summary: "Lookup a location by it's TIPLOC"
+      description: "This returns the TIPLOC as defined by NRE"
+      operationId: "getNRETiploc"
+      produces:
+      - "application/json"
+      - "application/xml"
+      parameters:
+      - name: "tiploc"
+        in: "path"
+        description: "Tiploc of location to return"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "The matching Location"
+          schema:
+            $ref: "#/definitions/LocationRef"
+        404:
+          description: "Invalid tiploc code"
+  /toc/{toc}:
+    get:
+      tags:
+      - "darwinref"
+      summary: "Lookup details about a Train Operator"
+      description: "This returns the Toc as defined by NRE"
+      operationId: "getNREToc"
+      produces:
+      - "application/json"
+      - "application/xml"
+      parameters:
+      - name: "toc"
+        in: "path"
+        description: "Train Operator Code to return"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "The matching Toc"
+          schema:
+            $ref: "#/definitions/TocRef"
+        404:
+          description: "Invalid toc code"
+  /via/{at}/{dest}/{loc1}:
+    get:
+      tags:
+      - "darwinref"
+      summary: "Lookup a via text message"
+      description: "This returns the via message to show for a service at a specific station. This endpoint is usually used to refer to a specific Via text message & not used for lookups."
+      operationId: "getNREVia1"
+      produces:
+      - "application/json"
+      - "application/xml"
+      parameters:
+      - name: "at"
+        in: "path"
+        description: "The CRS/3Alpha code of the station where a via message is to be shown"
+        required: true
+        type: "string"
+      - name: "dest"
+        in: "path"
+        description: "The destination Tiploc for the service"
+        required: true
+        type: "string"
+      - name: "loc1"
+        in: "path"
+        description: "An intermediate calling point Tiploc"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "The matching via text to show"
+          schema:
+            $ref: "#/definitions/TocRef"
+        404:
+          description: "No matching via text message"
+  /via/{at}/{dest}/{loc1}/{loc2}:
+    get:
+      tags:
+      - "darwinref"
+      summary: "Lookup a via text message"
+      description: "This returns the via message to show for a service at a specific station. This endpoint is usually used to refer to a specific Via text message & not used for lookups."
+      operationId: "getNREVia2"
+      produces:
+      - "application/json"
+      - "application/xml"
+      parameters:
+      - name: "at"
+        in: "path"
+        description: "The CRS/3Alpha code of the station where a via message is to be shown"
+        required: true
+        type: "string"
+      - name: "dest"
+        in: "path"
+        description: "The destination Tiploc for the service"
+        required: true
+        type: "string"
+      - name: "loc1"
+        in: "path"
+        description: "A first intermediate calling point Tiploc"
+        required: true
+        type: "string"
+      - name: "loc2"
+        in: "path"
+        description: "A second intermediate calling point Tiploc"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "The matching via text to show"
+          schema:
+            $ref: "#/definitions/TocRef"
+        404:
+          description: "No matching via text message"
+
+definitions:
+#  CISSource:
+#    type: "object"
+#    description: "CIS Source"
+#    properties:
+#      code:
+#        type: "string"
+#        description: "Code used within the D3 feeds"
+#      name:
+#        type: "string"
+#        description: "Name of this source"
+  LocationRef:
+    type: "object"
+    description: "Details about a location on the railway as defined by National Rail Enquiries"
+    properties:
+      tpl:
+        type: "string"
+        description: "The Tiploc code for this station"
+      crs:
+        type: "string"
+        description: "If present the CRS/3Alpha code for this location"
+      toc:
+        type: "string"
+        description: "If present the Train Operator that manages this location"
+      name:
+        type: "string"
+        description: "The name of this location or the tiploc code"
+      date:
+        type: "string"
+        format: "date-time"
+        description: "The date this location was last imported into the system"
+      self:
+        type: "string"
+        description: "The URL to retrieve this location"
+    xml:
+      name: "LocationRef"
+  Reason:
+    type: "object"
+    description: "A cancellation/late reason"
+    properties:
+      code:
+        type: "integer"
+        description: "The code used within the feeds"
+      text:
+        type: "string"
+        description: "The text to show for this reason"
+      cancelled:
+        type: "boolean"
+        description: "True this is for cancellations, false for lateness"
+      date:
+        type: "string"
+        format: "date-time"
+        description: "The date this reason was last imported into the system"
+      self:
+        type: "string"
+        description: "The URL to retrieve this reason"
+  TocRef:
+    type: "object"
+    description: "Details about a Train Operator"
+    properties:
+      toc:
+        type: "string"
+        description: "ID for this Train Operator"
+      name:
+        type: "string"
+        description: "The name of this operator"
+      url:
+        type: "string"
+        description: "The URL for this opertor on the NRE website"
+      date:
+        type: "string"
+        format: "date-time"
+        description: "The date this toc was last imported into the system"
+      self:
+        type: "string"
+        description: "The URL to retrieve this toc"
+    xml:
+      name: "TocRef"
+  Via:
+    type: "object"
+    description: "Locations in a schedule that require a Via message"
+    properties:
+      at:
+        type: "string"
+        description: "CRS/3Alpha code of station to check for a via"
+      dest:
+        type: "string"
+        description: "Destination tiploc for the service"
+      loc1:
+        type: "string"
+        description: "Intermediary tiploc"
+      loc2:
+        type: "string"
+        description: "Optional second intermediate tiploc"
+    xml:
+      name: "Via"
+#externalDocs:
+#  description: "Find out more about Swagger"
+#  url: "http://swagger.io"
