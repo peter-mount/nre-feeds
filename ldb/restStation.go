@@ -38,6 +38,7 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
   } else {
 
     d3Client := &darwind3.DarwinD3Client{ Url: d.Darwin }
+    refClient := &darwinref.DarwinRefClient{ Url: d.Reference }
 
     var services []*Service
 
@@ -122,16 +123,19 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
       Self: r.Self( "/ldb/boards/" + crs ),
     }
 
-    /*
-    if err := d.Reference.View( func( tx *bolt.Tx ) error {
-      // Station details
-      if sl, ok := d.Reference.GetCrs( tx, crs ); ok {
-        for _, l := range sl {
-          res.Station = append( res.Station, l.Tiploc )
-          res.Tiplocs.AddTiploc( d.Reference, tx, l.Tiploc )
-        }
-      }
+    tiplocs := make( map[string]interface{} )
 
+    // Station details
+    if sl, _ := refClient.GetCrs( crs ); sl != nil {
+      for _, l := range sl.Tiploc {
+        res.Station = append( res.Station, l.Tiploc )
+        //res.Tiplocs.Add( l )
+        tiplocs[ l.Tiploc ] = nil
+        refClient.AddToc( res.Tocs, l.Toc )
+      }
+    }
+
+      /*
       // Tiplocs within the departures
       for _, s := range services {
         // Service & location tiplocs
@@ -157,8 +161,18 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
     }
     */
 
-    res.Tiplocs.Self( r )
-    res.Tocs.Self( r )
+
+    if locs, _ := refClient.GetTiplocsMapKeys( tiplocs ); locs != nil {
+      // Add the tiplocs
+      res.Tiplocs.AddAll( locs )
+
+      // Add the tocs
+      for _, l := range locs {
+        refClient.AddToc( res.Tocs, l.Toc )
+      }
+    }
+    //res.Tiplocs.Self( r )
+    //res.Tocs.Self( r )
 
     r.Status( 200 ).
       Value( res )

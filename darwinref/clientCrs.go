@@ -12,3 +12,15 @@ func (c *DarwinRefClient) GetStations() ( []*Location, error ) {
     return nil, nil
   }
 }
+
+func (c *DarwinRefClient) GetCrs( crs string ) ( *CrsResponse, error ) {
+  res := &CrsResponse{}
+
+  if found, err := c.get( "/crs/" + crs , &res ); err != nil {
+    return nil, err
+  } else if found {
+    return res, nil
+  } else {
+    return nil, nil
+  }
+}

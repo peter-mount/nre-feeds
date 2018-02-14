@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Microservice to build & run
-#SERVICE=darwinref
+SERVICE=darwinref
 #SERVICE=darwintt
 #SERVICE=darwind3
 SERVICE=ldb

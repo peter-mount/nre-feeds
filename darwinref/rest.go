@@ -19,6 +19,8 @@ func (r DarwinReference) RegisterRest( c *rest.ServerContext ) {
   // Reference retrieval methods
   c.Handle( "/crs/{id}", r.CrsHandler ).Methods( "GET" )
   c.Handle( "/crs", r.AllCrsHandler ).Methods( "GET" )
+
+  c.Handle( "/tiploc", r.TiplocsHandler ).Methods( "POST" )
   c.Handle( "/tiploc/{id}", r.TiplocHandler ).Methods( "GET" )
 
   c.Handle( "/toc", r.AllTocsHandler ).Methods( "GET" )
