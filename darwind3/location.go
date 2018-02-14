@@ -1,7 +1,9 @@
 package darwind3
 
 import (
+  "bytes"
   "darwintimetable"
+  "encoding/json"
   "encoding/xml"
   "github.com/peter-mount/golib/codec"
   "strconv"
@@ -24,7 +26,7 @@ type Location struct {
   // The times for this entry
   Times             CircularTimes `json:"timetable"`
   // TIPLOC of False Destination to be used at this location
-  FalseDestination  string        `json:"FalseDestination,omitempty"`
+  FalseDestination  string        `json:"falseDestination,omitempty"`
   // Is this service cancelled at this location
   Cancelled         bool          `json:"cancelled,omitempty"`
   // The Planned data for this location
@@ -56,13 +58,13 @@ type Location struct {
     // If true then the train has departed or passed this location
     Departed          bool        `json:"departed,omitempty"`
     // Forecast data for the arrival at this location
-    Arrival           TSTime      `json:"arr"`
+    Arrival           TSTime      `json:"arr,omitempty"`
     // Forecast data for the departure at this location
-    Departure         TSTime      `json:"dep"`
+    Departure         TSTime      `json:"dep,omitempty"`
     // Forecast data for the pass of this location
-    Pass              TSTime      `json:"pass"`
+    Pass              TSTime      `json:"pass,omitempty"`
     // Current platform number
-    Platform          Platform    `json:"plat"`
+    Platform          Platform    `json:"plat,omitempty"`
     // The service is suppressed at this location.
     Suppressed        bool        `json:"suppressed,omitempty"`
     // The length of the service at this location on departure
@@ -326,4 +328,66 @@ func (a *Location) Clone() *Location {
   }
   b.update()
   return b
+}
+
+func (t *Location) append( b *bytes.Buffer, c bool, f string, v interface{} ) bool {
+  // Any null, "" or false ignore
+  if vb, err := json.Marshal( v );
+    err == nil &&
+    !( len(vb) == 2 && vb[0] == '"' && vb[1] == '"' ) &&
+    !( len(vb) == 4 && vb[0] == 'n' && vb[1] == 'u' && vb[2] == 'l' && vb[3] == 'l') &&
+    !( len(vb) == 5 && vb[0] == 'f' && vb[1] == 'a' && vb[2] == 'l' && vb[3] == 's' && vb[4] == 'e') {
+    if c {
+      b.WriteByte( ',' )
+    }
+
+    b.WriteByte( '"' )
+    b.WriteString( f )
+    b.WriteByte( '"' )
+    b.WriteByte( ':' )
+    b.Write( vb )
+    return true
+  }
+
+  return c
+}
+
+func (t *Location) MarshalJSON() ( []byte, error ) {
+  var b bytes.Buffer
+
+  b.WriteByte( '{' )
+  c := t.append( &b, false, "type", t.Type )
+  c = t.append( &b, c, "tiploc", t.Tiploc )
+  c = t.append( &b, c, "timetable", &t.Times )
+  c = t.append( &b, c, "falseDestination", t.FalseDestination )
+  c = t.append( &b, c, "cancelled", &t.Cancelled )
+  c = t.append( &b, c, "delay", &t.Delay )
+
+  if c {
+    b.WriteByte( ',' )
+  }
+  b.WriteString( "\"planned\":{")
+  c1 := t.append( &b, false, "activity", t.Planned.ActivityType )
+  c1 = t.append( &b, c1, "plannedActivity", t.Planned.PlannedActivity )
+  if t.Planned.RDelay != 0 {
+    c1 = t.append( &b, c1, "rDelay", &t.Planned.RDelay )
+  }
+  b.WriteByte( '}' )
+
+  b.WriteString( ",\"forecast\":{")
+  c1 = t.append( &b, false, "time", &t.Forecast.Time )
+  c1 = t.append( &b, c1, "delated", &t.Forecast.Delayed )
+  c1 = t.append( &b, c1, "arrived", &t.Forecast.Arrived )
+  c1 = t.append( &b, c1, "departed", &t.Forecast.Departed )
+  c1 = t.append( &b, c1, "arr", &t.Forecast.Arrival )
+  c1 = t.append( &b, c1, "dep", &t.Forecast.Departure )
+  c1 = t.append( &b, c1, "pass", &t.Forecast.Pass )
+  c1 = t.append( &b, c1, "plat", &t.Forecast.Platform )
+  c1 = t.append( &b, c1, "suppressed", &t.Forecast.Suppressed )
+  c1 = t.append( &b, c1, "detachFront", &t.Forecast.DetachFront )
+  c1 = t.append( &b, c1, "trainOrder", t.Forecast.TrainOrder )
+  b.WriteByte( '}' )
+
+  b.WriteByte( '}' )
+  return b.Bytes(), nil
 }
