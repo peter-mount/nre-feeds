@@ -19,7 +19,9 @@ func app( config *bin.Config ) ( func(), error ) {
 
   config.DbPath( &config.Database.PushPort, "dwd3.db" )
 
-  if err := d3.OpenDB( config.Database.PushPort ); err != nil {
+  em := darwind3.NewDarwinEventManager( &config.RabbitMQ )
+
+  if err := d3.OpenDB( config.Database.PushPort, em ); err != nil {
     return nil, err
   }
 

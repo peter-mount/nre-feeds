@@ -1,8 +1,10 @@
 package darwind3
 
 import (
-  "log"
-  "sync"
+  "encoding/json"
+  "fmt"
+  "github.com/peter-mount/golib/rabbitmq"
+  "os"
 )
 
 // The possible types of DarwinEvent
@@ -35,96 +37,54 @@ type DarwinEvent struct {
 
 // The core of the eventing system
 type DarwinEventManager struct {
-  mutex        *sync.Mutex
-  listeners     map[int][]*darwinEventListener
-  listenerSeq   int
-}
-
-type darwinEventListener struct {
-  sequence       int
-  eventType      int
-  channel   chan *DarwinEvent
+  mq         *rabbitmq.RabbitMQ
+  prefix      string
+  sequence    int
 }
 
 // NewDarwinEventManager creates a new DarwinEventManager
-func NewDarwinEventManager() *DarwinEventManager {
+func NewDarwinEventManager( mq *rabbitmq.RabbitMQ ) *DarwinEventManager {
   d := &DarwinEventManager{}
-  d.mutex = &sync.Mutex{}
-  d.listeners = make( map[int][]*darwinEventListener )
+  d.mq = mq
+  if hostname, err := os.Hostname(); err != nil {
+    d.prefix = "error"
+  } else {
+    d.prefix = hostname
+  }
   return d
 }
 
 // ListenToEvents will run a function which will reveive DarwinEvent's for the
 // specified type until it exists.
-func (d *DarwinEventManager) ListenToEvents( eventType int, f func( chan *DarwinEvent ) ) {
-  d.ListenToEventsCapacity( eventType, 1000, f )
-}
+func (d *DarwinEventManager) ListenToEvents( eventType int, f func( *DarwinEvent ) ) {
+  d.mq.Connect()
+  seq := d.sequence
+  d.sequence++
+  queueName := fmt.Sprintf( "%s.%d.%d", d.prefix, eventType, seq)
+  routingKey := fmt.Sprintf( "d3.event.%d", eventType )
+  d.mq.QueueDeclare( queueName, false, false, false, false, nil )
+  d.mq.QueueBind( queueName, routingKey, "amq.topic", false, nil )
 
-func (d *DarwinEventManager) ListenToEventsCapacity( eventType int, capacity int, f func( chan *DarwinEvent ) ) {
+  ch, _ := d.mq.Consume( queueName, "D3 Event Consumer", false, true, false, false, nil )
 
-  d.mutex.Lock()
-  defer d.mutex.Unlock()
-
-  listeners := d.listeners[ eventType ]
-
-  l := &darwinEventListener{
-    sequence: d.listenerSeq,
-    eventType: eventType,
-    channel: make( chan *DarwinEvent, capacity ),
-  }
-  d.listenerSeq++
-  listeners = append( listeners, l )
-
-  d.listeners[ eventType ] = listeners
-
-  // Launch the listener
   go func() {
-    // Ensure we deregister if the listener panics
-    defer func() {
-      if err := recover(); err != nil {
-        log.Println( err )
-      }
-      d.deregisterEventListener( l )
-    }()
+    for {
+      msg := <- ch
 
-    f( l.channel )
+      evt := &DarwinEvent{}
+      json.Unmarshal( msg.Body, evt )
+
+      if evt.Type == eventType {
+        f( evt )
+      }
+    }
   }()
 
 }
 
-// DeregisterEventListener removes a channel from receiving events
-func (d *DarwinEventManager) deregisterEventListener( l *darwinEventListener ) {
-
-  d.mutex.Lock()
-  defer d.mutex.Unlock()
-
-  if listeners, ok := d.listeners[ l.eventType ]; ok {
-    var arr []*darwinEventListener
-    for _, oc := range listeners {
-      if oc.sequence != l.sequence {
-        arr = append( arr, oc )
-      }
-    }
-    d.listeners[ l.eventType ] = arr
-  }
-}
-
 // PostEvent posts a DarwinEvent to all listeners listening for that specific type
 func (d *DarwinEventManager) PostEvent( e *DarwinEvent ) {
-
-  d.mutex.Lock()
-  listeners, ok := d.listeners[ e.Type ]
-  d.mutex.Unlock()
-
-  if ok  {
-
-    for _, l := range listeners {
-
-      lc := len( l.channel )
-      if lc >= 750 {
-        log.Println( "evt", l.sequence, lc )
-      }
-      l.channel <- e
-    }
+  if b, err := json.Marshal( e ); err == nil {
+    d.mq.Publish( fmt.Sprintf( "d3.event.%d", e.Type ), b )
   }
 }

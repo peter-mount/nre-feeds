@@ -13,8 +13,8 @@ type DarwinD3 struct {
 }
 
 // OpenDB opens a DarwinReference database.
-func (r *DarwinD3) OpenDB( dbFile string ) error {
-  r.EventManager = NewDarwinEventManager()
+func (r *DarwinD3) OpenDB( dbFile string, em *DarwinEventManager ) error {
+  r.EventManager = em
   r.Messages = NewStationMessages( dbFile )
 
   return r.cache.initCache( dbFile )
