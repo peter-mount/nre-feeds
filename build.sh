@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Microservice to build & run
-SERVICE=darwinref
+#SERVICE=darwinref
 #SERVICE=darwintt
 #SERVICE=darwind3
 SERVICE=ldb
@@ -21,6 +21,8 @@ CONFIG=$(pwd)/config.yaml
 clear
 
 docker build -t ${IMAGE} --build-arg service=${SERVICE} . || exit 1
+
+#exit
 
 docker run -it --rm \
   --name test \

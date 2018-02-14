@@ -72,13 +72,13 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
 
       for _, s := range sa {
         // Limit to max 20 departures and only if within the next hour
-        if len( services ) < 20 &&
-           nowt.Compare( &s.Location.Times.Time ) &&
-           s.Location.Times.Time.Compare( &hour ) {
+        //if len( services ) < 20 &&
+        //   nowt.Compare( &s.Location.Times.Time ) &&
+        //   s.Location.Times.Time.Compare( &hour ) {
           service := s.Clone()
           service.Self = r.Self( "/live/schedule/" + service.RID )
           services = append( services, service )
-        }
+        //}
       }
       return nil
     } ); err != nil {
@@ -113,7 +113,6 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
     }
     */
 
-    // Now resolve the Tiplocs
     res := &result{
       Services: services,
       Tiplocs: darwinref.NewLocationMap(),
@@ -123,56 +122,45 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
       Self: r.Self( "/ldb/boards/" + crs ),
     }
 
+    // Set of tiplocs
     tiplocs := make( map[string]interface{} )
 
     // Station details
     if sl, _ := refClient.GetCrs( crs ); sl != nil {
       for _, l := range sl.Tiploc {
         res.Station = append( res.Station, l.Tiploc )
-        //res.Tiplocs.Add( l )
         tiplocs[ l.Tiploc ] = nil
-        refClient.AddToc( res.Tocs, l.Toc )
       }
     }
 
-      /*
-      // Tiplocs within the departures
-      for _, s := range services {
-        // Service & location tiplocs
-        res.Tiplocs.AddTiploc( d.Reference, tx, s.Destination )
-        res.Tiplocs.AddTiploc( d.Reference, tx, s.Location.Tiploc )
-        // Toc running this service
-        res.Tocs.AddToc( d.Reference, tx, s.Toc )
-        // Tiploc in a cancel or late reason
-        if s.CancelReason.Tiploc != "" {
-          res.Tiplocs.AddTiploc( d.Reference, tx, s.CancelReason.Tiploc )
-        }
-        if s.LateReason.Tiploc != "" {
-          res.Tiplocs.AddTiploc( d.Reference, tx, s.LateReason.Tiploc )
-        }
+    // Tiplocs within the departures
+    for _, s := range services {
+
+      // Destination & location tiplocs
+      tiplocs[ s.Destination ] = nil
+      tiplocs[ s.Location.Tiploc ] = nil
+
+      // Toc running this service
+      refClient.AddToc( res.Tocs, s.Toc )
+
+      // Tiploc in a cancel or late reason
+      if s.CancelReason.Tiploc != "" {
+        tiplocs[ s.CancelReason.Tiploc ] = nil
       }
 
-      // Add any toc's from the locations in tiplocs
-      res.Tocs.AddLocations( d.Reference, tx, res.Tiplocs )
-
-      return nil
-    }); err != nil {
-      return err
+      if s.LateReason.Tiploc != "" {
+        tiplocs[ s.LateReason.Tiploc ] = nil
+      }
     }
-    */
 
-
+    // Now resolve the tiplocs en-masse and resolve the toc's at the same time
     if locs, _ := refClient.GetTiplocsMapKeys( tiplocs ); locs != nil {
-      // Add the tiplocs
       res.Tiplocs.AddAll( locs )
 
-      // Add the tocs
       for _, l := range locs {
         refClient.AddToc( res.Tocs, l.Toc )
       }
     }
-    //res.Tiplocs.Self( r )
-    //res.Tocs.Self( r )
 
     r.Status( 200 ).
       Value( res )

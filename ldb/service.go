@@ -6,7 +6,6 @@ import (
   "darwintimetable"
   "encoding/json"
   "time"
-  "log"
 )
 
 // A representation of a service at a location
