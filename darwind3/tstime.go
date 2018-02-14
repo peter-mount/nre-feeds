@@ -1,7 +1,9 @@
 package darwind3
 
 import (
+  "bytes"
   "darwintimetable"
+  "encoding/json"
   "encoding/xml"
   "github.com/peter-mount/golib/codec"
 )
@@ -42,6 +44,51 @@ type TSTime struct {
   Src         string      `json:"src,omitempty" xml:"src,attr,omitempty"`
   // The RTTI CIS code of the CIS instance if the src is a CIS.
   SrcInst     string      `json:"srcInst,omitempty" xml:"srcInst,attr,omitempty"`
+}
+
+func (t *TSTime) append( b *bytes.Buffer, c bool, f string, v interface{} ) bool {
+  // Any null, "" or false ignore
+  if vb, err := json.Marshal( v );
+    err == nil &&
+    !( len(vb) == 2 && vb[0] == '"' && vb[1] == '"' ) &&
+    !( len(vb) == 4 && vb[0] == 'n' && vb[1] == 'u' && vb[2] == 'l' && vb[3] == 'l') &&
+    !( len(vb) == 5 && vb[0] == 'f' && vb[1] == 'a' && vb[2] == 'l' && vb[3] == 's' && vb[4] == 'e') {
+    if c {
+      b.WriteByte( ',' )
+    }
+
+    b.WriteByte( '"' )
+    b.WriteString( f )
+    b.WriteByte( '"' )
+    b.WriteByte( ':' )
+    b.Write( vb )
+    return true
+  }
+
+  return c
+}
+
+func (t *TSTime) MarshalJSON() ( []byte, error ) {
+  var b bytes.Buffer
+
+  if t.ET == nil && t.ETMin == nil && t.AT == nil && t.WET == nil {
+    b.WriteString( "null" )
+  } else {
+    b.WriteByte( '{' )
+    c := t.append( &b, false, "et", t.ET )
+    c = t.append( &b, c, "etMin", t.ETMin )
+    c = t.append( &b, c, "etMin", t.ETMin )
+    c = t.append( &b, c, "etUnknown", &t.ETUnknown )
+    c = t.append( &b, c, "wet", t.WET )
+    c = t.append( &b, c, "at", t.AT )
+    c = t.append( &b, c, "atRemoved", &t.ATRemoved )
+    c = t.append( &b, c, "delayed", &t.Delayed )
+    c = t.append( &b, c, "src", &t.Src )
+    c = t.append( &b, c, "srcInst", &t.SrcInst )
+    b.WriteByte( '}' )
+  }
+
+  return b.Bytes(), nil
 }
 
 // IsSet returns true if at least ET or AT is set
