@@ -1,4 +1,4 @@
-package main
+package bin
 
 import (
   "log"
@@ -7,7 +7,7 @@ import (
   "syscall"
 )
 
-func (c *Config) initShutdown() error {
+func (c *Config) InitShutdown( close func() ) error {
 
   // Listen to signals & close the db before exiting
   // SIGINT for ^C, SIGTERM for docker stopping the container
@@ -17,15 +17,9 @@ func (c *Config) initShutdown() error {
     sig := <-sigs
     log.Println( "Signal", sig )
 
-    c.cron.Stop()
+    c.Cron.Stop()
 
-    if( c.Database.reference != nil ) {
-      c.Database.reference.Close()
-    }
-
-    if( c.Database.timetable != nil ) {
-      c.Database.timetable.Close()
-    }
+    close()
 
     log.Println( "Database closed" )
 

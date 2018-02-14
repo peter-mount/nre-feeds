@@ -1,53 +1,27 @@
 #!/bin/sh
 
+# Microservice to build & run
+SERVICE=darwinref
+
+# docker image:tag to build
+IMAGE=test:${SERVICE}
+
+# Port to run against
+PORT=8081
+
+# Local paths to where to store the DB's and local config.yaml
+DBPATH=/home/peter/tmp/
+CONFIG=$(pwd)/config.yaml
+
+# End of customisations
+
 clear
-docker build -t test . || exit 1
 
-#exit
-#rm -rf /home/peter/tmp/dwlive.db
-#rm -f /home/peter/tmp/dw*.db
-
-# If first parameter is present then it's the National Rail ftp password
-if [ -n "$1" ]
-then
-  FTP="-ftp $1"
-fi
+docker build -t ${IMAGE} --build-arg service=${SERVICE} . || exit 1
 
 docker run -it --rm \
   --name test \
-  -v /home/peter/tmp/:/database \
-  -v $(pwd)/config.yaml:/config.yaml:ro \
-  -p 8081:8081 \
-  test
-
-exit
-docker run -it --rm \
-  --name test \
-  -v /home/peter/tmp/:/database \
-  -v /home/peter/Downloads:/data:ro \
-  -p 8081:8081 \
-  test \
-  darwin \
-    -p 8081 $FTP \
-    -ref /database/dwref.db \
-    -timetable /database/dwtt.db
-
-exit
-
-docker run -it --rm \
-  --name test \
-  -v /home/peter/tmp/:/database \
-  -v /home/peter/Downloads:/data:ro \
-  test \
-  loaddarwinref \
-    -d /database/darwin.db \
-    -f /data/20180103020732_ref_v3.xml
-
-docker run -it --rm \
-  --name test \
-  -v /home/peter/tmp/:/database \
-  -v /home/peter/Downloads:/data:ro \
-  test \
-  loaddarwintimetable \
-    -d /database/darwin.db \
-    -f /data/20180103020732_v8.xml
+  -v ${DBPATH}:/database \
+  -v ${CONFIG}:/config.yaml:ro \
+  -p ${PORT}:${PORT} \
+  ${IMAGE}

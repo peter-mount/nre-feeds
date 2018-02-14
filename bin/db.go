@@ -1,13 +1,10 @@
-package main
+package bin
 
 import (
-  "darwind3"
-  "darwinref"
-  "darwintimetable"
   "path/filepath"
 )
 
-func (c *Config) dbPath( s *string, d string ) *Config {
+func (c *Config) DbPath( s *string, d string ) *Config {
   if *s == "" {
     *s = c.Database.Path + d
   } else if (*s)[0] != '/' {
@@ -16,7 +13,7 @@ func (c *Config) dbPath( s *string, d string ) *Config {
   return c
 }
 
-func (c *Config) initDb() error {
+func (c *Config) InitDb() error {
 
   if c.Database.Path == "" {
     c.Database.Path = "/database/"
@@ -32,14 +29,15 @@ func (c *Config) initDb() error {
     c.Database.Path = c.Database.Path + "/"
   }
 
+/*
   c.Database.reference = &darwinref.DarwinReference{}
-  c.dbPath( &c.Database.Reference, "dwref.db" )
+  c.DbPath( &c.Database.Reference, "dwref.db" )
   if err := c.Database.reference.OpenDB( c.Database.Reference ); err != nil {
     return err
   }
   c.Database.reference.RegisterRest( c.Server.ctx.Context( "/ref" ) )
 
-  c.dbPath( &c.Database.Timetable, "dwtt.db" )
+  c.DbPath( &c.Database.Timetable, "dwtt.db" )
   c.Database.timetable = &darwintimetable.DarwinTimetable{}
   if err := c.Database.timetable.OpenDB( c.Database.Timetable ); err != nil {
     return err
@@ -48,7 +46,7 @@ func (c *Config) initDb() error {
   c.Database.timetable.ScheduleCleanup( c.cron )
 
   if c.PushPort.Enabled {
-    c.dbPath( &c.Database.PushPort, "dwlive.db" )
+    c.DbPath( &c.Database.PushPort, "dwlive.db" )
     c.Database.pushPort = &darwind3.DarwinD3{}
     if err := c.Database.pushPort.OpenDB( c.Database.PushPort ); err != nil {
       return err
@@ -65,6 +63,7 @@ func (c *Config) initDb() error {
       c.Database.pushPort.BindConsumer( &c.PushPort.RabbitMQ, c.PushPort.QueueName, c.PushPort.RoutingKey )
     }
   }
+  */
 
   return nil
 }

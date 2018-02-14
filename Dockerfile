@@ -1,11 +1,18 @@
-# Dockerfile used to build the application
+# ============================================================
+# Dockerfile used to build the various microservices
+#
+# To build run something like:
+#
+# docker build -t mytag --build-arg service=darwinref .
+#
+# where the value of service is:
+#   darwinref     The Darwin Reference API
+# ============================================================
 
-# Build container containing our pre-pulled libraries
+# Build container containing our pre-pulled libraries.
+# As this changes rarely it means we can use the cache between
+# building each microservice.
 FROM golang:latest as build
-
-# Static compile
-ENV CGO_ENABLED=0
-ENV GOOS=linux
 
 # We want to build our final image under /dest
 # A copy of /etc/ssl is required if we want to use https datasources
@@ -32,21 +39,31 @@ RUN go get -v \
       path/filepath \
       time
 
+# ============================================================
+# compiler container used just for this build. Changing the
+
+FROM build as compiler
+ARG service
+
+# Static compile
+ENV CGO_ENABLED=0
+ENV GOOS=linux
+
 # Import the source and compile
 WORKDIR /go/src
 ADD . .
 
-RUN go build -v -x \
-      -o /dest/bin/darwin bin
+# Build the microservice
+RUN go build -v -x -o /dest/bin/${service} bin/${service}
 
-# Now each binary
-#RUN go build -v -x \
-#      -o /dest/bin/loaddarwinref bin/loaddarwinref
+# The docker entrypoint
+RUN cd /dest && \
+    ln -s bin/${service} docker-entrypoint
 
-#RUN go build -v -x \
-#      -o /dest/bin/loaddarwintimetable bin/loaddarwintimetable
-
-# Finally build the final runtime container will all required files
+# ============================================================
+# Finally build the final runtime container for the specific
+# microservice
 FROM scratch
-COPY --from=build /dest/ /
-CMD ["darwin", "-c", "/config.yaml"]
+ARG service
+COPY --from=compiler /dest/ /
+CMD ["/docker-entrypoint", "-c", "/config.yaml"]

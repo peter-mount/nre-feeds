@@ -1,4 +1,4 @@
-package main
+package bin
 
 import (
   "darwind3"
@@ -35,7 +35,7 @@ type Config struct {
     User          string    `yaml:"user"`
     Password      string    `yaml:"password"`
     Schedule      string    `yaml:"schedule"`
-    update       *darwinupdate.DarwinUpdate
+    Update       *darwinupdate.DarwinUpdate
   }                         `yaml:"ftp"`
 
   PushPort struct {
@@ -64,7 +64,7 @@ type Config struct {
     // Web Server
     server       *rest.Server
     // Base Context
-    ctx          *rest.ServerContext
+    Ctx          *rest.ServerContext
   }                         `yaml:"server"`
 
   Statistics struct {
@@ -75,7 +75,7 @@ type Config struct {
   }                         `yaml:"statistics"`
 
   // Cron
-  cron         *cron.Cron
+  Cron         *cron.Cron
 }
 
 // ReadFile reads the provided file and imports yaml config

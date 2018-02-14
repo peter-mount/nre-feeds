@@ -1,22 +1,22 @@
-package main
+package bin
 
 import (
   "github.com/peter-mount/golib/statistics"
 )
 
-func (c *Config) initStats() error {
+func (c *Config) InitStats() error {
 
   c.Statistics.statistics = &statistics.Statistics{
     Log: c.Statistics.Log,
     Schedule: c.Statistics.Schedule,
     // Use our cron rather than create a second one
-    Cron: c.cron,
+    Cron: c.Cron,
   }
 
   c.Statistics.statistics.Configure()
 
   if c.Statistics.Rest != "" {
-    c.Server.ctx.HandleFunc( "/stats", statistics.StatsRestHandler ).Methods( "GET" )
+    c.Server.Ctx.HandleFunc( "/stats", statistics.StatsRestHandler ).Methods( "GET" )
   }
 
   return nil

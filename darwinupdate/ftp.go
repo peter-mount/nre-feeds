@@ -6,7 +6,7 @@ import (
   "time"
 )
 
-func (u *DarwinUpdate) ftp( f func( *ftp.ServerConn ) error ) error {
+func (u *DarwinUpdate) Ftp( f func( *ftp.ServerConn ) error ) error {
   log.Println( "FTP: Connecting" )
   if con, err := ftp.DialTimeout( u.Server, time.Minute ); err != nil {
     return err

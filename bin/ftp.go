@@ -1,4 +1,4 @@
-package main
+package bin
 
 import (
   "darwinupdate"
@@ -11,7 +11,7 @@ func (c *Config) defaultValue( s *string, d string ) *Config {
   return c
 }
 
-func (c *Config) initFtp() error {
+func (c *Config) InitFtp() error {
 
   // Force ftp offline if no password is set
   if c.Ftp.Password == "" {
@@ -22,22 +22,12 @@ func (c *Config) initFtp() error {
     defaultValue( &c.Ftp.User, "ftpuser" )
 
   if c.Ftp.Enabled {
-    c.Ftp.update = &darwinupdate.DarwinUpdate{
-      Ref: c.Database.reference,
-      TT: c.Database.timetable,
+    // Create the updater
+    c.Ftp.Update = &darwinupdate.DarwinUpdate{
       Server: c.Ftp.Server,
       User: c.Ftp.User,
       Pass: c.Ftp.Password,
     }
-
-    c.Ftp.update.SetupRest( c.Server.ctx.Context( "/update" ) )
-
-    if c.Ftp.Schedule != "" {
-      c.Ftp.update.SetupSchedule( c.cron, c.Ftp.Schedule )
-    }
-
-    // Finally check to see if we need to import now
-    c.Ftp.update.InitialImport()
   }
 
   return nil

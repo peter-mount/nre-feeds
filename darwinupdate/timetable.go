@@ -2,85 +2,78 @@ package darwinupdate
 
 import (
   "compress/gzip"
+  "darwintimetable"
   "encoding/xml"
   "github.com/jlaffaye/ftp"
-  "github.com/peter-mount/golib/rest"
   "log"
   "regexp"
   "sort"
   "strings"
 )
 
-func (u *DarwinUpdate) TimetableHandler( r *rest.Rest ) error {
-  if err := u.ftp( u.ReferenceUpdate ); err != nil {
-    return err
-  }
+func (u *DarwinUpdate) TimetableUpdate( con *ftp.ServerConn, tt *darwintimetable.DarwinTimetable ) error {
+  return u.Ftp( func( con *ftp.ServerConn ) error {
+    log.Println( "Looking for timetable updates" )
 
-  r.Status( 200 ).Value( "ok" )
-  return nil
-}
-
-func (u *DarwinUpdate) TimetableUpdate( con *ftp.ServerConn ) error {
-  log.Println( "Looking for timetable files" )
-
-  entries, err := con.List( "." )
-  if err != nil {
-    return err
-  }
-
-  re := regexp.MustCompile( ".*_v8.xml.gz" )
-
-  var files []*ftp.Entry
-
-  for _, e := range entries {
-    if re.MatchString( e.Name ) {
-      files = append( files, e )
+    entries, err := con.List( "." )
+    if err != nil {
+      return err
     }
-  }
 
-  // Sort as in ISO format
-  sort.SliceStable( files, func( i, j int ) bool {
-    return strings.Compare( files[i].Name, files[i].Name ) < 0
-  })
+    re := regexp.MustCompile( ".*_v8.xml.gz" )
 
-  if len( files ) < 1 {
-    log.Println( "No timetable files found" )
-    return nil
-  }
+    var files []*ftp.Entry
 
-  file := files[ len(files)-1 ]
-  tid := u.TT.TimetableId()
+    for _, e := range entries {
+      if re.MatchString( e.Name ) {
+        files = append( files, e )
+      }
+    }
 
-  if tid != "" && strings.Compare( file.Name[:len(tid)], tid ) <= 0 {
-    log.Println( "Ignoring", file.Name, "timetableId", tid )
-    return nil
-  }
+    // Sort as in ISO format
+    sort.SliceStable( files, func( i, j int ) bool {
+      return strings.Compare( files[i].Name, files[i].Name ) < 0
+    })
 
-  log.Println( "Retrieving", file.Name, file.Size, file.Time )
+    if len( files ) < 1 {
+      log.Println( "No timetable files found" )
+      return nil
+    }
 
-  resp, err := con.Retr( file.Name )
-  if err != nil {
-    return err
-  }
+    file := files[ len(files)-1 ]
+    tid := tt.TimetableId()
 
-  gr, err := gzip.NewReader( resp )
-  if err != nil {
-    log.Println( "Failed to gunzip")
-    resp.Close()
-    return err
-  }
+    if tid != "" && strings.Compare( file.Name[:len(tid)], tid ) <= 0 {
+      log.Println( "Ignoring", file.Name, "timetableId", tid )
+      return nil
+    }
 
-  // Run a prune first
-  u.TT.PruneSchedules()
+    log.Println( "Retrieving", file.Name, file.Size, file.Time )
 
-  if err := xml.NewDecoder( gr ).Decode( u.TT ); err != nil {
-    log.Println( err )
-    resp.Close()
-    return err
-  }
+    resp, err := con.Retr( file.Name )
+    if err != nil {
+      return err
+    }
 
-  // Run a prune afterwards
-  u.TT.PruneSchedules()
+    gr, err := gzip.NewReader( resp )
+    if err != nil {
+      log.Println( "Failed to gunzip")
+      resp.Close()
+      return err
+    }
 
-  return resp.Close()
+    // Run a prune first
+    tt.PruneSchedules()
+
+    if err := xml.NewDecoder( gr ).Decode( tt ); err != nil {
+      log.Println( err )
+      resp.Close()
+      return err
+    }
+
+    // Run a prune afterwards
+    tt.PruneSchedules()
+
+    return resp.Close()
+  } )
 }
