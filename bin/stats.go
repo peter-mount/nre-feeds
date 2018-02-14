@@ -4,7 +4,8 @@ import (
   "github.com/peter-mount/golib/statistics"
 )
 
-func (c *Config) InitStats() error {
+// initStats initialises the statistics subsystem
+func (c *Config) initStats() error {
 
   c.Statistics.statistics = &statistics.Statistics{
     Log: c.Statistics.Log,

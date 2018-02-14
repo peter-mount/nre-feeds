@@ -4,55 +4,34 @@ package main
 import (
   "bin"
   "darwintimetable"
-  "flag"
   "log"
 )
 
 func main() {
   log.Println( "darwintt v0.1" )
 
-  configFile := flag.String( "c", "", "The config file to use" )
+  bin.RunApplication( app )
+}
 
-  flag.Parse()
-
-  if *configFile == "" {
-    log.Fatal( "No default config defined, provide with -c" )
-  }
-
-  config := &bin.Config{}
-
-  if err := config.ReadFile( *configFile ); err != nil {
-    log.Fatal( err )
-  }
-
-  if err := config.InitCron(); err != nil {
-    log.Fatal( err )
-  }
-
-  if err := config.InitServer(); err != nil {
-    log.Fatal( err )
-  }
-
-  if err := config.InitStats(); err != nil {
-    log.Fatal( err )
-  }
-
-  if err := config.InitDb(); err != nil {
-    log.Fatal( err )
-  }
+func app( config *bin.Config ) ( func(), error ) {
 
   // Reference database
   tt := &darwintimetable.DarwinTimetable{}
+
   config.DbPath( &config.Database.Timetable, "dwtt.db" )
+
   if err := tt.OpenDB( config.Database.Timetable ); err != nil {
-    log.Fatal( err )
+    return nil, err
   }
+
   tt.RegisterRest( config.Server.Ctx )
 
   // Enable ftp to auto update
   if err := config.InitFtp(); err != nil {
-    log.Fatal( err )
-  } else if config.Ftp.Enabled {
+    return nil, err
+  }
+
+  if config.Ftp.Enabled {
     // Scheduled updates
     if config.Ftp.Schedule != "" {
       config.Cron.AddFunc( config.Ftp.Schedule, func () {
@@ -69,11 +48,5 @@ func main() {
     }
   }
 
-  if err := config.InitShutdown( tt.Close ); err != nil {
-    log.Fatal( err )
-  }
-
-  if err := config.Start(); err != nil {
-    log.Fatal( err )
-  }
+  return tt.Close, nil
 }

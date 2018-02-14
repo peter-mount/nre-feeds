@@ -11,6 +11,8 @@ func (c *Config) defaultValue( s *string, d string ) *Config {
   return c
 }
 
+// InitFtp initialises the ftp client. This is exposed as it's not usually used
+// within every microservice
 func (c *Config) InitFtp() error {
 
   // Force ftp offline if no password is set
@@ -18,10 +20,10 @@ func (c *Config) InitFtp() error {
     c.Ftp.Enabled = false
   }
 
-  c.defaultValue( &c.Ftp.Server, "datafeeds.nationalrail.co.uk:21" ).
+  if c.Ftp.Enabled {
+    c.defaultValue( &c.Ftp.Server, "datafeeds.nationalrail.co.uk:21" ).
     defaultValue( &c.Ftp.User, "ftpuser" )
 
-  if c.Ftp.Enabled {
     // Create the updater
     c.Ftp.Update = &darwinupdate.DarwinUpdate{
       Server: c.Ftp.Server,

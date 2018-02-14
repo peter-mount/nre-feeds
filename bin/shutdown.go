@@ -7,7 +7,8 @@ import (
   "syscall"
 )
 
-func (c *Config) InitShutdown( close func() ) error {
+// initShutdown adds signal handlers to allow clean shutdown within a Docker container
+func (c *Config) initShutdown( close func() ) error {
 
   // Listen to signals & close the db before exiting
   // SIGINT for ^C, SIGTERM for docker stopping the container

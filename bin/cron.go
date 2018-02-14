@@ -4,7 +4,8 @@ import (
   "gopkg.in/robfig/cron.v2"
 )
 
-func (c *Config) InitCron() error {
+// initCron initialises the Cron scheduler
+func (c *Config) initCron() error {
 
   c.Cron = cron.New()
 

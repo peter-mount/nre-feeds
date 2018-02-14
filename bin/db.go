@@ -4,16 +4,23 @@ import (
   "path/filepath"
 )
 
+// DbPath ensures the database name is set. If the name is not absolute then it's
+// taken as being relative to the database path in config.
+// s The required filename
+// d The filename to use if s is ""
 func (c *Config) DbPath( s *string, d string ) *Config {
   if *s == "" {
-    *s = c.Database.Path + d
-  } else if (*s)[0] != '/' {
+    *s = d
+  }
+
+  if (*s)[0] != '/' {
     *s = c.Database.Path + *s
   }
+
   return c
 }
 
-func (c *Config) InitDb() error {
+func (c *Config) initDb() error {
 
   if c.Database.Path == "" {
     c.Database.Path = "/database/"

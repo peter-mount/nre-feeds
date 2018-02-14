@@ -2,10 +2,6 @@
 package bin
 
 import (
-  "darwind3"
-  "ldb"
-  "darwinref"
-  "darwintimetable"
   "darwinupdate"
   "github.com/peter-mount/golib/rabbitmq"
   "github.com/peter-mount/golib/rest"
@@ -18,17 +14,20 @@ import (
 
 // Common configuration used to read config.yaml
 type Config struct {
+  // URL prefixes for lookups to the reference microservices
+  Services struct {
+    Reference string        `yaml:"reference"`
+    Timetable string        `yaml:"timetable"`
+  }                         `yaml:"services"`
+
   Database struct {
     Path          string    `yaml:path`
     // Darwin Reference
     Reference     string    `yaml:"reference"`
-    reference    *darwinref.DarwinReference
     // Darwin Timetable
     Timetable     string    `yaml:"timetable"`
-    timetable    *darwintimetable.DarwinTimetable
     // Darwin PushPort
     PushPort      string    `yaml:"pushPort"`
-    pushPort     *darwind3.DarwinD3
   }                         `yaml:"database"`
 
   Ftp struct {
@@ -40,22 +39,18 @@ type Config struct {
     Update       *darwinupdate.DarwinUpdate
   }                         `yaml:"ftp"`
 
-  PushPort struct {
-    Enabled       bool      `yaml:"enabled"`
+  RabbitMQ      rabbitmq.RabbitMQ `yaml:"rabbitmq"`
+
+  D3 struct {
     ResolveSched  bool      `yaml:"resolveSchedules"`
     QueueName     string    `yaml:"queueName"`
     RoutingKey    string    `yaml:"routingKey"`
-    RabbitMQ      rabbitmq.RabbitMQ `yaml:"rabbitmq"`
-  }                         `yaml:"pushPort"`
-
-  LDB struct {
-    Enabled       bool      `yaml:"enabled"`
-    ldb          *ldb.LDB
-  }                         `yaml:"ldb"`
+  }                         `yaml:"d3"`
 
   Server struct {
+    // Root context path, defaults to ""
     Context       string    `yaml:"context"`
-    // The port to run on, defaults to 8080
+    // The port to run on, defaults to 80
     Port          int       `yaml:"port"`
     // The permitted headers
     Headers     []string
@@ -81,19 +76,12 @@ type Config struct {
 }
 
 // ReadFile reads the provided file and imports yaml config
-func (c *Config) ReadFile( configFile string ) error {
+func (c *Config) readFile( configFile string ) error {
   if filename, err := filepath.Abs( configFile ); err != nil {
     return err
   } else if in, err := ioutil.ReadFile( filename ); err != nil {
     return err
-  } else {
-    return c.Unmarshal( in )
-  }
-}
-
-// Unmarshal reads yaml from a byte slice
-func (c *Config) Unmarshal( in []byte ) error {
-  if err := yaml.Unmarshal( in, c ); err != nil {
+  } else if err := yaml.Unmarshal( in, c ); err != nil {
     return err
   }
   return nil

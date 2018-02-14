@@ -4,10 +4,11 @@ import (
   "github.com/peter-mount/golib/rest"
 )
 
-func (c *Config) InitServer() error {
+// initServer initialises the http server
+func (c *Config) initServer() error {
 
   if c.Server.Port < 1 || c.Server.Port > 65534 {
-    c.Server.Port = 8080
+    c.Server.Port = 80
   }
 
   // The webserver & base context path
@@ -19,10 +20,4 @@ func (c *Config) InitServer() error {
   c.Server.Ctx = c.Server.server.Context( c.Server.Context )
 
   return nil
-}
-
-func (c *Config) Start() error {
-  c.Cron.Start()
-
-  return c.Server.server.Start()
 }
