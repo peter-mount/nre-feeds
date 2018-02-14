@@ -76,6 +76,11 @@ func (t *PublicTime) Read( c *codec.BinaryCodec ) {
 // NewPublicTime returns a new PublicTime instance from a string of format "HH:MM"
 func NewPublicTime( s string ) *PublicTime {
   v := &PublicTime{}
+  v.Parse( s )
+  return v
+}
+
+func (v *PublicTime) Parse( s string ) {
   if s == "" {
     v.t = -1
   } else {
@@ -83,7 +88,6 @@ func NewPublicTime( s string ) *PublicTime {
     b, _ := strconv.Atoi( s[3:5] )
     v.Set( (a *60) + b )
   }
-  return v
 }
 
 // PublicTimeRead is a workaround issue where a custom type cannot be
@@ -116,6 +120,14 @@ func (t *PublicTime) MarshalJSON() ( []byte, error ) {
     return json.Marshal( nil )
   }
   return json.Marshal( t.String() )
+}
+
+func (t *PublicTime) UnmarshalJSON( b []byte ) error {
+  s := string(b[:])
+  if s != "null" && len( s ) > 2 {
+    t.Parse( s[1:len(s)-1] )
+  }
+  return nil
 }
 
 // Custom XML Marshaler.
@@ -221,6 +233,10 @@ func (t *WorkingTime) Read( c *codec.BinaryCodec ) {
 // NewWorkingTime returns a new WorkingTime instance from a string of format "HH:MM:SS"
 func NewWorkingTime( s string ) *WorkingTime {
   v := &WorkingTime{}
+  return v
+}
+
+func (v *WorkingTime) Parse( s string ) {
   if s == "" {
     v.t = -1
   } else {
@@ -233,7 +249,6 @@ func NewWorkingTime( s string ) *WorkingTime {
       v.Set( (a *3600) + (b * 60) )
     }
   }
-  return v
 }
 
 // WorkingTimeRead is a workaround issue where a custom type cannot be
@@ -266,6 +281,14 @@ func (t *WorkingTime) MarshalJSON() ( []byte, error ) {
     return json.Marshal( nil )
   }
   return json.Marshal( t.String() )
+}
+
+func (t *WorkingTime) UnmarshalJSON( b []byte ) error {
+  s := string(b[:])
+  if s != "null" && len( s ) > 2 {
+    t.Parse( s[1:len(s)-1] )
+  }
+  return nil
 }
 
 // Custom XML Marshaler.

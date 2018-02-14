@@ -39,6 +39,14 @@ func (t *SSD) MarshalJSON() ( []byte, error ) {
   return json.Marshal( t.String() )
 }
 
+func (t *SSD) UnmarshalJSON( b []byte ) error {
+  s := string(b[:])
+  if s != "null" && len( s ) > 2 {
+    t.Parse( s[1:len(s)-1] )
+  }
+  return nil
+}
+
 // Custom XML Marshaler.
 func (t *SSD) MarshalXMLAttr( name xml.Name ) ( xml.Attr, error ) {
   return xml.Attr{ Name: name, Value: t.String() }, nil
