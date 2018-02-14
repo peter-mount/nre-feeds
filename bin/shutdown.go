@@ -20,7 +20,9 @@ func (c *Config) initShutdown( close func() ) error {
 
     c.Cron.Stop()
 
-    close()
+    if close != nil {
+      close()
+    }
 
     log.Println( "Database closed" )
 
