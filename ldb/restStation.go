@@ -1,11 +1,10 @@
 package ldb
 
 import (
-  bolt "github.com/coreos/bbolt"
   "darwind3"
   "darwinref"
   "darwintimetable"
-  "fmt"
+//  "fmt"
   "github.com/peter-mount/golib/rest"
   "sort"
   "time"
@@ -38,6 +37,8 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
     r.Status( 404 )
   } else {
 
+    d3Client := &darwind3.DarwinD3Client{ Url: d.Darwin }
+
     var services []*Service
 
     var messages []*darwind3.StationMessage
@@ -52,8 +53,7 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
     if err := station.Update( func() error {
       // Station messages
       for _, id := range station.messages {
-        if sm := d.Darwin.Messages.Get( id ); sm != nil {
-          sm.Self = r.Self( fmt.Sprintf( "/live/message/%d", sm.ID ) )
+        if sm, _ := d3Client.GetStationMessage( id ); sm != nil {
           messages = append( messages, sm )
         }
       }
@@ -85,6 +85,7 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
     }
 
     // Resolve vias
+    /*
     for _, s := range services {
       sv := d.Darwin.GetSchedule( s.RID )
       if sv != nil {sv.View( func() error {
@@ -109,6 +110,7 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
       })
       }
     }
+    */
 
     // Now resolve the Tiplocs
     res := &result{
@@ -120,6 +122,7 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
       Self: r.Self( "/ldb/boards/" + crs ),
     }
 
+    /*
     if err := d.Reference.View( func( tx *bolt.Tx ) error {
       // Station details
       if sl, ok := d.Reference.GetCrs( tx, crs ); ok {
@@ -152,8 +155,7 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
     }); err != nil {
       return err
     }
-
-    // Station Messages
+    */
 
     res.Tiplocs.Self( r )
     res.Tocs.Self( r )
