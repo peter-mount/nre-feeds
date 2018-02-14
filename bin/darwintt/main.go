@@ -1,15 +1,15 @@
-// darwinref Microservice
+// darwintt Microservice
 package main
 
 import (
   "bin"
-  "darwinref"
+  "darwintimetable"
   "flag"
   "log"
 )
 
 func main() {
-  log.Println( "darwinref v0.1" )
+  log.Println( "darwintt v0.1" )
 
   configFile := flag.String( "c", "", "The config file to use" )
 
@@ -42,12 +42,12 @@ func main() {
   }
 
   // Reference database
-  reference := &darwinref.DarwinReference{}
-  config.DbPath( &config.Database.Reference, "dwref.db" )
-  if err := reference.OpenDB( config.Database.Reference ); err != nil {
+  tt := &darwintimetable.DarwinTimetable{}
+  config.DbPath( &config.Database.Timetable, "dwtt.db" )
+  if err := tt.OpenDB( config.Database.Timetable ); err != nil {
     log.Fatal( err )
   }
-  reference.RegisterRest( config.Server.Ctx )
+  tt.RegisterRest( config.Server.Ctx )
 
   // Enable ftp to auto update
   if err := config.InitFtp(); err != nil {
@@ -56,7 +56,7 @@ func main() {
     // Scheduled updates
     if config.Ftp.Schedule != "" {
       config.Cron.AddFunc( config.Ftp.Schedule, func () {
-        if err := config.Ftp.Update.ReferenceUpdate( reference ); err != nil {
+        if err := config.Ftp.Update.TimetableUpdate( tt ); err != nil {
           log.Println( "Failed import:", err )
         }
       })
@@ -64,12 +64,12 @@ func main() {
     }
 
     // Initial import required?
-    if config.Ftp.Update.ImportRequiredTimetable( reference ) {
-      config.Ftp.Update.ReferenceUpdate( reference )
+    if config.Ftp.Update.ImportRequiredTimetable( tt ) {
+      config.Ftp.Update.TimetableUpdate( tt )
     }
   }
 
-  if err := config.InitShutdown( reference.Close ); err != nil {
+  if err := config.InitShutdown( tt.Close ); err != nil {
     log.Fatal( err )
   }
 

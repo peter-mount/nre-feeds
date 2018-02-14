@@ -1,7 +1,8 @@
 #!/bin/sh
 
 # Microservice to build & run
-SERVICE=darwinref
+#SERVICE=darwinref
+SERVICE=darwintt
 
 # docker image:tag to build
 IMAGE=test:${SERVICE}

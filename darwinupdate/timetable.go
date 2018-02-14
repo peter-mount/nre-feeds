@@ -11,7 +11,7 @@ import (
   "strings"
 )
 
-func (u *DarwinUpdate) TimetableUpdate( con *ftp.ServerConn, tt *darwintimetable.DarwinTimetable ) error {
+func (u *DarwinUpdate) TimetableUpdate( tt *darwintimetable.DarwinTimetable ) error {
   return u.Ftp( func( con *ftp.ServerConn ) error {
     log.Println( "Looking for timetable updates" )
 

@@ -1,3 +1,4 @@
+// Internal library used for the binary webservices
 package bin
 
 import (
@@ -15,6 +16,7 @@ import (
   "path/filepath"
 )
 
+// Common configuration used to read config.yaml
 type Config struct {
   Database struct {
     Path          string    `yaml:path`
