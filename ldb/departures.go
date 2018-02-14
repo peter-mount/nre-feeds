@@ -3,14 +3,15 @@ package ldb
 
 import (
   "darwind3"
-  "darwinref"
 )
 
 type LDB struct {
   // Link to D3
-  Darwin       *darwind3.DarwinD3
+  Darwin        string
   // Link to reference
-  Reference    *darwinref.DarwinReference
+  Reference     string
+  // Eventing
+  EventManager *darwind3.DarwinEventManager
   // The managed stations
   Stations     *Stations
 }
@@ -19,9 +20,9 @@ func (d *LDB) Init() error {
   d.Stations = NewStations()
 
   // Add listeners
-  d.Darwin.EventManager.ListenToEventsCapacity( darwind3.Event_ScheduleUpdated, 10000, d.locationListener )
-  d.Darwin.EventManager.ListenToEventsCapacity( darwind3.Event_Deactivated, 10000, d.deactivationListener )
-  d.Darwin.EventManager.ListenToEventsCapacity( darwind3.Event_StationMessage, 100, d.stationMessageListener )
+  d.EventManager.ListenToEvents( darwind3.Event_ScheduleUpdated, d.locationListener )
+  d.EventManager.ListenToEvents( darwind3.Event_Deactivated, d.deactivationListener )
+  d.EventManager.ListenToEvents( darwind3.Event_StationMessage, d.stationMessageListener )
 
   // init initialises the LDB memory structures to have the stations preloaded
   go d.initStations()

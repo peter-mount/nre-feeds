@@ -1,7 +1,6 @@
 package ldb
 
 import (
-  bolt "github.com/coreos/bbolt"
   "darwinref"
   "sync"
 )
@@ -67,6 +66,7 @@ func (d *LDB) GetStationTiploc( tiploc string ) *Station {
     }
 
     var locs []*darwinref.Location
+    /*
     d.Reference.View( func( tx *bolt.Tx ) error {
       // Lookup the tiploc
       loc, _ := d.Reference.GetTiploc( tx, tiploc )
@@ -86,6 +86,7 @@ func (d *LDB) GetStationTiploc( tiploc string ) *Station {
 
       return nil
     } )
+    */
 
     if len( locs ) == 0 {
       return nil

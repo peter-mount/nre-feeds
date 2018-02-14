@@ -1,11 +1,12 @@
 package ldb
 
 import (
-  bolt "github.com/coreos/bbolt"
+//  bolt "github.com/coreos/bbolt"
   "darwinref"
-  "github.com/peter-mount/golib/codec"
+//  "github.com/peter-mount/golib/codec"
   "log"
 )
+
 // initStations ensures we have all public stations defined on startup.
 // Not doing so incurs a performance hit when a train references it for the
 // first time.
@@ -13,26 +14,26 @@ func (d *LDB) initStations() {
   if err := d.Stations.Update( func() error {
     log.Println( "LDB: Initialising stations")
 
-    if err := d.Reference.View( func( tx *bolt.Tx ) error {
-      crsBucket := tx.Bucket( []byte( "DarwinCrs" ) )
-      tiplocBucket := tx.Bucket( []byte( "DarwinTiploc" ) )
+    refClient := &darwinref.DarwinRefClient{ Url: d.Reference }
 
-      return crsBucket.ForEach( func( k, v []byte ) error {
-        var tpls []string
-        codec.NewBinaryCodecFrom( v ).ReadStringArray( &tpls )
-
-        var t []*darwinref.Location
-        for _, tpl := range tpls {
-          if loc, exists := d.Reference.GetTiplocBucket( tiplocBucket, tpl ); exists {
-            t = append( t, loc )
-          }
-        }
-
-        d.createStation( t )
-        return nil
-      })
-    } ); err != nil {
+    if locations, err := refClient.GetStations(); err != nil {
       return err
+    } else if locations != nil {
+      // Map tiplocs by crs
+      m := make( map[string][]*darwinref.Location )
+      for _, loc := range locations {
+        if s, ok := m[ loc.Crs ]; ok {
+          m[ loc.Crs ] = append( s, loc )
+        } else {
+          s = make( []*darwinref.Location, 0 )
+          m[ loc.Crs ] = append( s, loc )
+        }
+      }
+
+      // create a station for each
+      for _, l := range m {
+        d.createStation( l )
+      }
     }
 
     log.Println( "LDB:", len( d.Stations.crs ), "Stations initialised")
@@ -41,6 +42,6 @@ func (d *LDB) initStations() {
     log.Println( "LDB: Station import failed", err )
   }
 
-  d.Darwin.ExpireStationMessages()
-  d.Darwin.BroadcastStationMessages()
+  //d.Darwin.ExpireStationMessages()
+  //d.Darwin.BroadcastStationMessages()
 }

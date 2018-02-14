@@ -16,6 +16,7 @@ import (
 type Config struct {
   // URL prefixes for lookups to the reference microservices
   Services struct {
+    DarwinD3  string        `yaml:"darwind3"`
     Reference string        `yaml:"reference"`
     Timetable string        `yaml:"timetable"`
   }                         `yaml:"services"`

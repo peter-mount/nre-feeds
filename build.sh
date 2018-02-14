@@ -2,7 +2,9 @@
 
 # Microservice to build & run
 #SERVICE=darwinref
-SERVICE=darwintt
+#SERVICE=darwintt
+#SERVICE=darwind3
+SERVICE=ldb
 
 # docker image:tag to build
 IMAGE=test:${SERVICE}
@@ -24,5 +26,5 @@ docker run -it --rm \
   --name test \
   -v ${DBPATH}:/database \
   -v ${CONFIG}:/config.yaml:ro \
-  -p ${PORT}:${PORT} \
+  -p ${PORT}:80 \
   ${IMAGE}

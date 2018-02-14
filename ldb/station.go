@@ -49,7 +49,7 @@ func (s *Station) Update( f func() error ) error {
 }
 
 func (s *Station) update() {
-  s.ldb.Darwin.EventManager.PostEvent( &darwind3.DarwinEvent{
+  s.ldb.EventManager.PostEvent( &darwind3.DarwinEvent{
     Type: darwind3.Event_BoardUpdate,
     Crs: s.Crs,
   })
