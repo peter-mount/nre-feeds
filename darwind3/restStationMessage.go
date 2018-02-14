@@ -26,3 +26,46 @@ func (d *DarwinD3) BroadcastStationMessagesHandler( r *rest.Rest ) error {
 
   return nil
 }
+
+// CrsMessageHandler Returns all messages for a CRS
+func (d *DarwinD3) AllMessageHandler( r *rest.Rest ) error {
+  var messages []*StationMessage
+
+  d.Messages.Update( func() error {
+    if len( d.Messages.messages ) > 0 {
+      for _, s := range d.Messages.messages {
+        messages = append( messages, s )
+      }
+    }
+    return nil
+  })
+
+  r.Status( 200 ).Value( messages )
+
+  return nil
+}
+
+// CrsMessageHandler Returns all messages for a CRS
+func (d *DarwinD3) CrsMessageHandler( r *rest.Rest ) error {
+  crs := r.Var( "crs" )
+
+  var messages []*StationMessage
+
+  d.Messages.Update( func() error {
+    if len( d.Messages.messages ) > 0 {
+      for _, s := range d.Messages.messages {
+        for _, c := range s.Station {
+          if c == crs {
+            messages = append( messages, s )
+            break
+          }
+        }
+      }
+    }
+    return nil
+  })
+
+  r.Status( 200 ).Value( messages )
+
+  return nil
+}
