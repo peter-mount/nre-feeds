@@ -1,9 +1,12 @@
 package ldb
 
 import (
+  "bytes"
   "darwind3"
   "darwintimetable"
+  "encoding/json"
   "time"
+  "log"
 )
 
 // A representation of a service at a location
@@ -167,4 +170,55 @@ func (a *Service) Clone() *Service {
     Date: a.Date,
     Self: a.Self,
   }
+}
+
+func (t *Service) append( b *bytes.Buffer, c bool, f string, v interface{} ) bool {
+  // Any null, "" or false ignore
+  if vb, err := json.Marshal( v );
+    err == nil &&
+    !( len(vb) == 2 && vb[0] == '"' && vb[1] == '"' ) &&
+    !( len(vb) == 4 && vb[0] == 'n' && vb[1] == 'u' && vb[2] == 'l' && vb[3] == 'l') &&
+    !( len(vb) == 5 && vb[0] == 'f' && vb[1] == 'a' && vb[2] == 'l' && vb[3] == 's' && vb[4] == 'e') {
+    if c {
+      b.WriteByte( ',' )
+    }
+
+    b.WriteByte( '"' )
+    b.WriteString( f )
+    b.WriteByte( '"' )
+    b.WriteByte( ':' )
+    b.Write( vb )
+    return true
+  }
+
+  return c
+}
+
+func (t *Service) MarshalJSON() ( []byte, error ) {
+  var b bytes.Buffer
+
+  b.WriteByte( '{' )
+  c := t.append( &b, false, "rid", t.RID )
+  c = t.append( &b, c, "destination", t.Destination )
+  c = t.append( &b, c, "via", t.Via )
+  c = t.append( &b, c, "ssd", &t.SSD )
+  c = t.append( &b, c, "trainId", t.TrainId )
+  c = t.append( &b, c, "toc", t.Toc )
+  c = t.append( &b, c, "passengerService", &t.PassengerService )
+  c = t.append( &b, c, "charter", &t.Charter )
+
+  if t.CancelReason.Reason > 0 {
+    c = t.append( &b, c, "cancelReason", &t.CancelReason )
+  }
+
+  if t.LateReason.Reason > 0 {
+    c = t.append( &b, c, "lateReason", &t.LateReason )
+  }
+
+  c = t.append( &b, c, "location", &t.Location )
+  c = t.append( &b, c, "date", t.Date )
+  c = t.append( &b, c, "self", t.Self )
+
+  b.WriteByte( '}' )
+  return b.Bytes(), nil
 }
