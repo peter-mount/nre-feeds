@@ -234,6 +234,80 @@ func (t *PublicTime) Write(c *codec.BinaryCodec)
 ```
 BinaryCodec writer
 
+#### type SSD
+
+```go
+type SSD struct {
+}
+```
+
+
+#### func (*SSD) Before
+
+```go
+func (s *SSD) Before(t time.Time) bool
+```
+Before is an SSD before a specified time
+
+#### func (*SSD) Equals
+
+```go
+func (a *SSD) Equals(b *SSD) bool
+```
+
+#### func (*SSD) MarshalJSON
+
+```go
+func (t *SSD) MarshalJSON() ([]byte, error)
+```
+Custom JSON Marshaler.
+
+#### func (*SSD) MarshalXMLAttr
+
+```go
+func (t *SSD) MarshalXMLAttr(name xml.Name) (xml.Attr, error)
+```
+Custom XML Marshaler.
+
+#### func (*SSD) Parse
+
+```go
+func (t *SSD) Parse(s string)
+```
+
+#### func (*SSD) Read
+
+```go
+func (t *SSD) Read(c *codec.BinaryCodec)
+```
+BinaryCodec reader
+
+#### func (*SSD) String
+
+```go
+func (t *SSD) String() string
+```
+String returns a SSD in "YYYY-MM-DD" format
+
+#### func (*SSD) Time
+
+```go
+func (t *SSD) Time() time.Time
+```
+
+#### func (*SSD) UnmarshalJSON
+
+```go
+func (t *SSD) UnmarshalJSON(b []byte) error
+```
+
+#### func (*SSD) Write
+
+```go
+func (t *SSD) Write(c *codec.BinaryCodec)
+```
+BinaryCodec writer
+
 #### type TSTime
 
 ```go

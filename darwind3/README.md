@@ -474,11 +474,11 @@ updating our internal state
 
 ```go
 type Schedule struct {
-	RID     string              `json:"rid"`
-	UID     string              `json:"uid"`
-	TrainId string              `json:"trainId"`
-	SSD     darwintimetable.SSD `json:"ssd"`
-	Toc     string              `json:"toc"`
+	RID     string   `json:"rid"`
+	UID     string   `json:"uid"`
+	TrainId string   `json:"trainId"`
+	SSD     util.SSD `json:"ssd"`
+	Toc     string   `json:"toc"`
 	// Default P
 	Status string `json:"status"`
 	// Default OO
@@ -710,7 +710,7 @@ type TS struct {
 	// Train UID
 	UID string `json:"uid" xml:"uid,attr"`
 	// Scheduled Start Date
-	SSD darwintimetable.SSD `json:"ssd" xml:"ssd,attr"`
+	SSD util.SSD `json:"ssd" xml:"ssd,attr"`
 	// Indicates whether a train that divides is working with portions in
 	// reverse to their normal formation. The value applies to the whole train.
 	// Darwin will not validate that a divide association actually exists for

@@ -288,7 +288,7 @@ type Journey struct {
 	RID       string   `json:"rid" xml:"rid,attr"`
 	UID       string   `json:"uid" xml:"uid,attr"`
 	TrainID   string   `json:"trainId" xml:"trainId"`
-	SSD       SSD      `json:"ssd" xml:"ssd,attr"`
+	SSD       util.SSD `json:"ssd" xml:"ssd,attr"`
 	Toc       string   `json:"toc" xml:"toc,attr"`
 	TrainCat  string   `json:"trainCat" xml:"trainCat,attr"`
 	Passenger bool     `json:"isPassengerSvc" xml:"isPassengerSvc,attr"`
@@ -498,77 +498,3 @@ type PP struct {
 ```go
 func (s *PP) Location() *Location
 ```
-
-#### type SSD
-
-```go
-type SSD struct {
-}
-```
-
-
-#### func (*SSD) Before
-
-```go
-func (s *SSD) Before(t time.Time) bool
-```
-Before is an SSD before a specified time
-
-#### func (*SSD) Equals
-
-```go
-func (a *SSD) Equals(b *SSD) bool
-```
-
-#### func (*SSD) MarshalJSON
-
-```go
-func (t *SSD) MarshalJSON() ([]byte, error)
-```
-Custom JSON Marshaler.
-
-#### func (*SSD) MarshalXMLAttr
-
-```go
-func (t *SSD) MarshalXMLAttr(name xml.Name) (xml.Attr, error)
-```
-Custom XML Marshaler.
-
-#### func (*SSD) Parse
-
-```go
-func (t *SSD) Parse(s string)
-```
-
-#### func (*SSD) Read
-
-```go
-func (t *SSD) Read(c *codec.BinaryCodec)
-```
-BinaryCodec reader
-
-#### func (*SSD) String
-
-```go
-func (t *SSD) String() string
-```
-String returns a SSD in "YYYY-MM-DD" format
-
-#### func (*SSD) Time
-
-```go
-func (t *SSD) Time() time.Time
-```
-
-#### func (*SSD) UnmarshalJSON
-
-```go
-func (t *SSD) UnmarshalJSON(b []byte) error
-```
-
-#### func (*SSD) Write
-
-```go
-func (t *SSD) Write(c *codec.BinaryCodec)
-```
-BinaryCodec writer

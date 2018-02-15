@@ -61,7 +61,7 @@ type Service struct {
 	// Via text
 	Via string `json:"via,omitempty"`
 	// Service Start Date
-	SSD darwintimetable.SSD `json:"ssd"`
+	SSD util.SSD `json:"ssd"`
 	// The trainId (headcode)
 	TrainId string `json:"trainId"`
 	// The operator of this service
