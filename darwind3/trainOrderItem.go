@@ -2,6 +2,7 @@ package darwind3
 
 import (
   "encoding/xml"
+  "util"
 )
 
 // Describes the identifier of a train in the train order
@@ -11,7 +12,7 @@ type trainOrderItem struct {
   RID       string
   // One or more scheduled times to identify the instance of the location in
   // the train schedule for which the train order is set.
-  Times     CircularTimes
+  Times     util.CircularTimes
   // Where a train in the train order is not in the Darwin timetable,
   // a Train ID (headcode) will be supplied
   TrainId   string

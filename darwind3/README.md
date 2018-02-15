@@ -20,101 +20,12 @@ const (
 ```
 The possible types of DarwinEvent
 
-#### type CircularTimes
-
-```go
-type CircularTimes struct {
-	// The time for this location.
-	// This is calculated as the first value defined below in the following
-	// sequence: Wtd, Wta, Wtp, Ptd & Pta.
-	Time darwintimetable.WorkingTime `json:"time"`
-	// Public Scheduled Time of Arrival
-	Pta *darwintimetable.PublicTime `json:"pta,omitempty"`
-	// Public Scheduled Time of Departure
-	Ptd *darwintimetable.PublicTime `json:"ptd,omitempty"`
-	// Working Scheduled Time of Arrival
-	Wta *darwintimetable.WorkingTime `json:"wta,omitempty"`
-	// Working Scheduled Time of Departure
-	Wtd *darwintimetable.WorkingTime `json:"wtd,omitempty"`
-	// Working Scheduled Time of Passing
-	Wtp *darwintimetable.WorkingTime `json:"wtp,omitempty"`
-}
-```
-
-A scheduled time used to distinguish a location on circular routes. Note that
-all scheduled time attributes are marked as optional, but at least one must
-always be supplied. Only one value is required, and typically this should be the
-wtd value. However, for locations that have no wtd, or for clients that deal
-exclusively with public times, another value that is valid for the location may
-be supplied.
-
-#### func (*CircularTimes) Compare
-
-```go
-func (a *CircularTimes) Compare(b *CircularTimes) bool
-```
-Compare compares two Locations by their times
-
-#### func (*CircularTimes) Equals
-
-```go
-func (a *CircularTimes) Equals(b *CircularTimes) bool
-```
-
-#### func (*CircularTimes) IsPass
-
-```go
-func (t *CircularTimes) IsPass() bool
-```
-IsPass returns true if the instance represents a pass at a station
-
-#### func (*CircularTimes) IsPublic
-
-```go
-func (t *CircularTimes) IsPublic() bool
-```
-IsPublic returns true of the instance contains public times
-
-#### func (*CircularTimes) Read
-
-```go
-func (t *CircularTimes) Read(c *codec.BinaryCodec)
-```
-
-#### func (*CircularTimes) String
-
-```go
-func (l *CircularTimes) String() string
-```
-
-#### func (*CircularTimes) UnmarshalXMLAttributes
-
-```go
-func (t *CircularTimes) UnmarshalXMLAttributes(start xml.StartElement)
-```
-UnmarshalXMLAttributes reads from an arbitary start element
-
-#### func (*CircularTimes) UpdateTime
-
-```go
-func (l *CircularTimes) UpdateTime()
-```
-UpdateTime updates the Time field used for sequencing the location. This is the
-the first one of these set in the following order: Wtd, Wta, Wtp, Ptd, Pta Note
-this value is not persisted as it's a generated value
-
-#### func (*CircularTimes) Write
-
-```go
-func (t *CircularTimes) Write(c *codec.BinaryCodec)
-```
-
 #### type DarwinD3
 
 ```go
 type DarwinD3 struct {
-	// Optional link to DarwinTimetable for resolving schedules.
-	Timetable *darwintimetable.DarwinTimetable
+	// Optional link to remote DarwinTimetable for resolving schedules.
+	Timetable string
 	// Eventing
 	EventManager *DarwinEventManager
 
@@ -123,6 +34,20 @@ type DarwinD3 struct {
 }
 ```
 
+
+#### func (*DarwinD3) AllMessageHandler
+
+```go
+func (d *DarwinD3) AllMessageHandler(r *rest.Rest) error
+```
+CrsMessageHandler Returns all messages for a CRS
+
+#### func (*DarwinD3) BindConsumer
+
+```go
+func (d *DarwinD3) BindConsumer(r *rabbitmq.RabbitMQ, queueName, routingKey string) error
+```
+BindConsumer binds a consumer to a RabbitMQ queue to receive D3 messages
 
 #### func (*DarwinD3) BroadcastStationMessages
 
@@ -138,6 +63,13 @@ they have just been received.
 func (d *DarwinD3) BroadcastStationMessagesHandler(r *rest.Rest) error
 ```
 BroadcastStationMessagesHandler allows us to re-broadcast all messages
+
+#### func (*DarwinD3) CrsMessageHandler
+
+```go
+func (d *DarwinD3) CrsMessageHandler(r *rest.Rest) error
+```
+CrsMessageHandler Returns all messages for a CRS
 
 #### func (*DarwinD3) ExpireStationMessages
 
@@ -156,7 +88,7 @@ Retrieve a schedule by it's rid
 #### func (*DarwinD3) OpenDB
 
 ```go
-func (r *DarwinD3) OpenDB(dbFile string) error
+func (r *DarwinD3) OpenDB(dbFile string, em *DarwinEventManager) error
 ```
 OpenDB opens a DarwinReference database.
 
@@ -185,12 +117,32 @@ func (d *DarwinD3) StationMessageHandler(r *rest.Rest) error
 ```
 StationMessageHandler implements the /live/message/{id} rest endpoint
 
-#### func (*DarwinD3) TestHandler
+#### type DarwinD3Client
 
 ```go
-func (d *DarwinD3) TestHandler(r *rest.Rest) error
+type DarwinD3Client struct {
+	// The url prefix, e.g. "http://localhost:8080" of the remote service
+	// Note no trailing "/" as the client will add a patch starting with "/"
+	Url string
+}
 ```
-Test handle used to test xml locally via rest
+
+A remove client to the DarwinTimetable microservice
+
+#### func (*DarwinD3Client) GetSchedule
+
+```go
+func (c *DarwinD3Client) GetSchedule(rid string) (*Schedule, error)
+```
+GetSchedule returns an active Schedule or nil
+
+#### func (*DarwinD3Client) GetStationMessage
+
+```go
+func (c *DarwinD3Client) GetStationMessage(id int) (*StationMessage, error)
+```
+GetJourney returns a Journey by making an HTTP call to a remote instance of
+DarwinTimetable
 
 #### type DarwinEvent
 
@@ -225,23 +177,17 @@ The core of the eventing system
 #### func  NewDarwinEventManager
 
 ```go
-func NewDarwinEventManager() *DarwinEventManager
+func NewDarwinEventManager(mq *rabbitmq.RabbitMQ) *DarwinEventManager
 ```
 NewDarwinEventManager creates a new DarwinEventManager
 
 #### func (*DarwinEventManager) ListenToEvents
 
 ```go
-func (d *DarwinEventManager) ListenToEvents(eventType int, f func(chan *DarwinEvent))
+func (d *DarwinEventManager) ListenToEvents(eventType int, f func(*DarwinEvent)) error
 ```
 ListenToEvents will run a function which will reveive DarwinEvent's for the
 specified type until it exists.
-
-#### func (*DarwinEventManager) ListenToEventsCapacity
-
-```go
-func (d *DarwinEventManager) ListenToEventsCapacity(eventType int, capacity int, f func(chan *DarwinEvent))
-```
 
 #### func (*DarwinEventManager) PostEvent
 
@@ -319,10 +265,14 @@ type Location struct {
 	Type string `json:"type"`
 	// Tiploc of this location
 	Tiploc string `json:"tiploc"`
+	// The "display" time for this location
+	// This is calculated using the first value in the following order:
+	// Forecast.Time, Times.Time
+	Time util.WorkingTime `json:"displaytime"`
 	// The times for this entry
-	Times CircularTimes `json:"timetable"`
+	Times util.CircularTimes `json:"timetable"`
 	// TIPLOC of False Destination to be used at this location
-	FalseDestination string `json:"FalseDestination,omitempty"`
+	FalseDestination string `json:"falseDestination,omitempty"`
 	// Is this service cancelled at this location
 	Cancelled bool `json:"cancelled,omitempty"`
 	// The Planned data for this location
@@ -345,7 +295,7 @@ type Location struct {
 		// This is calculated using the first value in the following order:
 		// Departure, Arrival, Pass, or if none of those are set then the following
 		// order in CircularTimes above is used: ptd, pta, wtd, wta & wtp
-		Time darwintimetable.WorkingTime `json:"time"`
+		Time util.WorkingTime `json:"time"`
 		// If true then delayed. This is the delayed field in one of
 		// Departure, Arrival, Pass in that order
 		Delayed bool `json:"delayed,omitempty"`
@@ -354,13 +304,13 @@ type Location struct {
 		// If true then the train has departed or passed this location
 		Departed bool `json:"departed,omitempty"`
 		// Forecast data for the arrival at this location
-		Arrival TSTime `json:"arr"`
+		Arrival util.TSTime `json:"arr,omitempty"`
 		// Forecast data for the departure at this location
-		Departure TSTime `json:"dep"`
+		Departure util.TSTime `json:"dep,omitempty"`
 		// Forecast data for the pass of this location
-		Pass TSTime `json:"pass"`
+		Pass util.TSTime `json:"pass,omitempty"`
 		// Current platform number
-		Platform Platform `json:"plat"`
+		Platform Platform `json:"plat,omitempty"`
 		// The service is suppressed at this location.
 		Suppressed bool `json:"suppressed,omitempty"`
 		// The length of the service at this location on departure
@@ -377,6 +327,8 @@ type Location struct {
 		// The train order at this location (1, 2 or 3). 0 Means no TrainOrder has been set
 		TrainOrder *TrainOrder `json:"trainOrder,omitempty"`
 	} `json:"forecast"`
+	// The delay in seconds calculated as difference between forecast.time and timetable.time
+	Delay int
 }
 ```
 
@@ -417,6 +369,12 @@ trying to locate a location that's been updated
 func (a *Location) Equals(b *Location) bool
 ```
 Equals compares two Locations in their entirety
+
+#### func (*Location) MarshalJSON
+
+```go
+func (t *Location) MarshalJSON() ([]byte, error)
+```
 
 #### func (*Location) Read
 
@@ -780,95 +738,6 @@ schedule in the database
 
 ```go
 func (s *TS) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error
-```
-
-#### type TSTime
-
-```go
-type TSTime struct {
-	// Estimated Time. For locations with a public activity,
-	// this will be based on the "public schedule".
-	// For all other activities, it will be based on the "working schedule".
-	ET *darwintimetable.WorkingTime `json:"et,omitempty" xml:"et,attr,omitempty"`
-	// The manually applied lower limit that has been applied to the estimated
-	// time at this location. The estimated time will not be set lower than this
-	// value, but may be set higher.
-	ETMin *darwintimetable.WorkingTime `json:"etMin,omitempty" xml:"etmin,attr,omitempty"`
-	// Indicates that an unknown delay forecast has been set for the estimated
-	// time at this location. Note that this value indicates where a manual
-	// unknown delay forecast has been set, whereas it is the "delayed"
-	// attribute that indicates that the actual forecast is "unknown delay".
-	ETUnknown bool `json:"etUnknown,omitempty" xml:"etUnknown,attr,omitempty"`
-	// The estimated time based on the "working schedule".
-	// This will only be set for public activities and when it also differs
-	// from the estimated time based on the "public schedule".
-	WET *darwintimetable.WorkingTime `json:"wet,omitempty" xml:"wet,attr,omitempty"`
-	// Actual Time
-	AT *darwintimetable.WorkingTime `json:"at,omitempty" xml:"at,attr,omitempty"`
-	// If true, indicates that an actual time ("at") value has just been removed
-	// and replaced by an estimated time ("et").
-	// Note that this attribute will only be set to "true" once, when the actual
-	// time is removed, and will not be set in any snapshot.
-	ATRemoved bool `json:"atRemoved,omitempty" xml:"atRemoved,attr,omitempty"`
-	// Indicates that this estimated time is a forecast of "unknown delay".
-	// Displayed  as "Delayed" in LDB.
-	// Note that this value indicates that this forecast is "unknown delay",
-	// whereas it is the "etUnknown" attribute that indicates where the manual
-	// unknown delay forecast has been set.
-	Delayed bool `json:"delayed,omitempty" xml:"delayed,attr,omitempty"`
-	// The source of the forecast or actual time.
-	Src string `json:"src,omitempty" xml:"src,attr,omitempty"`
-	// The RTTI CIS code of the CIS instance if the src is a CIS.
-	SrcInst string `json:"srcInst,omitempty" xml:"srcInst,attr,omitempty"`
-}
-```
-
-Type describing time-based forecast attributes for a TS arrival/departure/pass
-
-#### func (*TSTime) Compare
-
-```go
-func (a *TSTime) Compare(b *TSTime) bool
-```
-Compare compares two TSTime's. This will use the value returned by TSTime.Time()
-
-#### func (*TSTime) Equals
-
-```go
-func (a *TSTime) Equals(b *TSTime) bool
-```
-
-#### func (*TSTime) IsSet
-
-```go
-func (t *TSTime) IsSet() bool
-```
-IsSet returns true if at least ET or AT is set
-
-#### func (*TSTime) Read
-
-```go
-func (t *TSTime) Read(c *codec.BinaryCodec)
-```
-
-#### func (*TSTime) Time
-
-```go
-func (t *TSTime) Time() *darwintimetable.WorkingTime
-```
-Time returns the appropirate time from TSTime to use in displays. This is the
-first one set of AT, ET or nil if neither is set.
-
-#### func (*TSTime) UnmarshalXML
-
-```go
-func (s *TSTime) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error
-```
-
-#### func (*TSTime) Write
-
-```go
-func (t *TSTime) Write(c *codec.BinaryCodec)
 ```
 
 #### type TrainOrder

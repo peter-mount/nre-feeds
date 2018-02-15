@@ -2,7 +2,7 @@
 --
     import "github.com/peter-mount/darwin/darwinref"
 
-Unmarshal the Darwin Reference XML
+Handle the daily reference XML file from Darwin
 
 ## Usage
 
@@ -28,6 +28,63 @@ type CrsResponse struct {
 ```
 
 
+#### type DarwinRefClient
+
+```go
+type DarwinRefClient struct {
+	// The url prefix, e.g. "http://localhost:8080" of the remote service
+	// Note no trailing "/" as the client will add a patch starting with "/"
+	Url string
+}
+```
+
+A remove client to the DarwinTimetable microservice
+
+#### func (*DarwinRefClient) AddToc
+
+```go
+func (c *DarwinRefClient) AddToc(m *TocMap, toc string)
+```
+AddToc adds a Toc to a TocMap
+
+#### func (*DarwinRefClient) GetCrs
+
+```go
+func (c *DarwinRefClient) GetCrs(crs string) (*CrsResponse, error)
+```
+
+#### func (*DarwinRefClient) GetStations
+
+```go
+func (c *DarwinRefClient) GetStations() ([]*Location, error)
+```
+GetStations returns all Location's with a CRS code
+
+#### func (*DarwinRefClient) GetTiploc
+
+```go
+func (c *DarwinRefClient) GetTiploc(tpl string) (*Location, error)
+```
+
+#### func (*DarwinRefClient) GetTiplocs
+
+```go
+func (c *DarwinRefClient) GetTiplocs(tpl []string) ([]*Location, error)
+```
+
+#### func (*DarwinRefClient) GetTiplocsMapKeys
+
+```go
+func (c *DarwinRefClient) GetTiplocsMapKeys(m map[string]interface{}) ([]*Location, error)
+```
+
+#### func (*DarwinRefClient) GetToc
+
+```go
+func (c *DarwinRefClient) GetToc(toc string) (*Toc, error)
+```
+GetToc retrieve a Toc by its code
+
 #### type DarwinReference
 
 ```go
@@ -36,6 +93,12 @@ type DarwinReference struct {
 ```
 
 Processed reference format
+
+#### func (*DarwinReference) AllCrsHandler
+
+```go
+func (dr *DarwinReference) AllCrsHandler(r *rest.Rest) error
+```
 
 #### func (*DarwinReference) AllReasonCancelHandler
 
@@ -203,6 +266,12 @@ Return's the timetableId for this reference dataset
 
 ```go
 func (dr *DarwinReference) TiplocHandler(r *rest.Rest) error
+```
+
+#### func (*DarwinReference) TiplocsHandler
+
+```go
+func (dr *DarwinReference) TiplocsHandler(r *rest.Rest) error
 ```
 
 #### func (*DarwinReference) TocHandler
@@ -400,6 +469,45 @@ SetSelf sets the Self field to match this request
 ```go
 func (t *Reason) Write(c *codec.BinaryCodec)
 ```
+
+#### type ReasonMap
+
+```go
+type ReasonMap struct {
+	Late      map[int]*Reason
+	Cancelled map[int]*Reason
+}
+```
+
+ReasonMap allows a set of Reasons (either Late or Cancelled) to be built up
+usually from a set of schedules - e.g. ldb.Service
+
+#### func  NewReasonMap
+
+```go
+func NewReasonMap() *ReasonMap
+```
+
+#### func (*ReasonMap) Add
+
+```go
+func (r *ReasonMap) Add(id int, canc bool, tx *bolt.Tx, dr *DarwinReference)
+```
+Add a Reason to the map t *Reason tx Bolt transaction f function to retrieve,
+usually DarwinReference.GetLateReason or DarwinReference.GetCancellationReason
+
+#### func (*ReasonMap) MarshalJSON
+
+```go
+func (r *ReasonMap) MarshalJSON() ([]byte, error)
+```
+
+#### func (*ReasonMap) Self
+
+```go
+func (r *ReasonMap) Self(rs *rest.Rest)
+```
+Self sets the Self field to match this request
 
 #### type ReasonsResponse
 

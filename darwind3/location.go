@@ -2,11 +2,11 @@ package darwind3
 
 import (
   "bytes"
-  "darwintimetable"
   "encoding/json"
   "encoding/xml"
   "github.com/peter-mount/golib/codec"
   "strconv"
+  "util"
 )
 
 // A location in a schedule.
@@ -26,9 +26,9 @@ type Location struct {
   // The "display" time for this location
   // This is calculated using the first value in the following order:
   // Forecast.Time, Times.Time
-  Time              darwintimetable.WorkingTime `json:"displaytime"`
+  Time              util.WorkingTime `json:"displaytime"`
   // The times for this entry
-  Times             CircularTimes `json:"timetable"`
+  Times             util.CircularTimes `json:"timetable"`
   // TIPLOC of False Destination to be used at this location
   FalseDestination  string        `json:"falseDestination,omitempty"`
   // Is this service cancelled at this location
@@ -53,7 +53,7 @@ type Location struct {
     // This is calculated using the first value in the following order:
     // Departure, Arrival, Pass, or if none of those are set then the following
     // order in CircularTimes above is used: ptd, pta, wtd, wta & wtp
-    Time              darwintimetable.WorkingTime `json:"time"`
+    Time              util.WorkingTime `json:"time"`
     // If true then delayed. This is the delayed field in one of
     // Departure, Arrival, Pass in that order
     Delayed           bool        `json:"delayed,omitempty"`
@@ -62,11 +62,11 @@ type Location struct {
     // If true then the train has departed or passed this location
     Departed          bool        `json:"departed,omitempty"`
     // Forecast data for the arrival at this location
-    Arrival           TSTime      `json:"arr,omitempty"`
+    Arrival           util.TSTime      `json:"arr,omitempty"`
     // Forecast data for the departure at this location
-    Departure         TSTime      `json:"dep,omitempty"`
+    Departure         util.TSTime      `json:"dep,omitempty"`
     // Forecast data for the pass of this location
-    Pass              TSTime      `json:"pass,omitempty"`
+    Pass              util.TSTime      `json:"pass,omitempty"`
     // Current platform number
     Platform          Platform    `json:"plat,omitempty"`
     // The service is suppressed at this location.

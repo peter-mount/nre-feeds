@@ -11,9 +11,11 @@ LDB - Live Departure Boards
 ```go
 type LDB struct {
 	// Link to D3
-	Darwin *darwind3.DarwinD3
+	Darwin string
 	// Link to reference
-	Reference *darwinref.DarwinReference
+	Reference string
+	// Eventing
+	EventManager *darwind3.DarwinEventManager
 	// The managed stations
 	Stations *Stations
 }
@@ -99,6 +101,20 @@ func (a *Service) Compare(b *Service) bool
 ```
 Compare two services by the times at a location
 
+#### func (*Service) MarshalJSON
+
+```go
+func (t *Service) MarshalJSON() ([]byte, error)
+```
+
+#### func (*Service) Timestamp
+
+```go
+func (s *Service) Timestamp() time.Time
+```
+Timestamp returns the time.Time of this service based on the SSD and Location's
+Time. TODO this does not currently handle midnight correctly
+
 #### type Station
 
 ```go
@@ -132,6 +148,13 @@ Manages all stations
 ```go
 func NewStations() *Stations
 ```
+
+#### func (*Stations) Cleanup
+
+```go
+func (st *Stations) Cleanup()
+```
+Cleanup removes any old schedules still in memory for each station
 
 #### func (*Stations) Update
 

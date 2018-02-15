@@ -18,37 +18,6 @@ Reference timetable
 
 ## Usage
 
-#### func  PublicTimeEquals
-
-```go
-func PublicTimeEquals(a *PublicTime, b *PublicTime) bool
-```
-
-#### func  PublicTimeWrite
-
-```go
-func PublicTimeWrite(c *codec.BinaryCodec, t *PublicTime)
-```
-PublicTimeWrite is a workaround for writing null times. If the pointer is null
-then a time is written where IsZero()==true
-
-#### func  WorkingTimeEquals
-
-```go
-func WorkingTimeEquals(a *WorkingTime, b *WorkingTime) bool
-```
-WorkingTimeEquals compares equality between two WorkingTimes. Unlike
-WorkingTime.Equals() this will return true if both are null, otherwise both must
-not be null and equal to be true
-
-#### func  WorkingTimeWrite
-
-```go
-func WorkingTimeWrite(c *codec.BinaryCodec, t *WorkingTime)
-```
-WorkingTimeWrite is a workaround for writing null times. If the pointer is null
-then a time is written where IsZero()==true
-
 #### type AssocService
 
 ```go
@@ -261,6 +230,26 @@ View performs a readonly operation on the database
 func (t *DarwinTimetable) Write(c *codec.BinaryCodec)
 ```
 
+#### type DarwinTimetableClient
+
+```go
+type DarwinTimetableClient struct {
+	// The url prefix, e.g. "http://localhost:8080" of the remote service
+	// Note no trailing "/" as the client will add a patch starting with "/"
+	Url string
+}
+```
+
+A remove client to the DarwinTimetable microservice
+
+#### func (*DarwinTimetableClient) GetJourney
+
+```go
+func (c *DarwinTimetableClient) GetJourney(rid string) (*Journey, error)
+```
+GetJourney returns a Journey by making an HTTP call to a remote instance of
+DarwinTimetable
+
 #### type IP
 
 ```go
@@ -358,12 +347,12 @@ type Location struct {
 	Cancelled bool     `json:"cancelled,omitempty" xml:"can,attr,omitempty"`
 	Platform  string   `json:"plat,omitempty" xml:"plat,attr,omitempty"`
 	// CallPtAttributes
-	Pta *PublicTime `json:"pta,omitempty" xml:"pta,attr,omitempty"`
-	Ptd *PublicTime `json:"ptd,omitempty" xml:"ptd,attr,omitempty"`
+	Pta *util.PublicTime `json:"pta,omitempty" xml:"pta,attr,omitempty"`
+	Ptd *util.PublicTime `json:"ptd,omitempty" xml:"ptd,attr,omitempty"`
 	// Working times
-	Wta *WorkingTime `json:"wta,omitempty" xml:"wta,attr,omitempty"`
-	Wtd *WorkingTime `json:"wtd,omitempty" xml:"wtd,attr,omitempty"`
-	Wtp *WorkingTime `json:"wtp,omitempty" xml:"wtp,attr,omitempty"`
+	Wta *util.WorkingTime `json:"wta,omitempty" xml:"wta,attr,omitempty"`
+	Wtd *util.WorkingTime `json:"wtd,omitempty" xml:"wtd,attr,omitempty"`
+	Wtp *util.WorkingTime `json:"wtp,omitempty" xml:"wtp,attr,omitempty"`
 	// Delay implied by a change to the services route
 	RDelay string `json:"rdelay,omitempty" xml:"rdelay,attr,omitempty"`
 	// False destination to be used at this location
@@ -510,102 +499,6 @@ type PP struct {
 func (s *PP) Location() *Location
 ```
 
-#### type PublicTime
-
-```go
-type PublicTime struct {
-}
-```
-
-Public Timetable time Note: 00:00 is not possible as in CIF that means no-time
-
-#### func  NewPublicTime
-
-```go
-func NewPublicTime(s string) *PublicTime
-```
-NewPublicTime returns a new PublicTime instance from a string of format "HH:MM"
-
-#### func  PublicTimeRead
-
-```go
-func PublicTimeRead(c *codec.BinaryCodec) *PublicTime
-```
-PublicTimeRead is a workaround issue where a custom type cannot be omitempty in
-JSON unless it's a nil So instead of using BinaryCodec.Read( v ), we call this &
-set the return value in the struct as a pointer.
-
-#### func (*PublicTime) Compare
-
-```go
-func (a *PublicTime) Compare(b *PublicTime) bool
-```
-Compare a PublicTime against another, accounting for crossing midnight. The
-rules for handling crossing midnight are: < -6 hours = crossed midnight < 0 back
-in time < 18 hours increasing time > 18 hours back in time & crossing midnight
-
-#### func (*PublicTime) Equals
-
-```go
-func (a *PublicTime) Equals(b *PublicTime) bool
-```
-
-#### func (*PublicTime) Get
-
-```go
-func (t *PublicTime) Get() int
-```
-Get returns the PublicTime in minutes of the day
-
-#### func (*PublicTime) IsZero
-
-```go
-func (t *PublicTime) IsZero() bool
-```
-IsZero returns true if the time is not present
-
-#### func (*PublicTime) MarshalJSON
-
-```go
-func (t *PublicTime) MarshalJSON() ([]byte, error)
-```
-Custom JSON Marshaler. This will write null or the time as "HH:MM"
-
-#### func (*PublicTime) MarshalXMLAttr
-
-```go
-func (t *PublicTime) MarshalXMLAttr(name xml.Name) (xml.Attr, error)
-```
-Custom XML Marshaler.
-
-#### func (*PublicTime) Read
-
-```go
-func (t *PublicTime) Read(c *codec.BinaryCodec)
-```
-BinaryCodec reader
-
-#### func (*PublicTime) Set
-
-```go
-func (t *PublicTime) Set(v int)
-```
-Set sets the PublicTime in minutes of the day
-
-#### func (*PublicTime) String
-
-```go
-func (t *PublicTime) String() string
-```
-String returns a PublicTime in HH:MM format or 5 blank spaces if it's not set.
-
-#### func (*PublicTime) Write
-
-```go
-func (t *PublicTime) Write(c *codec.BinaryCodec)
-```
-BinaryCodec writer
-
 #### type SSD
 
 ```go
@@ -661,108 +554,21 @@ func (t *SSD) String() string
 ```
 String returns a SSD in "YYYY-MM-DD" format
 
+#### func (*SSD) Time
+
+```go
+func (t *SSD) Time() time.Time
+```
+
+#### func (*SSD) UnmarshalJSON
+
+```go
+func (t *SSD) UnmarshalJSON(b []byte) error
+```
+
 #### func (*SSD) Write
 
 ```go
 func (t *SSD) Write(c *codec.BinaryCodec)
-```
-BinaryCodec writer
-
-#### type WorkingTime
-
-```go
-type WorkingTime struct {
-}
-```
-
-Working Timetable time. WorkingTime is similar to PublciTime, except we can have
-seconds. In the Working Timetable, the seconds can be either 0 or 30.
-
-#### func  NewWorkingTime
-
-```go
-func NewWorkingTime(s string) *WorkingTime
-```
-NewWorkingTime returns a new WorkingTime instance from a string of format
-"HH:MM:SS"
-
-#### func  WorkingTimeRead
-
-```go
-func WorkingTimeRead(c *codec.BinaryCodec) *WorkingTime
-```
-WorkingTimeRead is a workaround issue where a custom type cannot be omitempty in
-JSON unless it's a nil So instead of using BinaryCodec.Read( v ), we call this &
-set the return value in the struct as a pointer.
-
-#### func (*WorkingTime) Compare
-
-```go
-func (a *WorkingTime) Compare(b *WorkingTime) bool
-```
-Compare a WorkingTime against another, accounting for crossing midnight. The
-rules for handling crossing midnight are: < -6 hours = crossed midnight < 0 back
-in time < 18 hours increasing time > 18 hours back in time & crossing midnight
-
-#### func (*WorkingTime) Equals
-
-```go
-func (a *WorkingTime) Equals(b *WorkingTime) bool
-```
-
-#### func (*WorkingTime) Get
-
-```go
-func (t *WorkingTime) Get() int
-```
-Get returns the WorkingTime in seconds of the day
-
-#### func (*WorkingTime) IsZero
-
-```go
-func (t *WorkingTime) IsZero() bool
-```
-IsZero returns true if the time is not present
-
-#### func (*WorkingTime) MarshalJSON
-
-```go
-func (t *WorkingTime) MarshalJSON() ([]byte, error)
-```
-Custom JSON Marshaler. This will write null or the time as "HH:MM:SS"
-
-#### func (*WorkingTime) MarshalXMLAttr
-
-```go
-func (t *WorkingTime) MarshalXMLAttr(name xml.Name) (xml.Attr, error)
-```
-Custom XML Marshaler.
-
-#### func (*WorkingTime) Read
-
-```go
-func (t *WorkingTime) Read(c *codec.BinaryCodec)
-```
-BinaryCodec reader
-
-#### func (*WorkingTime) Set
-
-```go
-func (t *WorkingTime) Set(v int)
-```
-Set sets the WorkingTime in seconds of the day
-
-#### func (*WorkingTime) String
-
-```go
-func (t *WorkingTime) String() string
-```
-String returns a PublicTime in HH:MM:SS format or 8 blank spaces if it's not
-set.
-
-#### func (*WorkingTime) Write
-
-```go
-func (t *WorkingTime) Write(c *codec.BinaryCodec)
 ```
 BinaryCodec writer

@@ -40,7 +40,7 @@ else
   mkdir -p docs
   chown -R $UID docs
 
-  for LIB in bin darwind3 darwinkb darwinref darwinrest darwintimetable darwinupdate ldb
+  for LIB in bin darwind3 darwinkb darwinref darwinrest darwintimetable darwinupdate ldb util
   do
     PACKAGE=${IMPORT}/${LIB}
 

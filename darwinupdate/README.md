@@ -2,7 +2,7 @@
 --
     import "github.com/peter-mount/darwin/darwinupdate"
 
-Package that handles FTP updates
+Package that handles FTP updates from the NRE FTP server
 
 ## Usage
 
@@ -17,10 +17,6 @@ FtpLs utility to log the files in a path
 
 ```go
 type DarwinUpdate struct {
-	// DarwinReference instance or nil
-	Ref *darwinref.DarwinReference
-	// DarwinTimetable instance or nil
-	TT *darwintimetable.DarwinTimetable
 	// The server name
 	Server string
 	// The ftp user
@@ -31,51 +27,28 @@ type DarwinUpdate struct {
 ```
 
 
-#### func (*DarwinUpdate) InitialImport
+#### func (*DarwinUpdate) Ftp
 
 ```go
-func (u *DarwinUpdate) InitialImport()
+func (u *DarwinUpdate) Ftp(f func(*ftp.ServerConn) error) error
 ```
 
-#### func (*DarwinUpdate) ReferenceHandler
+#### func (*DarwinUpdate) ImportRequiredTimetable
 
 ```go
-func (u *DarwinUpdate) ReferenceHandler(r *rest.Rest) error
+func (u *DarwinUpdate) ImportRequiredTimetable(v interface {
+	TimetableId() string
+}) bool
 ```
 
 #### func (*DarwinUpdate) ReferenceUpdate
 
 ```go
-func (u *DarwinUpdate) ReferenceUpdate(con *ftp.ServerConn) error
-```
-
-#### func (*DarwinUpdate) SetupRest
-
-```go
-func (u *DarwinUpdate) SetupRest(c *rest.ServerContext)
-```
-
-#### func (*DarwinUpdate) SetupSchedule
-
-```go
-func (u *DarwinUpdate) SetupSchedule(cr *cron.Cron, schedule string)
-```
-
-#### func (*DarwinUpdate) TimetableHandler
-
-```go
-func (u *DarwinUpdate) TimetableHandler(r *rest.Rest) error
+func (u *DarwinUpdate) ReferenceUpdate(ref *darwinref.DarwinReference) error
 ```
 
 #### func (*DarwinUpdate) TimetableUpdate
 
 ```go
-func (u *DarwinUpdate) TimetableUpdate(con *ftp.ServerConn) error
+func (u *DarwinUpdate) TimetableUpdate(tt *darwintimetable.DarwinTimetable) error
 ```
-
-#### func (*DarwinUpdate) Update
-
-```go
-func (u *DarwinUpdate) Update(force bool) error
-```
-Update performs an update of all data

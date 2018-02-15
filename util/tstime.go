@@ -1,8 +1,7 @@
-package darwind3
+package util
 
 import (
   "bytes"
-  "darwintimetable"
   "encoding/json"
   "encoding/xml"
   "github.com/peter-mount/golib/codec"
@@ -13,11 +12,11 @@ type TSTime struct {
   // Estimated Time. For locations with a public activity,
   // this will be based on the "public schedule".
   // For all other activities, it will be based on the "working schedule".
-  ET         *darwintimetable.WorkingTime   `json:"et,omitempty" xml:"et,attr,omitempty"`
+  ET         *WorkingTime   `json:"et,omitempty" xml:"et,attr,omitempty"`
   // The manually applied lower limit that has been applied to the estimated
   // time at this location. The estimated time will not be set lower than this
   // value, but may be set higher.
-  ETMin      *darwintimetable.WorkingTime   `json:"etMin,omitempty" xml:"etmin,attr,omitempty"`
+  ETMin      *WorkingTime   `json:"etMin,omitempty" xml:"etmin,attr,omitempty"`
   // Indicates that an unknown delay forecast has been set for the estimated
   // time at this location. Note that this value indicates where a manual
   // unknown delay forecast has been set, whereas it is the "delayed"
@@ -26,9 +25,9 @@ type TSTime struct {
   // The estimated time based on the "working schedule".
   // This will only be set for public activities and when it also differs
   // from the estimated time based on the "public schedule".
-  WET        *darwintimetable.WorkingTime   `json:"wet,omitempty" xml:"wet,attr,omitempty"`
+  WET        *WorkingTime   `json:"wet,omitempty" xml:"wet,attr,omitempty"`
   // Actual Time
-  AT         *darwintimetable.WorkingTime   `json:"at,omitempty" xml:"at,attr,omitempty"`
+  AT         *WorkingTime   `json:"at,omitempty" xml:"at,attr,omitempty"`
   // If true, indicates that an actual time ("at") value has just been removed
   // and replaced by an estimated time ("et").
   // Note that this attribute will only be set to "true" once, when the actual
@@ -109,7 +108,7 @@ func (a *TSTime) Compare( b *TSTime ) bool {
 
 // Time returns the appropirate time from TSTime to use in displays.
 // This is the first one set of AT, ET or nil if neither is set.
-func (t *TSTime) Time() *darwintimetable.WorkingTime {
+func (t *TSTime) Time() *WorkingTime {
   if t.AT != nil {
     return t.AT
   }
@@ -133,10 +132,10 @@ func (a *TSTime) Equals( b *TSTime ) bool {
 }
 
 func (t *TSTime) Write( c *codec.BinaryCodec ) {
-  darwintimetable.WorkingTimeWrite( c, t.ET )
-  darwintimetable.WorkingTimeWrite( c, t.ETMin )
-  darwintimetable.WorkingTimeWrite( c, t.WET )
-  darwintimetable.WorkingTimeWrite( c, t.AT )
+  WorkingTimeWrite( c, t.ET )
+  WorkingTimeWrite( c, t.ETMin )
+  WorkingTimeWrite( c, t.WET )
+  WorkingTimeWrite( c, t.AT )
   c.WriteBool( t.ETUnknown ).
     WriteBool( t.ATRemoved ).
     WriteBool( t.Delayed ).
@@ -145,10 +144,10 @@ func (t *TSTime) Write( c *codec.BinaryCodec ) {
 }
 
 func (t *TSTime) Read( c *codec.BinaryCodec ) {
-  t.ET = darwintimetable.WorkingTimeRead( c )
-  t.ETMin = darwintimetable.WorkingTimeRead( c )
-  t.WET = darwintimetable.WorkingTimeRead( c )
-  t.AT = darwintimetable.WorkingTimeRead( c )
+  t.ET = WorkingTimeRead( c )
+  t.ETMin = WorkingTimeRead( c )
+  t.WET = WorkingTimeRead( c )
+  t.AT = WorkingTimeRead( c )
   c.ReadBool( &t.ETUnknown ).
     ReadBool( &t.ATRemoved ).
     ReadBool( &t.Delayed ).
@@ -161,19 +160,19 @@ func (s *TSTime) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) er
   for _, attr := range start.Attr {
     switch attr.Name.Local {
       case "et":
-        s.ET = darwintimetable.NewWorkingTime( attr.Value )
+        s.ET = NewWorkingTime( attr.Value )
 
       case "etmin":
-        s.ETMin = darwintimetable.NewWorkingTime( attr.Value )
+        s.ETMin = NewWorkingTime( attr.Value )
 
       case "etUnknown":
         s.ETUnknown = attr.Value == "true"
 
       case "wet":
-        s.WET = darwintimetable.NewWorkingTime( attr.Value )
+        s.WET = NewWorkingTime( attr.Value )
 
       case "at":
-        s.AT = darwintimetable.NewWorkingTime( attr.Value )
+        s.AT = NewWorkingTime( attr.Value )
 
       case "atRemoved":
         s.ATRemoved = attr.Value == "true"

@@ -3,11 +3,11 @@ package ldb
 import (
   "darwind3"
   "darwinref"
-  "darwintimetable"
 //  "fmt"
   "github.com/peter-mount/golib/rest"
   "sort"
   "time"
+  "util"
 )
 
 type result struct {
@@ -45,10 +45,10 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
     var messages []*darwind3.StationMessage
 
     now := time.Now()
-    var nowt darwintimetable.WorkingTime
+    var nowt util.WorkingTime
     nowt.Set( (now.Hour()*3600) + (now.Minute()*60) )
     next := now.Add( time.Hour )
-    var hour darwintimetable.WorkingTime
+    var hour util.WorkingTime
     hour.Set( (next.Hour()*3600) + (next.Minute()*60) )
 
     if err := station.Update( func() error {

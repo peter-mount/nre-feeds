@@ -1,7 +1,6 @@
-package darwind3
+package util
 
 import (
-  "darwintimetable"
   "encoding/xml"
   "fmt"
   "github.com/peter-mount/golib/codec"
@@ -18,17 +17,17 @@ type CircularTimes struct {
   // The time for this location.
   // This is calculated as the first value defined below in the following
   // sequence: Wtd, Wta, Wtp, Ptd & Pta.
-  Time              darwintimetable.WorkingTime `json:"time"`
+  Time              WorkingTime `json:"time"`
   // Public Scheduled Time of Arrival
-  Pta              *darwintimetable.PublicTime  `json:"pta,omitempty"`
+  Pta              *PublicTime  `json:"pta,omitempty"`
   // Public Scheduled Time of Departure
-  Ptd              *darwintimetable.PublicTime  `json:"ptd,omitempty"`
+  Ptd              *PublicTime  `json:"ptd,omitempty"`
   // Working Scheduled Time of Arrival
-  Wta              *darwintimetable.WorkingTime `json:"wta,omitempty"`
+  Wta              *WorkingTime `json:"wta,omitempty"`
   // Working Scheduled Time of Departure
-  Wtd              *darwintimetable.WorkingTime `json:"wtd,omitempty"`
+  Wtd              *WorkingTime `json:"wtd,omitempty"`
   // Working Scheduled Time of Passing
-  Wtp              *darwintimetable.WorkingTime `json:"wtp,omitempty"`
+  Wtp              *WorkingTime `json:"wtp,omitempty"`
 }
 
 // IsPublic returns true of the instance contains public times
@@ -46,19 +45,19 @@ func (t *CircularTimes) UnmarshalXMLAttributes( start xml.StartElement ) {
   for _, attr := range start.Attr {
     switch attr.Name.Local {
       case "pta":
-        t.Pta = darwintimetable.NewPublicTime( attr.Value )
+        t.Pta = NewPublicTime( attr.Value )
 
       case "ptd":
-        t.Ptd = darwintimetable.NewPublicTime( attr.Value )
+        t.Ptd = NewPublicTime( attr.Value )
 
       case "wta":
-        t.Wta = darwintimetable.NewWorkingTime( attr.Value )
+        t.Wta = NewWorkingTime( attr.Value )
 
       case "wtd":
-        t.Wtd = darwintimetable.NewWorkingTime( attr.Value )
+        t.Wtd = NewWorkingTime( attr.Value )
 
       case "wtp":
-        t.Wtp = darwintimetable.NewWorkingTime( attr.Value )
+        t.Wtp = NewWorkingTime( attr.Value )
     }
   }
   t.UpdateTime()
@@ -95,27 +94,27 @@ func (l *CircularTimes) UpdateTime() {
 
 func (a *CircularTimes) Equals( b *CircularTimes ) bool {
   return b != nil &&
-    darwintimetable.PublicTimeEquals( a.Pta, b.Pta ) &&
-    darwintimetable.PublicTimeEquals( a.Ptd, b.Ptd ) &&
-    darwintimetable.WorkingTimeEquals( a.Wta, b.Wta ) &&
-    darwintimetable.WorkingTimeEquals( a.Wtd, b.Wtd ) &&
-    darwintimetable.WorkingTimeEquals( a.Wtp, b.Wtp )
+    PublicTimeEquals( a.Pta, b.Pta ) &&
+    PublicTimeEquals( a.Ptd, b.Ptd ) &&
+    WorkingTimeEquals( a.Wta, b.Wta ) &&
+    WorkingTimeEquals( a.Wtd, b.Wtd ) &&
+    WorkingTimeEquals( a.Wtp, b.Wtp )
 }
 
 func (t *CircularTimes) Write( c *codec.BinaryCodec ) {
-  darwintimetable.PublicTimeWrite( c, t.Pta )
-  darwintimetable.PublicTimeWrite( c, t.Ptd )
-  darwintimetable.WorkingTimeWrite( c, t.Wta )
-  darwintimetable.WorkingTimeWrite( c, t.Wtd )
-  darwintimetable.WorkingTimeWrite( c, t.Wtp )
+  PublicTimeWrite( c, t.Pta )
+  PublicTimeWrite( c, t.Ptd )
+  WorkingTimeWrite( c, t.Wta )
+  WorkingTimeWrite( c, t.Wtd )
+  WorkingTimeWrite( c, t.Wtp )
 }
 
 func (t *CircularTimes) Read( c *codec.BinaryCodec ) {
-  t.Pta = darwintimetable.PublicTimeRead( c )
-  t.Ptd = darwintimetable.PublicTimeRead( c )
-  t.Wta = darwintimetable.WorkingTimeRead( c )
-  t.Wtd = darwintimetable.WorkingTimeRead( c )
-  t.Wtp = darwintimetable.WorkingTimeRead( c )
+  t.Pta = PublicTimeRead( c )
+  t.Ptd = PublicTimeRead( c )
+  t.Wta = WorkingTimeRead( c )
+  t.Wtd = WorkingTimeRead( c )
+  t.Wtp = WorkingTimeRead( c )
   t.UpdateTime()
 }
 

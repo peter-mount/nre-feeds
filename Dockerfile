@@ -53,8 +53,12 @@ ENV GOOS=linux
 WORKDIR /go/src
 ADD . .
 
+# Run any tests
+RUN go test -v util
+
 # Build the microservice
-RUN go build -v -x -o /dest/bin/${service} bin/${service}
+#RUN go build -v -x -o /dest/bin/${service} bin/${service}
+RUN go build -o /dest/bin/${service} bin/${service}
 
 # The docker entrypoint
 RUN cd /dest && \

@@ -5,6 +5,7 @@ import (
   //bolt "github.com/coreos/bbolt"
   "encoding/xml"
   "github.com/peter-mount/golib/codec"
+  "util"
 )
 
 // Common location object used in persistence
@@ -17,12 +18,12 @@ type Location struct {
     Cancelled   bool        `json:"cancelled,omitempty" xml:"can,attr,omitempty"`
     Platform    string      `json:"plat,omitempty" xml:"plat,attr,omitempty"`
     // CallPtAttributes
-    Pta        *PublicTime  `json:"pta,omitempty" xml:"pta,attr,omitempty"`
-    Ptd        *PublicTime  `json:"ptd,omitempty" xml:"ptd,attr,omitempty"`
+    Pta        *util.PublicTime  `json:"pta,omitempty" xml:"pta,attr,omitempty"`
+    Ptd        *util.PublicTime  `json:"ptd,omitempty" xml:"ptd,attr,omitempty"`
     // Working times
-    Wta        *WorkingTime `json:"wta,omitempty" xml:"wta,attr,omitempty"`
-    Wtd        *WorkingTime `json:"wtd,omitempty" xml:"wtd,attr,omitempty"`
-    Wtp        *WorkingTime `json:"wtp,omitempty" xml:"wtp,attr,omitempty"`
+    Wta        *util.WorkingTime `json:"wta,omitempty" xml:"wta,attr,omitempty"`
+    Wtd        *util.WorkingTime `json:"wtd,omitempty" xml:"wtd,attr,omitempty"`
+    Wtp        *util.WorkingTime `json:"wtp,omitempty" xml:"wtp,attr,omitempty"`
     // Delay implied by a change to the services route
     RDelay      string      `json:"rdelay,omitempty" xml:"rdelay,attr,omitempty"`
     // False destination to be used at this location
@@ -38,11 +39,11 @@ func (t *Location) Write( c *codec.BinaryCodec ) {
     WriteString( t.Platform ).
     WriteString( t.RDelay ).
     WriteString( t.FalseDest )
-  PublicTimeWrite( c, t.Pta )
-  PublicTimeWrite( c, t.Ptd )
-  WorkingTimeWrite( c, t.Wta )
-  WorkingTimeWrite( c, t.Wtd )
-  WorkingTimeWrite( c, t.Wtp )
+  util.PublicTimeWrite( c, t.Pta )
+  util.PublicTimeWrite( c, t.Ptd )
+  util.WorkingTimeWrite( c, t.Wta )
+  util.WorkingTimeWrite( c, t.Wtd )
+  util.WorkingTimeWrite( c, t.Wtp )
 }
 
 func (t *Location) Read( c *codec.BinaryCodec ) {
@@ -54,11 +55,11 @@ func (t *Location) Read( c *codec.BinaryCodec ) {
     ReadString( &t.Platform ).
     ReadString( &t.RDelay ).
     ReadString( &t.FalseDest )
-  t.Pta = PublicTimeRead( c )
-  t.Ptd = PublicTimeRead( c )
-  t.Wta = WorkingTimeRead( c )
-  t.Wtd = WorkingTimeRead( c )
-  t.Wtp = WorkingTimeRead( c )
+  t.Pta = util.PublicTimeRead( c )
+  t.Ptd = util.PublicTimeRead( c )
+  t.Wta = util.WorkingTimeRead( c )
+  t.Wtd = util.WorkingTimeRead( c )
+  t.Wtp = util.WorkingTimeRead( c )
 }
 
 type OR struct {
@@ -86,10 +87,10 @@ func (s *OR ) Location() *Location {
     PlanAct: s.PlanAct,
     Cancelled: s.Cancelled,
     Platform: s.Platform,
-    Pta: NewPublicTime( s.Pta ),
-    Ptd: NewPublicTime( s.Ptd ),
-    Wta: NewWorkingTime( s.Wta ),
-    Wtd: NewWorkingTime( s.Wtd ),
+    Pta: util.NewPublicTime( s.Pta ),
+    Ptd: util.NewPublicTime( s.Ptd ),
+    Wta: util.NewWorkingTime( s.Wta ),
+    Wtd: util.NewWorkingTime( s.Wtd ),
     FalseDest: s.FalseDest,
   }
 }
@@ -114,8 +115,8 @@ func (s *OPOR ) Location() *Location {
     PlanAct: s.PlanAct,
     Cancelled: s.Cancelled,
     Platform: s.Platform,
-    Wta: NewWorkingTime( s.Wta ),
-    Wtd: NewWorkingTime( s.Wtd ),
+    Wta: util.NewWorkingTime( s.Wta ),
+    Wtd: util.NewWorkingTime( s.Wtd ),
   }
 }
 
@@ -146,10 +147,10 @@ func (s *IP ) Location() *Location {
     PlanAct: s.PlanAct,
     Cancelled: s.Cancelled,
     Platform: s.Platform,
-    Pta: NewPublicTime( s.Pta ),
-    Ptd: NewPublicTime( s.Ptd ),
-    Wta: NewWorkingTime( s.Wta ),
-    Wtd: NewWorkingTime( s.Wtd ),
+    Pta: util.NewPublicTime( s.Pta ),
+    Ptd: util.NewPublicTime( s.Ptd ),
+    Wta: util.NewWorkingTime( s.Wta ),
+    Wtd: util.NewWorkingTime( s.Wtd ),
     RDelay: s.RDelay,
     FalseDest: s.FalseDest,
   }
@@ -177,8 +178,8 @@ func (s *OPIP ) Location() *Location {
     PlanAct: s.PlanAct,
     Cancelled: s.Cancelled,
     Platform: s.Platform,
-    Wta: NewWorkingTime( s.Wta ),
-    Wtd: NewWorkingTime( s.Wtd ),
+    Wta: util.NewWorkingTime( s.Wta ),
+    Wtd: util.NewWorkingTime( s.Wtd ),
     RDelay: s.RDelay,
   }
 }
@@ -204,7 +205,7 @@ func (s *PP ) Location() *Location {
     PlanAct: s.PlanAct,
     Cancelled: s.Cancelled,
     Platform: s.Platform,
-    Wtp: NewWorkingTime( s.Wtp ),
+    Wtp: util.NewWorkingTime( s.Wtp ),
     RDelay: s.RDelay,
   }
 }
@@ -234,10 +235,10 @@ func (s *DT ) Location() *Location {
     PlanAct: s.PlanAct,
     Cancelled: s.Cancelled,
     Platform: s.Platform,
-    Pta: NewPublicTime( s.Pta ),
-    Ptd: NewPublicTime( s.Ptd ),
-    Wta: NewWorkingTime( s.Wta ),
-    Wtd: NewWorkingTime( s.Wtd ),
+    Pta: util.NewPublicTime( s.Pta ),
+    Ptd: util.NewPublicTime( s.Ptd ),
+    Wta: util.NewWorkingTime( s.Wta ),
+    Wtd: util.NewWorkingTime( s.Wtd ),
     RDelay: s.RDelay,
   }
 }
@@ -264,8 +265,8 @@ func (s *OPDT ) Location() *Location {
     PlanAct: s.PlanAct,
     Cancelled: s.Cancelled,
     Platform: s.Platform,
-    Wta: NewWorkingTime( s.Wta ),
-    Wtd: NewWorkingTime( s.Wtd ),
+    Wta: util.NewWorkingTime( s.Wta ),
+    Wtd: util.NewWorkingTime( s.Wtd ),
     RDelay: s.RDelay,
   }
 }
