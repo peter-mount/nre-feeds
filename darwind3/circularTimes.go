@@ -76,16 +76,16 @@ func (a *CircularTimes) Compare( b *CircularTimes ) bool {
 func (l *CircularTimes) UpdateTime() {
   t := -1
 
-  if l.Wtd != nil {
+  if l.Wtd != nil && !l.Wtd.IsZero() {
     t = l.Wtd.Get()
-  } else if l.Wta != nil {
+  } else if l.Wta != nil && !l.Wta.IsZero() {
     t = l.Wta.Get()
-  } else if l.Wtp != nil {
+  } else if l.Wtp != nil && !l.Wtp.IsZero() {
     t = l.Wtp.Get()
-  } else if l.Ptd != nil {
+  } else if l.Ptd != nil && !l.Ptd.IsZero() {
     // Should not happen, we should have a working time
     t = l.Ptd.Get() * 60
-  } else if l.Ptd != nil {
+  } else if l.Pta != nil && !l.Pta.IsZero() {
     // Should not happen, we should have a working time
     t = l.Pta.Get() * 60
   }

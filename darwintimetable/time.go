@@ -320,5 +320,5 @@ func (t *WorkingTime) Set( v int ) {
 
 // IsZero returns true if the time is not present
 func (t *WorkingTime) IsZero() bool {
-  return t.t < 0
+  return t.t <= 0
 }

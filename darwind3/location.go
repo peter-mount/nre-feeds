@@ -23,6 +23,10 @@ type Location struct {
   Type              string        `json:"type"`
   // Tiploc of this location
   Tiploc            string        `json:"tiploc"`
+  // The "display" time for this location
+  // This is calculated using the first value in the following order:
+  // Forecast.Time, Times.Time
+  Time              darwintimetable.WorkingTime `json:"displaytime"`
   // The times for this entry
   Times             CircularTimes `json:"timetable"`
   // TIPLOC of False Destination to be used at this location
@@ -306,6 +310,13 @@ func (l *Location) update() {
     l.Forecast.Time.Set( -1 )
   }
 
+  // The Display time
+  if l.Forecast.Time.IsZero() {
+    l.Time = l.Times.Time
+  } else {
+    l.Time = l.Forecast.Time
+  }
+
   l.Forecast.Delayed = l.Forecast.Departure.Delayed || l.Forecast.Arrival.Delayed || l.Forecast.Pass.Delayed
 
   if !l.Forecast.Time.IsZero() && !l.Times.Time.IsZero() {
@@ -358,6 +369,7 @@ func (t *Location) MarshalJSON() ( []byte, error ) {
   b.WriteByte( '{' )
   c := t.append( &b, false, "type", t.Type )
   c = t.append( &b, c, "tiploc", t.Tiploc )
+  c = t.append( &b, c, "displaytime", &t.Time )
   c = t.append( &b, c, "timetable", &t.Times )
   c = t.append( &b, c, "falseDestination", t.FalseDestination )
   c = t.append( &b, c, "cancelled", &t.Cancelled )
