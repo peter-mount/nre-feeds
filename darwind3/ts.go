@@ -1,8 +1,8 @@
 package darwind3
 
 import (
-  "darwintimetable"
   "encoding/xml"
+  "util"
 )
 
 // Train Status. Update to the "real time" forecast data for a service.
@@ -13,7 +13,7 @@ type TS struct {
   // Train UID
   UID               string    `json:"uid" xml:"uid,attr"`
   // Scheduled Start Date
-  SSD               darwintimetable.SSD    `json:"ssd" xml:"ssd,attr"`
+  SSD               util.SSD  `json:"ssd" xml:"ssd,attr"`
   // Indicates whether a train that divides is working with portions in
   // reverse to their normal formation. The value applies to the whole train.
   // Darwin will not validate that a divide association actually exists for

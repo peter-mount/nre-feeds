@@ -120,11 +120,11 @@ func (t *TSTime) Time() *WorkingTime {
 
 func (a *TSTime) Equals( b *TSTime ) bool {
   return b != nil &&
-         a.ET == b.ET &&
-         a.ETMin == b.ETMin &&
+         WorkingTimeEquals( a.ET, b.ET ) &&
+         WorkingTimeEquals( a.ETMin, b.ETMin ) &&
          a.ETUnknown == b.ETUnknown &&
-         a.WET == b.WET &&
-         a.AT == b.AT &&
+         WorkingTimeEquals( a.WET, b.WET ) &&
+         WorkingTimeEquals( a.AT, b.AT ) &&
          a.ATRemoved == b.ATRemoved &&
          a.Delayed == b.Delayed &&
          a.Src == b.Src &&

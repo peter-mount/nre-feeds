@@ -1,4 +1,4 @@
-package darwintimetable
+package util
 
 import (
   "encoding/json"

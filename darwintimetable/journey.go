@@ -7,6 +7,7 @@ import (
   "github.com/peter-mount/golib/codec"
   "github.com/peter-mount/golib/rest"
   "time"
+  "util"
 )
 
 type Journey struct {
@@ -14,7 +15,7 @@ type Journey struct {
   RID             string        `json:"rid" xml:"rid,attr"`
   UID             string        `json:"uid" xml:"uid,attr"`
   TrainID         string        `json:"trainId" xml:"trainId"`
-  SSD             SSD           `json:"ssd" xml:"ssd,attr"`
+  SSD             util.SSD      `json:"ssd" xml:"ssd,attr"`
   Toc             string        `json:"toc" xml:"toc,attr"`
   TrainCat        string        `json:"trainCat" xml:"trainCat,attr"`
   Passenger       bool          `json:"isPassengerSvc" xml:"isPassengerSvc,attr"`

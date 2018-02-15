@@ -1,13 +1,13 @@
 package darwind3
 
 import (
-  "darwintimetable"
   "encoding/xml"
   "github.com/peter-mount/golib/codec"
   "github.com/peter-mount/golib/rest"
   "sort"
   "sync"
   "time"
+  "util"
 )
 
 // Train Schedule
@@ -15,7 +15,7 @@ type Schedule struct {
   RID               string                `json:"rid"`
   UID               string                `json:"uid"`
   TrainId           string                `json:"trainId"`
-  SSD               darwintimetable.SSD   `json:"ssd"`
+  SSD               util.SSD              `json:"ssd"`
   Toc               string                `json:"toc"`
   // Default P
   Status            string                `json:"status"`
