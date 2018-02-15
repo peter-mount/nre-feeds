@@ -2,9 +2,9 @@
 
 # Microservice to build & run
 #SERVICE=darwinref
-SERVICE=darwintt
+#SERVICE=darwintt
 #SERVICE=darwind3
-#SERVICE=ldb
+SERVICE=ldb
 
 # docker image:tag to build
 IMAGE=test:${SERVICE}
@@ -20,16 +20,16 @@ CONFIG=$(pwd)/config.yaml
 
 clear
 
-for i in darwinref darwintt darwind3 ldb
-do
-  docker build -t test:$i --build-arg service=$i . || exit 1
-done
+#for i in darwinref darwintt darwind3 ldb
+#do
+#  docker build -t test:$i --build-arg service=$i . || exit 1
+#done
 
-exit
+#exit
 
 docker build -t ${IMAGE} --build-arg service=${SERVICE} . || exit 1
 
-exit
+#exit
 
 docker run -it --rm \
   --name test \

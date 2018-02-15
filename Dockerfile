@@ -42,8 +42,7 @@ RUN go get -v \
 # ============================================================
 # compiler container used just for this build. Changing the
 
-FROM build as compiler
-ARG service
+FROM build as source
 
 # Static compile
 ENV CGO_ENABLED=0
@@ -53,11 +52,19 @@ ENV GOOS=linux
 WORKDIR /go/src
 ADD . .
 
-# Run any tests
+# ============================================================
+# Run all tests in a new container so any output won't affect
+# the final build
+FROM source as test
 RUN go test -v util
 
+# ============================================================
+# Compile the source
+
+FROM source as compiler
+ARG service
+
 # Build the microservice
-#RUN go build -v -x -o /dest/bin/${service} bin/${service}
 RUN go build -o /dest/bin/${service} bin/${service}
 
 # The docker entrypoint
