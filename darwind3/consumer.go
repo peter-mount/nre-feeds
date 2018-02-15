@@ -9,17 +9,23 @@ import (
 )
 
 // BindConsumer binds a consumer to a RabbitMQ queue to receive D3 messages
-func (d *DarwinD3) BindConsumer( r *rabbitmq.RabbitMQ, queueName, routingKey string ) {
-  r.Connect()
-  r.QueueDeclare( queueName, true, false, false, false, nil )
-  r.QueueBind( queueName, routingKey, "amq.topic", false, nil )
-  ch, _ := r.Consume( queueName, "ldb consumer", false, true, false, false, nil )
-  go func() {
-    for {
-      msg := <- ch
-      d.consume( msg )
-    }
-  }()
+func (d *DarwinD3) BindConsumer( r *rabbitmq.RabbitMQ, queueName, routingKey string ) error {
+  if channel, err := r.NewChannel(); err != nil {
+    return err
+  } else {
+    r.QueueDeclare( channel, queueName, true, false, false, false, nil )
+    r.QueueBind( channel, queueName, routingKey, "amq.topic", false, nil )
+    ch, _ := r.Consume( channel, queueName, "ldb consumer", false, true, false, false, nil )
+
+    go func() {
+      for {
+        msg := <- ch
+        d.consume( msg )
+      }
+    }()
+
+    return nil
+  }
 }
 
 func (d *DarwinD3) consume( msg amqp.Delivery ) {

@@ -15,6 +15,10 @@ func main() {
 
 func app( config *bin.Config ) ( func(), error ) {
 
+  // Connect to Rabbit & name the connection so its easier to debug
+  config.RabbitMQ.ConnectionName = "darwin d3"
+  config.RabbitMQ.Connect()
+
   d3 := &darwind3.DarwinD3{}
 
   config.DbPath( &config.Database.PushPort, "dwd3.db" )

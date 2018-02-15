@@ -5,6 +5,7 @@ import (
   "fmt"
   "github.com/peter-mount/golib/rabbitmq"
   "os"
+  "log"
 )
 
 // The possible types of DarwinEvent
@@ -56,34 +57,40 @@ func NewDarwinEventManager( mq *rabbitmq.RabbitMQ ) *DarwinEventManager {
 
 // ListenToEvents will run a function which will reveive DarwinEvent's for the
 // specified type until it exists.
-func (d *DarwinEventManager) ListenToEvents( eventType int, f func( *DarwinEvent ) ) {
-  d.mq.Connect()
+func (d *DarwinEventManager) ListenToEvents( eventType int, f func( *DarwinEvent ) ) error {
   seq := d.sequence
   d.sequence++
 
   queueName := fmt.Sprintf( "%s.d3.event.%d.%d", d.prefix, eventType, seq)
   routingKey := fmt.Sprintf( "d3.event.%d", eventType )
 
-  // non-durable auto-delete queue
-  d.mq.QueueDeclare( queueName, false, true, false, false, nil )
+  if channel, err := d.mq.NewChannel(); err != nil {
+    log.Println( err )
+    return err
+  } else {
 
-  d.mq.QueueBind( queueName, routingKey, "amq.topic", false, nil )
+    // non-durable auto-delete queue
+    d.mq.QueueDeclare( channel, queueName, false, true, false, false, nil )
 
-  ch, _ := d.mq.Consume( queueName, "D3 Event Consumer", true, true, false, false, nil )
+    d.mq.QueueBind( channel, queueName, routingKey, "amq.topic", false, nil )
 
-  go func() {
-    for {
-      msg := <- ch
+    ch, _ := d.mq.Consume( channel, queueName, "D3 Event Consumer", true, true, false, false, nil )
 
-      evt := &DarwinEvent{}
-      json.Unmarshal( msg.Body, evt )
+    go func() {
+      for {
+        msg := <- ch
 
-      if evt.Type == eventType {
-        f( evt )
+        evt := &DarwinEvent{}
+        json.Unmarshal( msg.Body, evt )
+
+        if evt.Type == eventType {
+          f( evt )
+        }
       }
-    }
-  }()
+    }()
 
+    return nil
+  }
 }
 
 // PostEvent posts a DarwinEvent to all listeners listening for that specific type

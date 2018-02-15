@@ -16,11 +16,16 @@ func main() {
 
 func app( config *bin.Config ) ( func(), error ) {
 
+  // Connect to Rabbit & name the connection so its easier to debug
+  config.RabbitMQ.ConnectionName = "darwin ldb"
+  config.RabbitMQ.Connect()
+
   db := &ldb.LDB{
     Darwin: config.Services.DarwinD3,
     Reference: config.Services.Reference,
-    EventManager: darwind3.NewDarwinEventManager( &config.RabbitMQ ),
   }
+
+  db.EventManager = darwind3.NewDarwinEventManager( &config.RabbitMQ )
 
   if err := db.Init(); err != nil {
     return nil, err
