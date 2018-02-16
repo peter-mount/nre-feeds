@@ -36,6 +36,10 @@ func app( config *bin.Config ) ( func(), error ) {
 
   d3.RegisterRest( config.Server.Ctx )
 
+  // Expire old messages every 15 minutes & run an expire on startup
+  config.Cron.AddFunc( "0 0/15 * * * *", d3.ExpireStationMessages )
+  go d3.ExpireStationMessages()
+
   if config.RabbitMQ.Url != "" {
     d3.BindConsumer( &config.RabbitMQ, config.D3.QueueName, config.D3.RoutingKey )
   }

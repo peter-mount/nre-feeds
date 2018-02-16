@@ -33,9 +33,6 @@ func app( config *bin.Config ) ( func(), error ) {
 
   db.RegisterRest( config.Server.Ctx )
 
-  // Expire old messages every 15 minutes
-  //config.Cron.AddFunc( "0 0/15 * * * *", db.Darwin.ExpireStationMessages )
-
   // Expire old schedules every 15 minutes
   config.Cron.AddFunc( "0 * * * * *", db.Stations.Cleanup )
 
