@@ -4,12 +4,9 @@ package main
 import (
   "bin"
   "darwind3"
-  "log"
 )
 
 func main() {
-  log.Println( "darwind3 v0.1" )
-
   bin.RunApplication( app )
 }
 

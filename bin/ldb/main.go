@@ -5,12 +5,9 @@ import (
   "bin"
   "darwind3"
   "ldb"
-  "log"
 )
 
 func main() {
-  log.Println( "ldb v0.1" )
-
   bin.RunApplication( app )
 }
 

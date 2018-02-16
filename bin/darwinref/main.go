@@ -8,8 +8,6 @@ import (
 )
 
 func main() {
-  log.Println( "darwinref v0.1" )
-
   bin.RunApplication( app )
 }
 

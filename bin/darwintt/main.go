@@ -8,8 +8,6 @@ import (
 )
 
 func main() {
-  log.Println( "darwintt v0.1" )
-
   bin.RunApplication( app )
 }
 

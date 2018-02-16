@@ -15,7 +15,7 @@ import (
 // application shuts down.
 func RunApplication( app func( *Config ) ( func(), error ) ) {
 
-  log.Printf( "%s %s %s", os.Args[0], runtime.GOOS, runtime.GOARCH )
+  log.Printf( "%s %s %s(%s)", os.Args[0], VERSION, runtime.GOOS, runtime.GOARCH )
 
   configFile := flag.String( "c", "", "The config file to use" )
 

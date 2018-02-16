@@ -84,6 +84,11 @@ ARG service
 ENV CGO_ENABLED=0
 ENV GOOS=linux
 
+# Microservice version is the branch & commit hash from git
+RUN branch="$(git branch --no-color|cut -f2- -d' ')" &&\
+    version="$(git rev-parse --short "$branch")" &&\
+    sed -i "s/@@version@@/${version}(${branch})/g" bin/version.go
+
 # Build the microservice
 RUN go build -o /dest/${service} bin/${service}
 
