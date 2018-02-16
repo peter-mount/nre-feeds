@@ -12,7 +12,12 @@
 # Build container containing our pre-pulled libraries.
 # As this changes rarely it means we can use the cache between
 # building each microservice.
-FROM golang:latest as build
+FROM golang:alpine as build
+
+# The golang alpine image is missing git so ensure we have additional tools
+RUN apk add --no-cache \
+      curl \
+      git
 
 # We want to build our final image under /dest
 # A copy of /etc/ssl is required if we want to use https datasources
@@ -75,6 +80,12 @@ RUN cd /dest && \
 # Finally build the final runtime container for the specific
 # microservice
 FROM scratch
-ARG service
+
+# The default database directory
+Volume /database
+
+# Install our built image
 COPY --from=compiler /dest/ /
-CMD ["/docker-entrypoint", "-c", "/config.yaml"]
+
+ENTRYPOINT ["/docker-entrypoint"]
+CMD [ "-c", "/config.yaml"]
