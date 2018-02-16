@@ -1,43 +1,33 @@
 # Darwin
-go library &amp; Application for handling the NRE DarwinD3 feeds
+go library &amp; suite of microservices for handling the NRE DarwinD3 feeds
 
 The main purpose of this project is to consume the feeds provided by National Rail Enquiries in real time and expose that information as a REST service which can be consumed by a client, usually a website.
 
 https://departureboards.mobi/ is an example of one of these clients.
 
-## Running
+## Microservices
 
-A pre-built image is now available:
+The project is split currently into 4 individual microservices, each in it's own container.
 
-| Architecture | Image | Tags | Build Status |
-| :----------: | ----- | ---- | ------------ |
-| amd64 | [area51/amd64-darwin](https://hub.docker.com/r/area51/amd64-darwin/) | latest 0.1 | [![Build Status](http://jenkins.area51.onl/buildStatus/icon?job=Public/amd64-darwin)](http://jenkins.area51.onl/job/Public/amd64-darwin)
+* darwinref handles the reference feed and provides access to data that doesn't change often, including stations, locations, train operators etc.
+* darwintt handles the daily timetable feed
+* darwind3 handles the real time feed which includes currently running trains and forecasts of their arrival times & delays.
+* ldb provides a departure board service allowing the current status to be shown per station.
 
-To run a pre-built image you can easily run it with:
+## Build Status
 
-    docker run -it --rm \
-      -v /tmp/darwin/:/database \
-      -v $(pwd)/config-example.yaml:ro \
-      -p 8081:8081 \
-      area51/amd64-darwin:0.1
+The builds are available for both AMD64 and ARM64v8 processors.
 
-See below for more details on this.
-
-## Building
-
-As this is intended to be run within a docker container, the build is entirely within the Dockerfile. Just clone this repository and from the base directory run:
-
-    docker build -t mytag .
-
-To run that built image you can easily run it with:
-
-    docker run -it --rm \
-      -v /tmp/darwin/:/database \
-      -v $(pwd)/config-example.yaml:ro \
-      -p 8081:8081 \
-      mytag
-
-See below for more details on this.
+| Microservice | Architecture | Image | Build Status |
+| :----------: | :----------: | ----- | ------------ |
+| darwinref | amd64 |  | [![Build Status](http://jenkins.area51.onl/buildStatus/icon?job=UKRail/DarwinRef/microservice=darwinref,slave=AMD64)](http://jenkins.area51.onl/job/UKRail/DarwinRef/microservice=darwinref,slave=AMD64)
+| darwinref | arm64v8 |  | [![Build Status](http://jenkins.area51.onl/buildStatus/icon?job=UKRail/DarwinRef/microservice=darwinref,slave=ARM64v8)](http://jenkins.area51.onl/job/UKRail/DarwinRef/microservice=darwinref,slave=ARM64v8)
+| darwintt | amd64 |  | [![Build Status](http://jenkins.area51.onl/buildStatus/icon?job=UKRail/DarwinRef/microservice=darwintt,slave=AMD64)](http://jenkins.area51.onl/job/UKRail/DarwinRef/microservice=darwintt,slave=AMD64)
+| darwintt | arm64v8 |  | [![Build Status](http://jenkins.area51.onl/buildStatus/icon?job=UKRail/DarwinRef/microservice=darwintt,slave=ARM64v8)](http://jenkins.area51.onl/job/UKRail/DarwinRef/microservice=darwintt,slave=ARM64v8)
+| darwind3 | amd64 |  | [![Build Status](http://jenkins.area51.onl/buildStatus/icon?job=UKRail/DarwinRef/microservice=darwind3,slave=AMD64)](http://jenkins.area51.onl/job/UKRail/DarwinRef/microservice=darwind3,slave=AMD64)
+| darwind3 | arm64v8 |  | [![Build Status](http://jenkins.area51.onl/buildStatus/icon?job=UKRail/DarwinRef/microservice=darwind3,slave=ARM64v8)](http://jenkins.area51.onl/job/UKRail/DarwinRef/microservice=darwind3,slave=ARM64v8)
+| ldb | amd64 |  | [![Build Status](http://jenkins.area51.onl/buildStatus/icon?job=UKRail/DarwinRef/microservice=ldb,slave=AMD64)](http://jenkins.area51.onl/job/UKRail/DarwinRef/microservice=ldb,slave=AMD64)
+| ldb | arm64v8 |  | [![Build Status](http://jenkins.area51.onl/buildStatus/icon?job=UKRail/DarwinRef/microservice=ldb,slave=ARM64v8)](http://jenkins.area51.onl/job/UKRail/DarwinRef/microservice=ldb,slave=ARM64v8)
 
 ## Volumes
 
@@ -67,28 +57,4 @@ Again, there are alternatives to this method, as long as the file is accessible 
 
 ## config.yaml
 
-This is the main configuration file. config-example.yaml is fully documented on what each option is, but it's broken into several sections:
-
-* server configures the embedded web server
-* database configures the database
-* ftp holds your credentials to the NRE FTP server for retrieving the daily reference files.
-* statistics Allows for monitoring of the components of the application.
-
-### database
-
-This can be kept as it is. By default if nothing is set for path then /database will be used. If this section can be absent & all defaults will be used.
-
-### server
-
-This configures the webserver. If absent then port 8080 will be used.
-
-### statistics
-
-This controls the statistics used to monitor the application. If not set then
-the monitoring is hidden.
-
-* log set to true then once a minute statistics are logged to the console. This is useful when used with docker as you can export the logs to a remote service like AWS CloudWatch and extract those values.
-
-* rest if set the path to expose a rest service which returns the statistics in JSON.
-
-* schedule defines how often the statistics are captured & reported. By default this is once per minute.
+This is the main configuration file. config-example.yaml is fully documented on what each option is.
