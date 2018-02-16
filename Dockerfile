@@ -9,6 +9,13 @@
 #   darwinref     The Darwin Reference API
 # ============================================================
 
+# ============================================================
+# gcc container required to build the docker-entrypoint.
+# See bin/docker/main.c for why we need this
+FROM alpine as gcc
+RUN apk add --no-cache gcc musl-dev
+
+# ============================================================
 # Build container containing our pre-pulled libraries.
 # As this changes rarely it means we can use the cache between
 # building each microservice.
@@ -45,15 +52,9 @@ RUN go get -v \
       time
 
 # ============================================================
-# compiler container used just for this build. Changing the
-
+# source container contains the source as it exists within the
+# repository.
 FROM build as source
-
-# Static compile
-ENV CGO_ENABLED=0
-ENV GOOS=linux
-
-# Import the source and compile
 WORKDIR /go/src
 ADD . .
 
@@ -64,17 +65,30 @@ FROM source as test
 RUN go test -v util
 
 # ============================================================
-# Compile the source
+# Now test have past build the docker-entrypoint
+# see bin/docker/main.c for why we need this
+FROM gcc as wrapper
+ARG service
+WORKDIR /work
+ADD bin/docker .
+RUN sed -i "s/@@service@@/${service}/g" main.c &&\
+    gcc -o main -static main.c &&\
+    strip main
 
+# ============================================================
+# Compile the source.
 FROM source as compiler
 ARG service
 
-# Build the microservice
-RUN go build -o /dest/bin/${service} bin/${service}
+# Static compile
+ENV CGO_ENABLED=0
+ENV GOOS=linux
 
-# The docker entrypoint
-RUN cd /dest && \
-    ln -s bin/${service} docker-entrypoint
+# Build the microservice
+RUN go build -o /dest/${service} bin/${service}
+
+# Install the docker-entrypoint
+COPY --from=wrapper /work/main /dest/docker-entrypoint
 
 # ============================================================
 # Finally build the final runtime container for the specific

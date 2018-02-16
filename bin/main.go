@@ -4,6 +4,8 @@ package bin
 import (
   "flag"
   "log"
+  "os"
+  "runtime"
 )
 
 // RunApplication starts the common services then runs the supplied function
@@ -12,6 +14,8 @@ import (
 // The optional function in the return will, if not nil, be called when the
 // application shuts down.
 func RunApplication( app func( *Config ) ( func(), error ) ) {
+
+  log.Printf( "%s %s %s", os.Args[0], runtime.GOOS, runtime.GOARCH )
 
   configFile := flag.String( "c", "", "The config file to use" )
 
