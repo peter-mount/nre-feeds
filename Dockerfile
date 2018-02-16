@@ -10,12 +10,6 @@
 # ============================================================
 
 # ============================================================
-# gcc container required to build the docker-entrypoint.
-# See bin/docker/main.c for why we need this
-FROM alpine as gcc
-RUN apk add --no-cache gcc musl-dev
-
-# ============================================================
 # Build container containing our pre-pulled libraries.
 # As this changes rarely it means we can use the cache between
 # building each microservice.
@@ -65,20 +59,13 @@ FROM source as test
 RUN go test -v util
 
 # ============================================================
-# Now test have past build the docker-entrypoint
-# see bin/docker/main.c for why we need this
-FROM gcc as wrapper
-ARG service
-WORKDIR /work
-ADD bin/docker .
-RUN sed -i "s/@@service@@/${service}/g" main.c &&\
-    gcc -o main -static main.c &&\
-    strip main
-
-# ============================================================
 # Compile the source.
 FROM source as compiler
 ARG service
+ARG arch
+ARG goos
+ARG goarch
+ARG goarm
 
 # Static compile
 ENV CGO_ENABLED=0
@@ -86,14 +73,17 @@ ENV GOOS=linux
 
 # Microservice version is the commit hash from git
 RUN version="$(git rev-parse --short HEAD)" &&\
-    sed -i "s/@@version@@/${version}/g" bin/version.go
+    sed -i "s/@@version@@/${version} ${goos}(${arch})/g" bin/version.go
 
 # Build the microservice
-RUN go build -o /dest/${service} bin/${service}
-
-# Install the docker-entrypoint
-#COPY --from=wrapper /work/main /dest/docker-entrypoint
-RUN cd /dest && ln -s ${service} docker-entrypoint
+RUN echo ${goos} ${goarch} ${goarm} &&\
+    CGO_ENABLED=0 \
+    GOOS=${goos} \
+    GOARCH=${goarch} \
+    GOARM=${goarm} \
+    go build \
+      -o /dest/${service} \
+      bin/${service}
 
 # ============================================================
 # Finally build the final runtime container for the specific
@@ -106,5 +96,6 @@ Volume /database
 # Install our built image
 COPY --from=compiler /dest/ /
 
-ENTRYPOINT ["/docker-entrypoint"]
+#ENTRYPOINT ["/docker-entrypoint"]
+ENTRYPOINT ["/@@entrypoint@@"]
 CMD [ "-c", "/config.yaml"]

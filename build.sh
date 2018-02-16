@@ -1,39 +1,64 @@
 #!/bin/sh
+#
+# Script to run a build for a specific microservice and platform.
+#
+# SYNTAX
+#
+# docker.sh imagename microservice arch
+#
+# Where arch is one of the following: amd64 arm32v6 arm32v7 arm64v8
+#
+# image should be the full name, e.g. area51/nre-feeds:latest or area51/nre-feeds:0.2
+# This script will append -{microservice}-{arch} to that name
+#
 
-# Microservice to build & run
-#SERVICE=darwinref
-#SERVICE=darwintt
-#SERVICE=darwind3
-SERVICE=ldb
+IMAGE=$1
+SERVICE=$2
+ARCH=$3
 
-# docker image:tag to build
-IMAGE=test:${SERVICE}
+# Resolve the architecture
+case $ARCH in
+  amd64)
+    GOARCH=amd64
+    ;;
+  arm32v6)
+    GOARCH=arm
+    GOARM=6
+    ;;
+  arm32v7)
+    GOARCH=arm
+    GOARM=7
+    ;;
+  arm64v8)
+    GOARCH=arm64
+    ;;
+  *)
+    echo "Unsupported architecture $ARCH"
+    exit 1
+    ;;
+esac
 
-# Port to run against
-PORT=8081
+# For now just support Linux
+GOOS=linux
 
-# Local paths to where to store the DB's and local config.yaml
-DBPATH=/home/peter/tmp/
-CONFIG=$(pwd)/config.yaml
+# The actual image being built
+TAG=${IMAGE}-${SERVICE}-${ARCH}
 
-# End of customisations
+# Now customise Dockerfile
+DOCKERFILE=Dockerfile.${SERVICE}.${GOOS}.${ARCH}
+(
+  echo "# GENERATED $DOCKERFILE"
+  sed "s/@@entrypoint@@/${SERVICE}/g" Dockerfile
+) >$DOCKERFILE
 
-clear
+echo "Building $SERVICE image $TAG on $ARCH"
 
-#for i in darwinref darwintt darwind3 ldb
-#do
-#  docker build -t test:$i --build-arg service=$i . || exit 1
-#done
-
-#exit
-
-docker build -t ${IMAGE} --build-arg service=${SERVICE} . || exit 1
-
-#exit
-
-docker run -it --rm \
-  --name test \
-  -v ${DBPATH}:/database \
-  -v ${CONFIG}:/config.yaml:ro \
-  -p ${PORT}:80 \
-  ${IMAGE}
+docker build \
+  -t ${TAG} \
+  -f ${DOCKERFILE} \
+  --build-arg service=${SERVICE} \
+  --build-arg arch=${ARCH} \
+  --build-arg goos=${GOOS} \
+  --build-arg goarch=${GOARCH} \
+  --build-arg goarm=${GOARM} \
+  .
