@@ -120,14 +120,14 @@ func tstime_testTime( t *testing.T, s string, a *WorkingTime, b *WorkingTime ) b
 func tstime_test( t *testing.T, a *TSTime ) bool {
 
   if b, err := json.Marshal( a ); err != nil {
-    t.Errorf( "%s failed to marshal: %v", a, err )
+    t.Errorf( "%v failed to marshal: %v", a, err )
     return true
   } else {
 
     // unmarshal back
     c := &TSTime{}
     if err := json.Unmarshal( b, c ); err != nil {
-      t.Errorf( "%s failed to marshal: %v", a, err )
+      t.Errorf( "%v failed to marshal: %v", a, err )
       return true
     }
 
