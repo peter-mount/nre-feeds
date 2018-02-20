@@ -4,7 +4,7 @@
 #
 # SYNTAX
 #
-# docker.sh imagename microservice arch
+# docker.sh imagename microservice arch version
 #
 # Where arch is one of the following: amd64 arm32v6 arm32v7 arm64v8
 #
@@ -15,6 +15,7 @@
 IMAGE=$1
 SERVICE=$2
 ARCH=$3
+VERSION=$4
 
 # Resolve the architecture
 case $ARCH in
@@ -42,7 +43,7 @@ esac
 GOOS=linux
 
 # The actual image being built
-TAG=${IMAGE}-${SERVICE}-${ARCH}
+TAG=${IMAGE}:${SERVICE}-${ARCH}-${VERSION}
 
 # Now customise Dockerfile
 DOCKERFILE=Dockerfile.${SERVICE}.${GOOS}.${ARCH}
