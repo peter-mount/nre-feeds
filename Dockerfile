@@ -9,6 +9,9 @@
 #   darwinref     The Darwin Reference API
 # ============================================================
 
+ARG arch=amd64
+ARG goos=linux
+
 # ============================================================
 # Build container containing our pre-pulled libraries.
 # As this changes rarely it means we can use the cache between
@@ -56,7 +59,8 @@ ADD . .
 # Run all tests in a new container so any output won't affect
 # the final build
 FROM source as test
-RUN go test -v util
+ARG skipTest
+RUN if [ -z "$skipTest" ] ;then go test -v util;fi
 
 # ============================================================
 # Compile the source.
@@ -67,17 +71,13 @@ ARG goos
 ARG goarch
 ARG goarm
 
-# Static compile
-ENV CGO_ENABLED=0
-ENV GOOS=linux
-
 # Microservice version is the commit hash from git
 RUN version="$(git rev-parse --short HEAD)" &&\
     sed -i "s/@@version@@/${version} ${goos}(${arch})/g" bin/version.go
 
-# Build the microservice
-RUN echo ${goos} ${goarch} ${goarm} &&\
-    CGO_ENABLED=0 \
+# Build the microservice.
+# NB: CGO_ENABLED=0 forces a static build
+RUN CGO_ENABLED=0 \
     GOOS=${goos} \
     GOARCH=${goarch} \
     GOARM=${goarm} \
