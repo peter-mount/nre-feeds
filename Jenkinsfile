@@ -62,7 +62,7 @@ properties([
   disableResume()
 ])
 
-node('master') {
+node('Dev_AMD64_Amsterdam') {
 
   stage("Checkout") {
     checkout scm
