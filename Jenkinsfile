@@ -85,11 +85,9 @@ def buildArch = {
 
     if( repository != '' ) {
       // Push all built images relevant docker repository
-      architectures.each {
-        architecture -> stage( 'Publish ' + architecture + ' images' ) {
-          services.each {
-            service -> sh 'docker push ' + dockerImage( service, architecture )
-          }
+      stage( 'Publish ' + architecture + ' images' ) {
+        services.each {
+          service -> sh 'docker push ' + dockerImage( service, architecture )
         }
       }
     } // repository != ''
