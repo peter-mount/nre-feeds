@@ -17,7 +17,7 @@ architectures = [ 'amd64', 'arm64v8' ]
 services = [ 'darwinref', 'darwintt', 'darwind3', 'ldb' ]
 
 // Temp docker image name
-tempImage = 'temp/' + imagePrefix + version
+tempImage = 'temp/' + imagePrefix + ':' + version
 
 // The docker image name
 // architecture can be '' for multiarch images
@@ -116,12 +116,12 @@ node('AMD64') {
 parallel (
   'amd64': {
     node('AMD64') {
-      build( "amd64" )
+      buildArch( "amd64" )
     }
   },
   'arm64v8': {
     node('AMD64') {
-      build( "arm64v8" )
+      buildArch( "arm64v8" )
     }
   }
 )
