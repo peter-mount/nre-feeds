@@ -90,12 +90,16 @@ def buildArch = {
     } // repository != ''
 }
 
+def manifests = {
+  service -> manifests = architectures.collect { architecture -> dockerImage( service, architecture ) }
+  manifests.join(' ')
+}
+
 // Deploy multi-arch image for a service
 def multiArchService = {
   service ->
     // Create/amend the manifest with our architectures
-    manifests = architectures.collect { architecture -> dockerImage( service, architecture ) }
-    sh 'docker manifest create -a ' + multiImage( service ) + ' ' + manifests.join(' ')
+    sh 'docker manifest create -a ' + multiImage( service ) + ' ' + manifests( service )
 
     // For each architecture annotate them to be correct
     architectures.each {
