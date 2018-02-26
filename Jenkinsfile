@@ -92,13 +92,10 @@ def buildArch = {
 
 // Deploy multi-arch image for a service
 def multiArchService = {
-  service -> {
-    echo service
+  service ->
     // Create/amend the manifest with our architectures
     manifests = architectures.collect { architecture -> dockerImage( service, architecture ) }
-    echo service
     sh 'docker manifest create -a ' + multiImage( service ) + ' ' + manifests.join(' ')
-    echo service
 
     // For each architecture annotate them to be correct
     architectures.each {
@@ -109,11 +106,8 @@ def multiArchService = {
         ' ' + dockerImage( service, architecture )
     }
 
-    echo service
     // Publish the manifest
     sh 'docker manifest push -p ' + multiImage( service )
-    echo service
-  }
 }
 
 // Now build everything on one node
