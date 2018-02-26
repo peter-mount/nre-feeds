@@ -81,11 +81,7 @@ def buildArch = {
 
     if( repository != '' ) {
       // Push all built images relevant docker repository
-      stage( 'Publish ' + architecture + ' images' ) {
-        services.each {
-          service -> sh 'docker push ' + dockerImage( service, architecture )
-        }
-      }
+      sh 'docker push ' + dockerImage( service, architecture )
     } // repository != ''
 }
 
@@ -112,10 +108,10 @@ node('AMD64') {
     service -> stage( service ) {
       parallel (
         'amd64': {
-          buildArch( "amd64" )
+          buildArch( "amd64", service )
         },
         'arm64v8': {
-          buildArch( "arm64v8" )
+          buildArch( "arm64v8", service )
         }
       )
     }
