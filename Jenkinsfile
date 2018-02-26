@@ -88,7 +88,7 @@ def buildArch = {
 
 // Deploy multi-arch image for a service
 def multiArchService = {
-  service ->
+  service -> {
 
     // The manifest to publish
     multiImage = dockerImage( service, '' )
@@ -108,6 +108,7 @@ def multiArchService = {
 
     // Publish the manifest
     sh 'docker manifest push -p ' + multiImage
+  }
 }
 
 // Now build everything on one node
@@ -145,7 +146,7 @@ node('AMD64') {
 
   // Stages valid only if we have a repository set
   if( repository != '' ) {
-    stage( "Publish MultiArch Image" ) {
+    stage( "Multiarch Image" ) {
       parallel(
         'darwinref': {
           multiArchService( 'darwinref' )
