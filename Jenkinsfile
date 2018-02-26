@@ -62,16 +62,17 @@ properties([
   disableResume()
 ])
 
+def dockerFile = { architecture, service -> "Dockerfile." + service + '.' + architecture }
+
 // Build a service for a specific architecture
 def buildArch = {
   architecture, service ->
     // Modify Dockerfile so the final image has the correct entrypoint
-    dockerFile = "Dockerfile." + service + '.' + architecture
-    sh 'sed "s/@@entrypoint@@/' + service + '/g" Dockerfile >' + dockerFile
+    sh 'sed "s/@@entrypoint@@/' + service + '/g" Dockerfile >' + dockerFile( architecture, service )
 
     sh 'docker build' +
       ' -t ' + dockerImage( service, architecture ) +
-      ' -f ' + dockerFile +
+      ' -f ' + dockerFile( architecture, service ) +
       ' --build-arg skipTest=true' +
       ' --build-arg service=' + service +
       ' --build-arg arch=' + architecture +
@@ -86,28 +87,26 @@ def buildArch = {
     } // repository != ''
 }
 
+def multiImage = { service -> dockerImage( service, '' ) }
 // Deploy multi-arch image for a service
 def multiArchService = {
   service -> {
 
-    // The manifest to publish
-    multiImage = dockerImage( service, '' )
-
     // Create/amend the manifest with our architectures
     manifests = architectures.collect { architecture -> dockerImage( service, architecture ) }
-    sh 'docker manifest create -a ' + multiImage + ' ' + manifests.join(' ')
+    sh 'docker manifest create -a ' + multiImage( service ) + ' ' + manifests.join(' ')
 
     // For each architecture annotate them to be correct
     architectures.each {
       architecture -> sh 'docker manifest annotate' +
         ' --os linux' +
         ' --arch ' + goarch( architecture ) +
-        ' ' + multiImage +
+        ' ' + multiImage( service ) +
         ' ' + dockerImage( service, architecture )
     }
 
     // Publish the manifest
-    sh 'docker manifest push -p ' + multiImage
+    sh 'docker manifest push -p ' + multiImage( service )
   }
 }
 
