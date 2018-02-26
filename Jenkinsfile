@@ -64,37 +64,35 @@ properties([
 
 def buildArch = {
   architecture ->
-    node('AMD64') {
-      services.each {
-        service -> stage( service + ' ' + architecture ) {
-          // Modify Dockerfile so the final image has the correct entrypoint
-          dockerFile = "Dockerfile." + service
-          sh 'sed "s/@@entrypoint@@/' + service + '/g" Dockerfile >' + dockerFile
+    services.each {
+      service -> stage( service + ' ' + architecture ) {
+        // Modify Dockerfile so the final image has the correct entrypoint
+        dockerFile = "Dockerfile." + service
+        sh 'sed "s/@@entrypoint@@/' + service + '/g" Dockerfile >' + dockerFile
 
-          sh 'docker build' +
-            ' -t ' + dockerImage( service, architecture ) +
-            ' -f ' + dockerFile +
-            ' --build-arg skipTest=true' +
-            ' --build-arg service=' + service +
-            ' --build-arg arch=' + architecture +
-            ' --build-arg goos=linux' +
-            ' --build-arg goarch=' + goarch( architecture ) +
-            ' --build-arg goarm=' + goarm( architecture ) +
-            ' .'
-        }
+        sh 'docker build' +
+          ' -t ' + dockerImage( service, architecture ) +
+          ' -f ' + dockerFile +
+          ' --build-arg skipTest=true' +
+          ' --build-arg service=' + service +
+          ' --build-arg arch=' + architecture +
+          ' --build-arg goos=linux' +
+          ' --build-arg goarch=' + goarch( architecture ) +
+          ' --build-arg goarm=' + goarm( architecture ) +
+          ' .'
       }
+    }
 
-      if( repository != '' ) {
-        // Push all built images relevant docker repository
-        architectures.each {
-          architecture -> stage( 'Publish ' + architecture + ' images' ) {
-            services.each {
-              service -> sh 'docker push ' + dockerImage( service, architecture )
-            }
+    if( repository != '' ) {
+      // Push all built images relevant docker repository
+      architectures.each {
+        architecture -> stage( 'Publish ' + architecture + ' images' ) {
+          services.each {
+            service -> sh 'docker push ' + dockerImage( service, architecture )
           }
         }
-      } // repository != ''
-    } // node
+      }
+    } // repository != ''
 }
 
 node('AMD64') {
@@ -118,8 +116,16 @@ node('AMD64') {
 }
 
 parallel( {
-  "amd64": build( "amd64" )
-  "arm64v8": build( "arm64v8" )
+  "amd64": {
+    node('AMD64') {
+      build( "amd64" )
+    }
+  }
+  "arm64v8": {
+    node('AMD64') {
+      build( "arm64v8" )
+    }
+  }
 })
 
 node('AMD64') {
