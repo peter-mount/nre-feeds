@@ -113,11 +113,11 @@ node('AMD64') {
   }
 }
 
-parallel amd64: {
+parallel 'amd64': {
     node('AMD64') {
       build( "amd64" )
     }
-  }, arm64v8: {
+  }, 'arm64v8': {
     node('AMD64') {
       build( "arm64v8" )
     }
