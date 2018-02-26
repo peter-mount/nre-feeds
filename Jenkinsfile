@@ -115,7 +115,7 @@ node('AMD64') {
   }
 }
 
-parallel( {
+parallel {
   "amd64": {
     node('AMD64') {
       build( "amd64" )
@@ -126,7 +126,7 @@ parallel( {
       build( "arm64v8" )
     }
   }
-})
+}
 
 node('AMD64') {
   // Stages valid only if we have a repository set
