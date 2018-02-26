@@ -86,7 +86,7 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
 
         if include {
           service := s.Clone()
-          service.Self = r.Self( "/live/schedule/" + service.RID )
+          service.Self = r.Self( "/service/" + service.RID )
           services = append( services, service )
         }
       }
@@ -129,7 +129,7 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
       Tocs: darwinref.NewTocMap(),
       Messages: messages,
       Date: now,
-      Self: r.Self( "/ldb/boards/" + crs ),
+      Self: r.Self( "/boards/" + crs ),
     }
 
     // Set of tiplocs
