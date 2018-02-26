@@ -63,7 +63,7 @@ properties([
 ])
 
 def buildArch = {
-  architecture -> {
+  architecture ->
     node('AMD64') {
       services.each {
         service -> stage( service + ' ' + architecture ) {
@@ -95,7 +95,6 @@ def buildArch = {
         }
       } // repository != ''
     } // node
-  }
 }
 
 node('AMD64') {
