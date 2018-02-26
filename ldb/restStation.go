@@ -71,14 +71,24 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
       } )
 
       for _, s := range sa {
-        // Limit to max 20 departures and only if within the next hour
-        //if len( services ) < 20 &&
-        //   nowt.Compare( &s.Location.Times.Time ) &&
-        //   s.Location.Times.Time.Compare( &hour ) {
+        // Ignore if it's departed
+        include := !s.Departed
+
+        if include {
+          // Limit to max 20 departures and only if within the next hour
+          include = len( services ) < 20
+        }
+
+        if include {
+          include = nowt.Compare( &s.Location.Times.Time ) &&
+            s.Location.Times.Time.Compare( &hour )
+        }
+
+        if include {
           service := s.Clone()
           service.Self = r.Self( "/live/schedule/" + service.RID )
           services = append( services, service )
-        //}
+        }
       }
       return nil
     } ); err != nil {
