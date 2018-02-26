@@ -62,28 +62,9 @@ properties([
   disableResume()
 ])
 
-node('AMD64') {
-  stage("Checkout") {
-    checkout scm
-  }
-
-  // Prepare the go base image with the source and libraries
-  stage("Prepare Build") {
-    // Ensure we have current versions of each base image
-    sh 'docker pull golang:alpine'
-
-    // Run up to the source target
-    sh 'docker build -t ' + tempImage + ' --target source .'
-  }
-
-  // Run unit tests
-  stage("Run Tests") {
-    sh 'docker build -t ' + tempImage + ' --target test .'
-  }
-
-  // Now for each architecture run each microservice build
-  architectures.each {
-    architecture ->
+def buildArch = {
+  architecture -> {
+    node('AMD64') {
       services.each {
         service -> stage( service + ' ' + architecture ) {
           // Modify Dockerfile so the final image has the correct entrypoint
@@ -102,20 +83,49 @@ node('AMD64') {
             ' .'
         }
       }
+
+      if( repository != '' ) {
+        // Push all built images relevant docker repository
+        architectures.each {
+          architecture -> stage( 'Publish ' + architecture + ' images' ) {
+            services.each {
+              service -> sh 'docker push ' + dockerImage( service, architecture )
+            }
+          }
+        }
+      } // repository != ''
+    } // node
+  }
+}
+
+node('AMD64') {
+  stage("Checkout") {
+    checkout scm
   }
 
+  // Prepare the go base image with the source and libraries
+  stage("Prepare Build") {
+    // Ensure we have current versions of each base image
+    sh 'docker pull golang:alpine'
+
+    // Run up to the source target
+    sh 'docker build -t ' + tempImage + ' --target source .'
+  }
+
+  // Run unit tests
+  stage("Run Tests") {
+    sh 'docker build -t ' + tempImage + ' --target test .'
+  }
+}
+
+parallel( {
+  "amd64": build( "amd64" )
+  "arm64v8": build( "arm64v8" )
+})
+
+node('AMD64') {
   // Stages valid only if we have a repository set
   if( repository != '' ) {
-
-    // Push all built images relevant docker repository
-    architectures.each {
-      architecture -> stage( 'Publish ' + architecture + ' images' ) {
-        services.each {
-          service -> sh 'docker push ' + dockerImage( service, architecture )
-        }
-      }
-    }
-
     // Experimental: Create multi-arch images
     services.each {
       service -> stage( 'Publish ' + service + ' MultiArch image' ) {
