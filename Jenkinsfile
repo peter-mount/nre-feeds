@@ -28,6 +28,9 @@ def dockerImage = {
     '-' + version
 }
 
+// The multi arch image name
+def multiImage = { service -> repository + imagePrefix + ':' + service + '-' + version }
+
 // The go arch
 def goarch = {
   architecture -> switch( architecture ) {
@@ -87,14 +90,15 @@ def buildArch = {
     } // repository != ''
 }
 
-def multiImage = { service -> dockerImage( service, '' ) }
 // Deploy multi-arch image for a service
 def multiArchService = {
   service -> {
-
+    echo service
     // Create/amend the manifest with our architectures
     manifests = architectures.collect { architecture -> dockerImage( service, architecture ) }
+    echo service
     sh 'docker manifest create -a ' + multiImage( service ) + ' ' + manifests.join(' ')
+    echo service
 
     // For each architecture annotate them to be correct
     architectures.each {
@@ -105,8 +109,10 @@ def multiArchService = {
         ' ' + dockerImage( service, architecture )
     }
 
+    echo service
     // Publish the manifest
     sh 'docker manifest push -p ' + multiImage( service )
+    echo service
   }
 }
 
