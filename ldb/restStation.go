@@ -10,7 +10,7 @@ import (
   "util"
 )
 
-type result struct {
+type stationResult struct {
   // The departures
   Services []*Service                 `json:"departures"`
   // Details about this station
@@ -86,6 +86,7 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
 
         if include {
           service := s.Clone()
+          // Point self to our proxy so we provide reference data as well
           service.Self = r.Self( "/service/" + service.RID )
           services = append( services, service )
         }
@@ -123,7 +124,7 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
     }
     */
 
-    res := &result{
+    res := &stationResult{
       Services: services,
       Tiplocs: darwinref.NewLocationMap(),
       Tocs: darwinref.NewTocMap(),

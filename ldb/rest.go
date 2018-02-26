@@ -6,4 +6,5 @@ import (
 
 func (d *LDB) RegisterRest( c *rest.ServerContext ) {
   c.Handle( "/boards/{crs}", d.stationHandler ).Methods( "GET" )
+  c.Handle( "/service/{rid}", d.serviceHandler ).Methods( "GET" )
 }
