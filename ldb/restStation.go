@@ -72,7 +72,7 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
 
       for _, s := range sa {
         // Ignore if it's departed
-        include := !s.Departed
+        include := !s.Location.Forecast.Departed
 
         if include {
           // Limit to max 20 departures and only if within the next hour
