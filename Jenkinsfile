@@ -62,6 +62,7 @@ properties([
   disableResume()
 ])
 
+// Build a service for a specific architecture
 def buildArch = {
   architecture, service ->
     // Modify Dockerfile so the final image has the correct entrypoint
@@ -85,6 +86,31 @@ def buildArch = {
     } // repository != ''
 }
 
+// Deploy multi-arch image for a service
+def multiArchService = {
+  service ->
+
+    // The manifest to publish
+    multiImage = dockerImage( service, '' )
+
+    // Create/amend the manifest with our architectures
+    manifests = architectures.collect { architecture -> dockerImage( service, architecture ) }
+    sh 'docker manifest create -a ' + multiImage + ' ' + manifests.join(' ')
+
+    // For each architecture annotate them to be correct
+    architectures.each {
+      architecture -> sh 'docker manifest annotate' +
+        ' --os linux' +
+        ' --arch ' + goarch( architecture ) +
+        ' ' + multiImage +
+        ' ' + dockerImage( service, architecture )
+    }
+
+    // Publish the manifest
+    sh 'docker manifest push -p ' + multiImage
+}
+
+// Now build everything on one node
 node('AMD64') {
   stage("Checkout") {
     checkout scm
@@ -105,7 +131,7 @@ node('AMD64') {
   }
 
   services.each {
-    service -> stage( service ) {
+    service -> stage( 'Build ' + service ) {
       parallel (
         'amd64': {
           buildArch( "amd64", service )
@@ -119,28 +145,21 @@ node('AMD64') {
 
   // Stages valid only if we have a repository set
   if( repository != '' ) {
-    services.each {
-      service -> stage( 'Publish ' + service + ' MultiArch image' ) {
-
-        // The manifest to publish
-        multiImage = dockerImage( service, '' )
-
-        // Create/amend the manifest with our architectures
-        manifests = architectures.collect { architecture -> dockerImage( service, architecture ) }
-        sh 'docker manifest create -a ' + multiImage + ' ' + manifests.join(' ')
-
-        // For each architecture annotate them to be correct
-        architectures.each {
-          architecture -> sh 'docker manifest annotate' +
-            ' --os linux' +
-            ' --arch ' + goarch( architecture ) +
-            ' ' + multiImage +
-            ' ' + dockerImage( service, architecture )
+    stage( "Publish MultiArch Image" ) {
+      parallel(
+        'darwinref': {
+          multiArchService( 'darwinref' )
+        },
+        'darwintt': {
+          multiArchService( 'darwintt' )
+        },
+        'darwind3': {
+          multiArchService( 'darwind3' )
+        },
+        'ldb': {
+          multiArchService( 'ldb' )
         }
-
-        // Publish the manifest
-        sh 'docker manifest push -p ' + multiImage
-      }
+      )
     }
   }
 
