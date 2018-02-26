@@ -63,25 +63,21 @@ properties([
 ])
 
 def buildArch = {
-  architecture ->
-    services.each {
-      service -> stage( service + ' ' + architecture ) {
-        // Modify Dockerfile so the final image has the correct entrypoint
-        dockerFile = "Dockerfile." + service
-        sh 'sed "s/@@entrypoint@@/' + service + '/g" Dockerfile >' + dockerFile
+  architecture, service ->
+    // Modify Dockerfile so the final image has the correct entrypoint
+    dockerFile = "Dockerfile." + service + '.' + architecture
+    sh 'sed "s/@@entrypoint@@/' + service + '/g" Dockerfile >' + dockerFile
 
-        sh 'docker build' +
-          ' -t ' + dockerImage( service, architecture ) +
-          ' -f ' + dockerFile +
-          ' --build-arg skipTest=true' +
-          ' --build-arg service=' + service +
-          ' --build-arg arch=' + architecture +
-          ' --build-arg goos=linux' +
-          ' --build-arg goarch=' + goarch( architecture ) +
-          ' --build-arg goarm=' + goarm( architecture ) +
-          ' .'
-      }
-    }
+    sh 'docker build' +
+      ' -t ' + dockerImage( service, architecture ) +
+      ' -f ' + dockerFile +
+      ' --build-arg skipTest=true' +
+      ' --build-arg service=' + service +
+      ' --build-arg arch=' + architecture +
+      ' --build-arg goos=linux' +
+      ' --build-arg goarch=' + goarch( architecture ) +
+      ' --build-arg goarm=' + goarm( architecture ) +
+      ' .'
 
     if( repository != '' ) {
       // Push all built images relevant docker repository
@@ -111,27 +107,25 @@ node('AMD64') {
   stage("Run Tests") {
     sh 'docker build -t ' + tempImage + ' --target test .'
   }
-}
 
-parallel (
-  'amd64': {
-    node('AMD64') {
-      buildArch( "amd64" )
-    }
-  },
-  'arm64v8': {
-    node('AMD64') {
-      buildArch( "arm64v8" )
+  services.each {
+    service -> stage( service ) {
+      parallel (
+        'amd64': {
+          buildArch( "amd64" )
+        },
+        'arm64v8': {
+          buildArch( "arm64v8" )
+        }
+      )
     }
   }
-)
 
-node('AMD64') {
   // Stages valid only if we have a repository set
   if( repository != '' ) {
-    // Experimental: Create multi-arch images
     services.each {
       service -> stage( 'Publish ' + service + ' MultiArch image' ) {
+
         // The manifest to publish
         multiImage = dockerImage( service, '' )
 
