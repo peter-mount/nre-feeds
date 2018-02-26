@@ -1,6 +1,6 @@
 # darwinrest
 --
-    import "github.com/peter-mount/darwin/darwinrest"
+    import "github.com/peter-mount/nre-feeds/darwinrest"
 
 darwinrest provides some additional rest services which use all of the other
 packages in forming their results

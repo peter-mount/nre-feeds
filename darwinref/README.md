@@ -1,6 +1,6 @@
 # darwinref
 --
-    import "github.com/peter-mount/darwin/darwinref"
+    import "github.com/peter-mount/nre-feeds/darwinref"
 
 Handle the daily reference XML file from Darwin
 

@@ -1,5 +1,13 @@
 # Example config.yaml file
 
+# Paths to each microservice.
+# This is used for those services which will use these ones for lookups.
+services:
+  reference: https://ref.example.com
+  timetable: https://timetable.example.com
+  darwind3: https://d3.example.com
+  ldb: https://ldb.example.com
+
 # The embedded webserver
 server:
   # The port to listen on, defaults to 8080
@@ -51,31 +59,24 @@ ftp:
   # hopefully get an update in a subsequent attempt.
   schedule: "0 30 2-6 * * *"
 
-# Details on handling the realtime pushPort D3 feed
-pushPort:
-  # Is the d3 feed enabled
-  enabled: true
+# RabbitMQ config
+rabbitmq:
+  # URL of the connection. If this is not set then RabbitMQ is not used
+  url: amqp://user:password@server
+  # Name to show in management describing this connection
+  connectionName: LDB Departure Boards
 
+# Details on handling the realtime pushPort D3 feed
+d3:
   # If true then if we get a Train Status update for an unknown schedule then
   # attempt to retrieve it from the timetable. If that fails or this is disabled
   # then a new blank schedule is created.
   resolveSchedules: true
 
-  # RabbitMQ config
-  rabbitmq:
-    # URL of the connection. If this is not set then RabbitMQ is not used
-    url: amqp://user:password@server
-    # Name to show in management describing this connection
-    connectionName: LDB Departure Boards
   # The Queue name to create in RabbitMQ
   queueName: ldb
   # The routingKey to bind to the queue
   routingKey: nre.push
-
-ldb:
-  # Is the live departure boards enabled
-  # Note this is only valid if pushPort.enabled is also true
-  enabled: true
 
 # Statistics management
 statistics:

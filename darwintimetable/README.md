@@ -1,6 +1,6 @@
 # darwintimetable
 --
-    import "github.com/peter-mount/darwin/darwintimetable"
+    import "github.com/peter-mount/nre-feeds/darwintimetable"
 
 Reference timetable
 

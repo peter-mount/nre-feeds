@@ -1,6 +1,6 @@
 # darwinupdate
 --
-    import "github.com/peter-mount/darwin/darwinupdate"
+    import "github.com/peter-mount/nre-feeds/darwinupdate"
 
 Package that handles FTP updates from the NRE FTP server
 
@@ -36,9 +36,7 @@ func (u *DarwinUpdate) Ftp(f func(*ftp.ServerConn) error) error
 #### func (*DarwinUpdate) ImportRequiredTimetable
 
 ```go
-func (u *DarwinUpdate) ImportRequiredTimetable(v interface {
-	TimetableId() string
-}) bool
+func (u *DarwinUpdate) ImportRequiredTimetable(v interface{ TimetableId() string }) bool
 ```
 
 #### func (*DarwinUpdate) ReferenceUpdate

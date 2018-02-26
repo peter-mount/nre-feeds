@@ -1,6 +1,6 @@
 # darwind3
 --
-    import "github.com/peter-mount/darwin/darwind3"
+    import "github.com/peter-mount/nre-feeds/darwind3"
 
 darwind3 handles the real time push port feed
 

@@ -1,6 +1,6 @@
 # util
 --
-    import "github.com/peter-mount/darwin/util"
+    import "github.com/peter-mount/nre-feeds/util"
 
 Utility types used to store common data like times
 

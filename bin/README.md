@@ -1,12 +1,18 @@
 # bin
 --
-    import "github.com/peter-mount/darwin/bin"
+    import "github.com/peter-mount/nre-feeds/bin"
 
 Internal library used for the binary webservices
 
 Internal library used for the binary webservices
 
 ## Usage
+
+```go
+const (
+	VERSION = "@@version@@"
+)
+```
 
 #### func  RunApplication
 

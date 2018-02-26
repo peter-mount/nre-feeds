@@ -1,6 +1,6 @@
 # ldb
 --
-    import "github.com/peter-mount/darwin/ldb"
+    import "github.com/peter-mount/nre-feeds/ldb"
 
 LDB - Live Departure Boards
 

@@ -1,6 +1,6 @@
 # darwinkb
 --
-    import "github.com/peter-mount/darwin/darwinkb"
+    import "github.com/peter-mount/nre-feeds/darwinkb"
 
 
 ## Usage
