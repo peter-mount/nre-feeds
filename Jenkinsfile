@@ -116,16 +116,13 @@ def multiArchService = {
 
 // Now build everything on one node
 node('AMD64') {
-  stage("Checkout") {
+  stage( "Checkout" ) {
     checkout scm
-  }
 
-  // Prepare the go base image with the source and libraries
-  stage("Prepare Build") {
-    // Ensure we have current versions of each base image
+    // Prepare the go base image with the source and libraries
     sh 'docker pull golang:alpine'
 
-    // Run up to the source target
+    // Run up to the source target so libraries are checked out
     sh 'docker build -t ' + tempImage + ' --target source .'
   }
 
