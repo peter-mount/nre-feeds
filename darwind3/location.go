@@ -206,7 +206,7 @@ func (s *Location) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) 
       case "planAct":
         s.Planned.PlannedActivity = attr.Value
 
-      case "Cancelled":
+      case "can":
         s.Cancelled = attr.Value == "true"
 
       case "fd":
