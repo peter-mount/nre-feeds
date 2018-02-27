@@ -46,6 +46,16 @@ func (r *ReasonMap) Add( id int, canc bool, tx *bolt.Tx, dr *DarwinReference ) {
   }
 }
 
+func (r *ReasonMap) AddReason( reason *Reason ) {
+  if reason != nil && reason.Code > 0 {
+    if reason.Cancelled {
+      r.Cancelled[ reason.Code ] = reason
+    } else {
+      r.Late[ reason.Code ] = reason
+    }
+  }
+}
+
 // Self sets the Self field to match this request
 func (r *ReasonMap) Self( rs *rest.Rest ) {
   for _, v := range r.Cancelled {

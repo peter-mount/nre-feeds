@@ -21,6 +21,8 @@ type stationResult struct {
   Tocs       *darwinref.TocMap        `json:"toc"`
   // StationMessages
   Messages []*darwind3.StationMessage `json:"messages"`
+  // Cancellation or Late Reasons
+  Reasons    *darwinref.ReasonMap     `json:"reasons"`
   // The date of this request
   Date        time.Time               `json:"date"`
   // The URL of this departure board
@@ -129,6 +131,7 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
       Tiplocs: darwinref.NewLocationMap(),
       Tocs: darwinref.NewTocMap(),
       Messages: messages,
+      Reasons: darwinref.NewReasonMap(),
       Date: now,
       Self: r.Self( "/boards/" + crs ),
     }
@@ -154,13 +157,28 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
       // Toc running this service
       refClient.AddToc( res.Tocs, s.Toc )
 
-      // Tiploc in a cancel or late reason
-      if s.CancelReason.Tiploc != "" {
-        tiplocs[ s.CancelReason.Tiploc ] = nil
+      if s.CancelReason.Reason > 0 {
+        if reason, err := refClient.GetCancelledReason( s.CancelReason.Reason ); err != nil {
+          return err
+        } else if reason != nil {
+          res.Reasons.AddReason( reason )
+        }
+
+        if s.CancelReason.Tiploc != "" {
+          tiplocs[ s.CancelReason.Tiploc ] = nil
+        }
       }
 
-      if s.LateReason.Tiploc != "" {
-        tiplocs[ s.LateReason.Tiploc ] = nil
+      if s.LateReason.Reason > 0 {
+        if reason, err := refClient.GetLateReason( s.LateReason.Reason ); err != nil {
+          return err
+        } else if reason != nil {
+          res.Reasons.AddReason( reason )
+        }
+
+        if s.LateReason.Tiploc != "" {
+          tiplocs[ s.LateReason.Tiploc ] = nil
+        }
       }
     }
 
