@@ -68,19 +68,41 @@ func (r *ReasonMap) Self( rs *rest.Rest ) {
 
 func (r *ReasonMap) MarshalJSON() ( []byte, error ) {
   b := &bytes.Buffer{}
-  b.WriteString( "{\"late\":{")
-  if err := r.marshalJSON( b, r.Late ); err != nil {
-    return nil, err
+  if len( r.Late ) == 0 && len( r.Cancelled ) == 0 {
+    b.WriteString( "null")
+  } else {
+
+    b.WriteByte( '{' )
+
+    sep, err := r.marshalJSON( b, "late", r.Late, false )
+    if err != nil {
+      return nil, err
+    }
+
+    sep, err = r.marshalJSON( b, "cancelled", r.Cancelled, sep )
+    if err != nil {
+        return nil, err
+    }
+
+    b.WriteByte( '}' )
   }
-  b.WriteString( "},\"cancelled\":{")
-  if err := r.marshalJSON( b, r.Cancelled ); err != nil {
-    return nil, err
-  }
-  b.WriteByte( '}' )
+
   return b.Bytes(), nil
 }
 
-func (r *ReasonMap) marshalJSON( b *bytes.Buffer, m map[int]*Reason ) ( error ) {
+func (r *ReasonMap) marshalJSON( b *bytes.Buffer, l string, m map[int]*Reason, notFirst bool ) ( bool, error ) {
+  if len( m ) == 0 {
+    return notFirst, nil
+  }
+
+  if notFirst {
+    b.WriteByte( ',' )
+  }
+
+  b.WriteByte( '"' )
+  b.WriteString( l )
+  b.WriteString( "\":{")
+
   var vals []*Reason
   for _,v := range m {
     vals = append( vals, v )
@@ -101,11 +123,13 @@ func (r *ReasonMap) marshalJSON( b *bytes.Buffer, m map[int]*Reason ) ( error ) 
     b.WriteByte( ':' )
 
     if eb, err := json.Marshal( v ); err != nil {
-      return err
+      return notFirst, err
     } else {
       b.Write( eb )
     }
   }
 
-  return nil
+  b.WriteByte( '}' )
+
+  return true, nil
 }

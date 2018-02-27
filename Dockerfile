@@ -60,7 +60,9 @@ ADD . .
 # the final build
 FROM source as test
 ARG skipTest
-RUN if [ -z "$skipTest" ] ;then go test -v util;fi
+RUN if [ -z "$skipTest" ] ;then \
+      go test -v darwinref util \
+    ;fi
 
 # ============================================================
 # Compile the source.
