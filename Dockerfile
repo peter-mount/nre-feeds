@@ -57,11 +57,11 @@ ADD . .
 
 # ============================================================
 # Run all tests in a new container so any output won't affect
-# the final build
+# the final build.
 FROM source as test
 ARG skipTest
 RUN if [ -z "$skipTest" ] ;then \
-      go test -v darwinref util \
+      go test -v darwind3 darwinref ldb util \
     ;fi
 
 # ============================================================

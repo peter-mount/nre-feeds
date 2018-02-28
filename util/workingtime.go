@@ -6,6 +6,7 @@ import (
   "fmt"
   "github.com/peter-mount/golib/codec"
   "strconv"
+  "time"
 )
 
 // Working Timetable time.
@@ -14,6 +15,11 @@ import (
 type WorkingTime struct {
   t int
 }
+
+const (
+  workingTime_min = 0
+  workingTime_max = 86400
+)
 
 func (a *WorkingTime) Equals( b *WorkingTime ) bool {
   if b == nil {
@@ -39,10 +45,10 @@ func (a *WorkingTime) Compare( b *WorkingTime ) bool {
   d := a.t - b.t
 
   if d < -21600 || d >64800 {
-    return d > 0
+    return a.t > b.t
   }
 
-  return d < 0
+  return a.t < b.t
 }
 
 // WorkingTimeEquals compares equality between two WorkingTimes.
@@ -174,4 +180,39 @@ func (t *WorkingTime) Set( v int ) {
 // IsZero returns true if the time is not present
 func (t *WorkingTime) IsZero() bool {
   return t.t <= 0
+}
+
+// SetTime set's the working time to the current time (resolution 1 minute)
+func (t *WorkingTime) SetTime( tm time.Time ) {
+  t.Set( (tm.Hour()*3600) + (tm.Minute()*60) )
+}
+
+// WorkingTime_FromTime returns a WorkingTime from a time.Time with a resolution
+// of 1 minute.
+func WorkingTime_FromTime( tm time.Time ) *WorkingTime {
+  t := &WorkingTime{}
+  t.SetTime( tm )
+  return t
+}
+
+// Before returns true if this WorkingTime is before another
+func (a *WorkingTime) Before( b *WorkingTime ) bool {
+  return a.t < b.t
+}
+
+// After returns true if this WorkingTime is after another
+func (a *WorkingTime) After( b *WorkingTime ) bool {
+  return a.t > b.t
+}
+
+// Between returns true if this WorkingTime falls between two other WorkingTime's.
+// The test is inclusive of the from & to times.
+// If from is after to then we presume we cross midnight.
+func (t *WorkingTime) Between( from *WorkingTime, to *WorkingTime ) bool {
+
+  if from.After( to ) {
+    return ( from.t <= t.t && t.t <= workingTime_max ) || ( t.t >= workingTime_min && t.t <= to.t )
+  }
+
+  return from.t <= t.t && t.t <= to.t
 }

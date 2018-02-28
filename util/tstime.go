@@ -21,7 +21,7 @@ type TSTime struct {
   // time at this location. Note that this value indicates where a manual
   // unknown delay forecast has been set, whereas it is the "delayed"
   // attribute that indicates that the actual forecast is "unknown delay".
-  ETUnknown   bool                          `json:"etUnknown,omitempty" xml:"etUnknown,attr,omitempty"`
+  ETUnknown   bool          `json:"etUnknown,omitempty" xml:"etUnknown,attr,omitempty"`
   // The estimated time based on the "working schedule".
   // This will only be set for public activities and when it also differs
   // from the estimated time based on the "public schedule".

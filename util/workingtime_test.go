@@ -199,3 +199,61 @@ func TestWorkingTime_JSON( t *testing.T ) {
     return false
   } )
 }
+
+func TestWorkingTime_After( t *testing.T ) {
+  a := NewWorkingTime( "02:03" )
+  b := NewWorkingTime( "01:02" )
+
+  if !a.After( b ) {
+    t.Errorf( "%v not after %v", a, b )
+  }
+
+  if b.After( a ) {
+    t.Errorf( "%v after %v", b, a )
+  }
+}
+
+func TestWorkingTime_Before( t *testing.T ) {
+  a := NewWorkingTime( "01:02" )
+  b := NewWorkingTime( "02:03" )
+
+  if !a.Before( b ) {
+    t.Errorf( "%v not before %v", a, b )
+  }
+
+  if b.Before( a ) {
+    t.Errorf( "%v before %v", a, b )
+  }
+}
+
+func TestWorkingTime_Between( t *testing.T ) {
+  from := NewWorkingTime( "20:30:00" )
+  to := NewWorkingTime( "21:30:00" )
+
+  // Time between the range
+
+  v := NewWorkingTime( "20:33:30" )
+
+  if !v.Between( from, to ) {
+    t.Errorf( "%v not between %v and %v", v, from, to )
+  }
+
+  // Cross midnight v should not be between from and to
+  if v.Between( to, from ) {
+    t.Errorf( "%v between %v and %v", v, from, to )
+  }
+
+  // Time outside the range
+
+  v = NewWorkingTime( "09:40" )
+
+  if v.Between( from, to ) {
+    t.Errorf( "%v between %v and %v", v, from, to )
+  }
+
+  // Cross midnight v should not be between from and to
+  if !v.Between( to, from ) {
+    t.Errorf( "%v not between %v and %v", v, from, to )
+  }
+
+}

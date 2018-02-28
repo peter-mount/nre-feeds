@@ -3,9 +3,7 @@ package ldb
 import (
   "darwind3"
   "darwinref"
-//  "fmt"
   "github.com/peter-mount/golib/rest"
-  "sort"
   "time"
   "util"
 )
@@ -42,61 +40,12 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
     d3Client := &darwind3.DarwinD3Client{ Url: d.Darwin }
     refClient := &darwinref.DarwinRefClient{ Url: d.Reference }
 
-    var services []*Service
-
-    var messages []*darwind3.StationMessage
-
+    // We want everything for the next hour
     now := time.Now()
-    var nowt util.WorkingTime
-    nowt.Set( (now.Hour()*3600) + (now.Minute()*60) )
-    next := now.Add( time.Hour )
-    var hour util.WorkingTime
-    hour.Set( (next.Hour()*3600) + (next.Minute()*60) )
+    from := util.WorkingTime_FromTime( now )
+    to := util.WorkingTime_FromTime( now.Add( time.Hour ) )
 
-    if err := station.Update( func() error {
-      // Station messages
-      for _, id := range station.messages {
-        if sm, _ := d3Client.GetStationMessage( id ); sm != nil {
-          messages = append( messages, sm )
-        }
-      }
-
-      // Get the services from the station
-      var sa []*Service
-      for _,s := range station.services {
-        sa = append( sa, s )
-      }
-
-      // sort into time order
-      sort.SliceStable( sa, func( i, j int ) bool {
-        return sa[ i ].Compare( sa[ j ] )
-      } )
-
-      for _, s := range sa {
-        // Ignore if it's departed
-        include := !s.Location.Forecast.Departed
-
-        if include {
-          // Limit to max 20 departures and only if within the next hour
-          include = len( services ) < 20
-        }
-
-        if include {
-          include = nowt.Compare( &s.Location.Times.Time ) &&
-            s.Location.Times.Time.Compare( &hour )
-        }
-
-        if include {
-          service := s.Clone()
-          // Point self to our proxy so we provide reference data as well
-          service.Self = r.Self( "/service/" + service.RID )
-          services = append( services, service )
-        }
-      }
-      return nil
-    } ); err != nil {
-      return err
-    }
+    services := station.GetServices( from, to )
 
     // Resolve vias
     /*
@@ -130,7 +79,7 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
       Services: services,
       Tiplocs: darwinref.NewLocationMap(),
       Tocs: darwinref.NewTocMap(),
-      Messages: messages,
+      Messages: station.GetMessages( d3Client ),
       Reasons: darwinref.NewReasonMap(),
       Date: now,
       Self: r.Self( "/boards/" + crs ),
@@ -157,10 +106,9 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
       // Toc running this service
       refClient.AddToc( res.Tocs, s.Toc )
 
+      // Cancellation reason
       if s.CancelReason.Reason > 0 {
-        if reason, err := refClient.GetCancelledReason( s.CancelReason.Reason ); err != nil {
-          return err
-        } else if reason != nil {
+        if reason, _ := refClient.GetCancelledReason( s.CancelReason.Reason ); reason != nil {
           res.Reasons.AddReason( reason )
         }
 
@@ -169,10 +117,9 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
         }
       }
 
+      // Late reason
       if s.LateReason.Reason > 0 {
-        if reason, err := refClient.GetLateReason( s.LateReason.Reason ); err != nil {
-          return err
-        } else if reason != nil {
+        if reason, _ := refClient.GetLateReason( s.LateReason.Reason ); reason != nil {
           res.Reasons.AddReason( reason )
         }
 
@@ -180,6 +127,9 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
           tiplocs[ s.LateReason.Tiploc ] = nil
         }
       }
+
+      // Set self to point to our service endpoint
+      s.Self = r.Self( "/service/" + s.RID )
     }
 
     // Now resolve the tiplocs en-masse and resolve the toc's at the same time

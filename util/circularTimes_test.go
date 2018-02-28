@@ -53,7 +53,6 @@ func TestCircularTimes_Compare( t *testing.T ) {
 func circularTimes_timesSlice() []*CircularTimes {
   var ary []*CircularTimes
   var circularTimes_times = [...]string {
-    // Ensure first element IS NOT the lowest value, see test for why
     "09:50",
     "09:14",
     "09:18",
@@ -105,28 +104,22 @@ func pary( l string, a []*CircularTimes ) {
 
 func TestCircularTimes_SliceStable( t *testing.T ) {
 
-  a := circularTimes_timesSlice()
-  pary( "a", a )
+  ary := circularTimes_timesSlice()
 
-  b := circularTimes_timesSlice()
-  pary( "b", b )
+  pary( "before sort", ary )
 
-  sort.SliceStable( b, func( i, j int ) bool {
-    return b[ i ].Compare( b[ j ] )
+  sort.SliceStable( ary, func( i, j int ) bool {
+    return ary[ i ].Compare( ary[ j ] )
   } )
 
-  pary( "b", b )
+  pary( "after sort", ary )
 
-  if len( a ) != len( b ) {
-    t.Errorf( "Length incorrect, expected %d got %d", len( a ), len( b ) )
-  } else {
-    // This will work if both same length. If an element is identical then we
-    // havent sorted correctly
-    for i, av := range a {
-      if av.Equals( b[i] ) {
-        t.Errorf( "Slice failed, element %d not changed: %v", i, av.Time.String() )
-      }
+  var l *WorkingTime
+  for i, v := range ary {
+    if i > 0 && v.Time.Before( l ) {
+      t.Errorf( "Element %d not in correct place. Last %v Got %v", i, l.String(), v.Time.String() )
     }
+    l = &v.Time
   }
 
 }
