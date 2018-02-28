@@ -128,11 +128,20 @@ node('AMD64') {
 
   // Run unit tests
   stage("Run Tests") {
-    sh 'docker build -t ' + tempImage + ' --target test .'
+    def runTest = {
+      test -> sh 'docker run -it --rm ' + tempImage + ' go test -v ' + test
+    }
+    parallel (
+      'darwind3': { runTest( 'darwind3' ) },
+      'darwinref': { runTest( 'darwinref' ) },
+      'ldb': { runTest( 'ldb' ) },
+      'util': { runTest( 'util' ) }
+    )
+    //sh 'docker build -t ' + tempImage + ' --target test .'
   }
 
   services.each {
-    service -> stage( 'Build ' + service ) {
+    service -> stage( service ) {
       parallel (
         'amd64': {
           buildArch( "amd64", service )
