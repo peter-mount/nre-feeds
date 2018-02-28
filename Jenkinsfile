@@ -129,7 +129,7 @@ node('AMD64') {
   // Run unit tests
   stage("Run Tests") {
     def runTest = {
-      test -> sh 'docker run -it --rm ' + tempImage + ' go test -v ' + test
+      test -> sh 'docker run -i --rm ' + tempImage + ' go test -v ' + test
     }
     parallel (
       'darwind3': { runTest( 'darwind3' ) },
