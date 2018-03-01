@@ -13,8 +13,9 @@ func (r DarwinReference) RegisterRest( c *rest.ServerContext ) {
   c.Handle( "/reason/late", r.AllReasonLateHandler ).Methods( "GET" )
   c.Handle( "/reason/late/{id}", r.ReasonLateHandler ).Methods( "GET" )
 
-  c.Handle( "/via/{at}/{dest}/{loc1}", r.ViaHandler ).Methods( "GET" )
-  c.Handle( "/via/{at}/{dest}/{loc1}/{loc2}", r.ViaHandler ).Methods( "GET" )
+  c.Handle( "/via/{at}/{dest}/{loc1}", r.viaHandler ).Methods( "GET" )
+  c.Handle( "/via/{at}/{dest}/{loc1}/{loc2}", r.viaHandler ).Methods( "GET" )
+  c.Handle( "/via", r.viaResolveHandler ).Methods( "POST" )
 
   // Reference retrieval methods
   c.Handle( "/crs/{id}", r.CrsHandler ).Methods( "GET" )

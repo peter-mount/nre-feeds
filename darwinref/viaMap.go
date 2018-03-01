@@ -52,8 +52,8 @@ func (r *DarwinReference) ResolveVia( at string, dest string, loc []string ) *Vi
         for _, v := range m2 {
           for i1, l1 := range loc {
             // Run rest of array as 2nd loc against l1
-            for i2, l2 := range loc {
-              if i2 > i1 && v.Loc1 == l1 && v.Loc2 == l2 {
+            for _, l2 := range loc[i1+1:] {
+              if v.Loc1 == l1 && v.Loc2 == l2 {
                 via = v
                 return nil
               }
