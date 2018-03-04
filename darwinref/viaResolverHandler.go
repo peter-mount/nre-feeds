@@ -4,8 +4,9 @@ import (
   "github.com/peter-mount/golib/rest"
 )
 
-// An entry in the request object
-type viaResolveRequest struct {
+// An entry in the request object either received by the rest endpoint but also
+// used by DarwinRefClient.GetVias().
+type ViaResolveRequest struct {
   // CRS of the location we want to show a via
   Crs           string    `json:"crs"`
   // Destination tiploc
@@ -18,7 +19,7 @@ type viaResolveRequest struct {
 func (dr *DarwinReference) viaResolveHandler( r *rest.Rest ) error {
 
   // The query
-  queries := make( map[string]*viaResolveRequest )
+  queries := make( map[string]*ViaResolveRequest )
 
   // The response
   response := make( map[string]*Via )
