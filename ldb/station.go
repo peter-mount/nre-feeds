@@ -21,9 +21,6 @@ type Station struct {
   messages              []int
   // Mutex for this station
   mutex                  *sync.Mutex
-  // Update channel
-  addServiceChannel     chan *stationAddService
-  removeServiceChannel  chan string
   // Pointer to Stations object
   ldb                    *LDB
 }
@@ -32,15 +29,6 @@ type Station struct {
 func (s *Station) init() {
   s.services = make( map[string]*Service )
   s.mutex = &sync.Mutex{}
-
-  // The addService channel & worker
-  s.addServiceChannel = make( chan *stationAddService, 100 )
-  go s.addServiceWorker()
-
-  // The removeService channel & worker
-  s.removeServiceChannel = make( chan string, 100 )
-  go s.removeServiceWorker()
-
 }
 
 // Perform an action on the station with an exclusive lock

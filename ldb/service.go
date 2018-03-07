@@ -34,6 +34,12 @@ type Service struct {
   LateReason        darwind3.DisruptionReason   `json:"lateReason"`
   // The "time" for this service
   Location         *darwind3.Location           `json:"location"`
+  // The calling points from this location
+  CallingPoints  []*darwind3.CallingPoint       `json:"calling"`
+  // The latest schedule entry used for this service
+  schedule         *darwind3.Schedule
+  // The index within the schedule of this location
+  locationIndex     int
   // The time this entry was set
   Date              time.Time                   `json:"date,omitempty" xml:"date,attr,omitempty"`
   // URL to the train detail page
@@ -51,12 +57,23 @@ func (s *Service) Timestamp() time.Time {
   return s.SSD.Time().Add( time.Duration( s.Location.Forecast.Time.Get() ) * time.Second )
 }
 
-func (s *Service) update( e *darwind3.DarwinEvent, loc *darwind3.Location ) bool {
-  sched := e.Schedule
+func (s *Service) update( sched *darwind3.Schedule, idx int ) bool {
 
-  if sched != nil && sched.Date.After( s.Date ) {
-    s.RID = e.RID
-    s.Location = loc
+  if sched != nil && //sched.Date.After( s.Date ) &&
+      ( s.RID == "" || s.RID == sched.RID ) &&
+      idx >=0 && idx < len( sched.Locations ) {
+
+    // Copy of our meta data
+    s.schedule = sched
+    s.locationIndex = idx
+
+    // Clear calling points so we'll update again later when needed
+    s.CallingPoints = nil
+
+    s.RID = sched.RID
+
+    // Clone the location
+    s.Location = sched.Locations[ idx ].Clone()
 
     s.SSD = sched.SSD
     s.TrainId = sched.TrainId
@@ -83,74 +100,6 @@ func (s *Service) update( e *darwind3.DarwinEvent, loc *darwind3.Location ) bool
   }
 
   return false
-}
-
-// Adds a service to the station
-func (s *Station) addService( e *darwind3.DarwinEvent, loc *darwind3.Location ) {
-  // Only public stations can be updated. Pass to the channel so the worker thread
-  // can read it
-  if s.public && loc.Times.IsPublic() {
-    s.addServiceChannel <- &stationAddService{ e: e, loc: loc }
-  }
-}
-
-type stationAddService struct {
-  e   *darwind3.DarwinEvent
-  loc *darwind3.Location
-}
-
-// Adds a service to the station
-func (s *Station) addServiceWorker() {
-  for {
-     e := <- s.addServiceChannel
-
-     s.Update( func() error {
-
-       // See if we already have this train
-       if l, exists := s.services[ e.e.RID ]; exists {
-         if l.update( e.e, e.loc ) {
-           s.update()
-         }
-         return nil
-       }
-
-       // A new service
-       service := &Service{}
-       if service.update( e.e, e.loc ) {
-         // Key must be unique so to support circular routes use both the
-         // RUD and the timetable time
-         k := e.e.RID + ":" + e.loc.Times.Time.String()
-         s.services[ k ] = service
-         s.update()
-       }
-
-       return nil
-     })
-  }
-}
-
-func (s *Station) removeService( rid string ) {
-  if s.public {
-    s.removeServiceChannel <- rid
-  }
-}
-
-func (s *Station) removeServiceWorker() {
-  for {
-    rid := <- s.removeServiceChannel
-
-    s.Update( func() error {
-
-      for k, service := range s.services {
-        if service.RID == rid {
-          delete( s.services, k )
-        }
-      }
-
-      return nil
-    })
-  }
-
 }
 
 // Clone returns a copy of this Service

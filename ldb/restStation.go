@@ -10,21 +10,23 @@ import (
 
 type stationResult struct {
   // The departures
-  Services []*Service                 `json:"departures"`
+  Services []*Service                   `json:"departures"`
   // Details about this station
-  Station  []string                   `json:"station"`
+  Station  []string                     `json:"station"`
   // Map of Tiploc's
-  Tiplocs    *darwinref.LocationMap   `json:"tiploc"`
+  Tiplocs    *darwinref.LocationMap     `json:"tiploc"`
   // Map of Toc's
-  Tocs       *darwinref.TocMap        `json:"toc"`
+  Tocs       *darwinref.TocMap          `json:"toc"`
   // StationMessages
-  Messages []*darwind3.StationMessage `json:"messages"`
+  Messages []*darwind3.StationMessage   `json:"messages"`
   // Cancellation or Late Reasons
-  Reasons    *darwinref.ReasonMap     `json:"reasons"`
+  Reasons    *darwinref.ReasonMap       `json:"reasons"`
+  // Map of Via text by RID
+  Via         map[string]*darwinref.Via `json:"via,omitempty"`
   // The date of this request
-  Date        time.Time               `json:"date"`
+  Date        time.Time                 `json:"date"`
   // The URL of this departure board
-  Self        string                  `json:"self"`
+  Self        string                    `json:"self"`
 }
 
 func (d *LDB) stationHandler( r *rest.Rest ) error {
@@ -47,34 +49,6 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
 
     services := station.GetServices( from, to )
 
-    // Resolve vias
-    /*
-    for _, s := range services {
-      sv := d.Darwin.GetSchedule( s.RID )
-      if sv != nil {sv.View( func() error {
-        // Find our Location
-        found := false
-        var locs []string
-        for _, l := range sv.Locations {
-          if found {
-            locs = append( locs, l.Tiploc )
-          } else if l.Equals( s.Location ) {
-            found = true
-          }
-        }
-
-        if len( locs ) > 0 {
-          via := d.Reference.ResolveVia( crs, s.Destination, locs )
-          if via != nil {
-            s.Via = via.Text
-          }
-        }
-        return nil
-      })
-      }
-    }
-    */
-
     res := &stationResult{
       Services: services,
       Tiplocs: darwinref.NewLocationMap(),
@@ -87,6 +61,9 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
 
     // Set of tiplocs
     tiplocs := make( map[string]interface{} )
+
+    // Map of via texts
+    vias := make( map[string]*darwinref.ViaResolveRequest )
 
     // Station details
     if sl, _ := refClient.GetCrs( crs ); sl != nil {
@@ -102,6 +79,25 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
       // Destination & location tiplocs
       tiplocs[ s.Destination ] = nil
       tiplocs[ s.Location.Tiploc ] = nil
+
+      // CallingPoints resolved once
+      if s.CallingPoints == nil && s.schedule != nil {
+        s.CallingPoints = s.schedule.GetCallingPoints( s.locationIndex )
+      }
+
+      // Add CallingPoints tiplocs to map & via request
+      if s.CallingPoints != nil {
+        viaRequest := &darwinref.ViaResolveRequest{
+          Crs: station.Crs,
+          Destination: s.CallingPoints[ len( s.CallingPoints )-1 ].Tiploc,
+        }
+        vias[ s.RID ] = viaRequest
+
+        for _, cp := range s.CallingPoints {
+          tiplocs[ cp.Tiploc ] = nil
+          viaRequest.Tiplocs = append( viaRequest.Tiplocs, cp.Tiploc )
+        }
+      }
 
       // Toc running this service
       refClient.AddToc( res.Tocs, s.Toc )
@@ -138,6 +134,13 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
 
       for _, l := range locs {
         refClient.AddToc( res.Tocs, l.Toc )
+      }
+    }
+
+    // Resolve via texts
+    if len( vias ) > 0 {
+      if vias, _ := refClient.GetVias( vias ); vias != nil {
+        res.Via = vias
       }
     }
 
