@@ -22,7 +22,7 @@ type stationResult struct {
   // Cancellation or Late Reasons
   Reasons    *darwinref.ReasonMap       `json:"reasons"`
   // Map of Via text by RID
-  Via         map[string]*darwinref.Via `json:"via,omitempty"`
+  Via         map[string]*darwinref.Via `json:"via"`
   // The date of this request
   Date        time.Time                 `json:"date"`
   // The URL of this departure board
@@ -80,13 +80,12 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
       tiplocs[ s.Destination ] = nil
       tiplocs[ s.Location.Tiploc ] = nil
 
-      // CallingPoints resolved once
-      if s.CallingPoints == nil && s.schedule != nil {
+      // Add CallingPoints tiplocs to map & via request
+      if s.schedule != nil {
         s.CallingPoints = s.schedule.GetCallingPoints( s.locationIndex )
       }
 
-      // Add CallingPoints tiplocs to map & via request
-      if s.CallingPoints != nil {
+      if len( s.CallingPoints ) > 0 {
         viaRequest := &darwinref.ViaResolveRequest{
           Crs: station.Crs,
           Destination: s.CallingPoints[ len( s.CallingPoints )-1 ].Tiploc,

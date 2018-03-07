@@ -6,8 +6,8 @@ import (
 
 // A calling point of a service after a station.
 type CallingPoint struct {
-  Tiploc  string            `json:"tpl" xml:"tpl,attr"`
-  Time    util.WorkingTime  `json:"time" xml:",chardata"`
+  Tiploc  string            `json:"tpl"`
+  Time    util.WorkingTime  `json:"time"`
 }
 
 // IsCallingPoint returns true if this location is a valid CallingPoint.

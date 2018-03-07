@@ -14,8 +14,6 @@ type Service struct {
   RID               string                      `json:"rid"`
   // The destination
   Destination       string                      `json:"destination"`
-  // Via text
-  Via               string                      `json:"via,omitempty"`
   // Service Start Date
   SSD               util.SSD                    `json:"ssd"`
   // The trainId (headcode)
@@ -37,9 +35,9 @@ type Service struct {
   // The calling points from this location
   CallingPoints  []*darwind3.CallingPoint       `json:"calling"`
   // The latest schedule entry used for this service
-  schedule         *darwind3.Schedule
+  schedule         *darwind3.Schedule           `json:"-"`
   // The index within the schedule of this location
-  locationIndex     int
+  locationIndex     int                         `json:"-"`
   // The time this entry was set
   Date              time.Time                   `json:"date,omitempty" xml:"date,attr,omitempty"`
   // URL to the train detail page
@@ -115,6 +113,8 @@ func (a *Service) Clone() *Service {
     CancelReason: a.CancelReason,
     LateReason: a.LateReason,
     Location: a.Location.Clone(),
+    schedule: a.schedule,
+    locationIndex: a.locationIndex,
     Date: a.Date,
     Self: a.Self,
   }
@@ -148,7 +148,6 @@ func (t *Service) MarshalJSON() ( []byte, error ) {
   b.WriteByte( '{' )
   c := t.append( &b, false, "rid", t.RID )
   c = t.append( &b, c, "destination", t.Destination )
-  c = t.append( &b, c, "via", t.Via )
   c = t.append( &b, c, "ssd", &t.SSD )
   c = t.append( &b, c, "trainId", t.TrainId )
   c = t.append( &b, c, "toc", t.Toc )
@@ -164,6 +163,11 @@ func (t *Service) MarshalJSON() ( []byte, error ) {
   }
 
   c = t.append( &b, c, "location", &t.Location )
+
+  if len( t.CallingPoints ) > 0 {
+    c = t.append( &b, c, "calling", t.CallingPoints )
+  }
+
   c = t.append( &b, c, "date", t.Date )
   c = t.append( &b, c, "self", t.Self )
 
