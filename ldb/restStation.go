@@ -84,6 +84,9 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
       if s.schedule != nil {
         s.CallingPoints = s.schedule.GetCallingPoints( s.locationIndex )
         s.LastReport = s.schedule.GetLastReport()
+        if s.LastReport != nil {
+          tiplocs[ s.LastReport.Tiploc ] = nil
+        }
       }
 
       if len( s.CallingPoints ) > 0 {
