@@ -27,6 +27,8 @@ func (r DarwinReference) RegisterRest( c *rest.ServerContext ) {
   c.Handle( "/toc", r.AllTocsHandler ).Methods( "GET" )
   c.Handle( "/toc/{id}", r.TocHandler ).Methods( "GET" )
 
+  c.Handle( "/search/{term}", r.SearchHandler ).Methods( "GET" )
+
   // Data import
   c.Handle( "/import", r.ImportHandler ).Methods( "POST" )
 }

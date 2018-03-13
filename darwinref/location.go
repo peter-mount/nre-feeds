@@ -49,3 +49,10 @@ func (t *Location) Read( c *codec.BinaryCodec ) {
     ReadString( &t.Name ).
     ReadTime( &t.Date )
 }
+
+// IsPublic returns true if this Location represents a public station.
+// This is defined as having a Crs and one that does not start with X (Network Rail,
+// some Bus stations and some Ferry terminals) and Z (usually London Underground)
+func (t *Location) IsPublic() bool {
+  return t.Crs != "" && t.Crs[0] != 'X' && t.Crs[0] != 'Z'
+}
