@@ -34,6 +34,8 @@ type Service struct {
   Location         *darwind3.Location           `json:"location"`
   // The calling points from this location
   CallingPoints  []*darwind3.CallingPoint       `json:"calling"`
+  // The last report
+  LastReport       *darwind3.CallingPoint       `json:"lastReport,omitempty"`
   // The latest schedule entry used for this service
   schedule         *darwind3.Schedule           `json:"-"`
   // The index within the schedule of this location
@@ -166,6 +168,10 @@ func (t *Service) MarshalJSON() ( []byte, error ) {
 
   if len( t.CallingPoints ) > 0 {
     c = t.append( &b, c, "calling", t.CallingPoints )
+  }
+
+  if t.LastReport != nil {
+    c = t.append( &b, c, "lastReport", t.LastReport )
   }
 
   c = t.append( &b, c, "date", t.Date )

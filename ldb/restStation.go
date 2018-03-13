@@ -9,6 +9,8 @@ import (
 )
 
 type stationResult struct {
+  // The requested crs
+  Crs         string                    `json:"crs"`
   // The departures
   Services []*Service                   `json:"departures"`
   // Details about this station
@@ -50,6 +52,7 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
     services := station.GetServices( from, to )
 
     res := &stationResult{
+      Crs: crs,
       Services: services,
       Tiplocs: darwinref.NewLocationMap(),
       Tocs: darwinref.NewTocMap(),
@@ -83,6 +86,10 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
       // Add CallingPoints tiplocs to map & via request
       if s.schedule != nil {
         s.CallingPoints = s.schedule.GetCallingPoints( s.locationIndex )
+        s.LastReport = s.schedule.GetLastReport()
+        if s.LastReport != nil {
+          tiplocs[ s.LastReport.Tiploc ] = nil
+        }
       }
 
       if len( s.CallingPoints ) > 0 {
