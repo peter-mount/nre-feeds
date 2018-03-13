@@ -84,7 +84,16 @@ func (dr *DarwinReference) SearchName( term string ) ([]*SearchResult, error) {
     result = append( result, l )
   }
   sort.SliceStable( result, func(i, j int) bool {
-    return result[i].Score > result[j].Score
+    // Compare scores at 2 decimal places
+    s1 := int32(100*result[i].Score)
+    s2 := int32(100*result[j].Score)
+    if s1 == s2 {
+      // Sort identical scores alphabetically
+      return strings.ToUpper( result[i].Name ) < strings.ToUpper( result[j].Name )
+    } else {
+      // Sort scores by descending score order
+      return s1 > s2
+    }
   })
 
   return result, nil
