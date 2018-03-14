@@ -20,6 +20,8 @@ type serviceResult struct {
   Tiplocs      *darwinref.LocationMap `json:"tiploc"`
   // Map of Toc's
   Tocs         *darwinref.TocMap      `json:"toc"`
+  // Cancellation or Late Reasons
+  Reasons      *darwinref.ReasonMap   `json:"reasons"`
   // Map of Via text by RID
   Via          *darwinref.Via         `json:"via"`
   // The date of this request
@@ -49,6 +51,7 @@ func (d *LDB) serviceHandler( r *rest.Rest ) error {
       Service: service,
       Tiplocs: darwinref.NewLocationMap(),
       Tocs: darwinref.NewTocMap(),
+      Reasons: darwinref.NewReasonMap(),
       Date: time.Now(),
       Self: r.Self( "/service/" + rid ),
     }
@@ -69,13 +72,26 @@ func (d *LDB) serviceHandler( r *rest.Rest ) error {
     refClient.AddToc( res.Tocs, service.Toc )
 
     // Tiploc in a cancel or late reason
-    if service.CancelReason.Tiploc != "" {
-      tiplocs[ service.CancelReason.Tiploc ] = nil
+    if service.CancelReason.Reason > 0 {
+      if reason, _ := refClient.GetCancelledReason( service.CancelReason.Reason ); reason != nil {
+        res.Reasons.AddReason( reason )
+      }
+
+      if service.CancelReason.Tiploc != "" {
+        tiplocs[ service.CancelReason.Tiploc ] = nil
+      }
     }
 
-    if service.LateReason.Tiploc != "" {
-      tiplocs[ service.LateReason.Tiploc ] = nil
+    if service.LateReason.Reason > 0 {
+      if reason, _ := refClient.GetLateReason( service.LateReason.Reason ); reason != nil {
+        res.Reasons.AddReason( reason )
+      }
+
+      if service.LateReason.Tiploc != "" {
+        tiplocs[ service.LateReason.Tiploc ] = nil
+      }
     }
+
 
     // Now resolve the tiplocs en-masse and resolve the toc's at the same time
     if locs, _ := refClient.GetTiplocsMapKeys( tiplocs ); locs != nil {
