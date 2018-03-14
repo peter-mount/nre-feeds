@@ -9,10 +9,17 @@ import (
 // Defines a location, i.e. Station or passing point
 type Location struct {
   XMLName     xml.Name  `json:"-" xml:"LocationRef"`
+  // Tiploc of this location
   Tiploc      string    `json:"tpl" xml:"tpl,attr"`
+  // CRS of this station, "" for none
   Crs         string    `json:"crs,omitempty" xml:"crs,attr,omitempty"`
+  // TOC who manages this station
   Toc         string    `json:"toc,omitempty" xml:"toc,attr,omitempty"`
+  // Name of this station
   Name        string    `json:"locname" xml:"locname,attr"`
+  // True if this represents a Station, Bus stop or Ferry Terminal
+  // i.e. Crs is present but does not start with X or Z
+  Station     bool      `json:"station" xml:"station,attr"`
   // Date entry was inserted into the database
   Date        time.Time `json:"date" xml:"date,attr"`
   // URL to this entity
@@ -48,6 +55,7 @@ func (t *Location) Read( c *codec.BinaryCodec ) {
     ReadString( &t.Toc ).
     ReadString( &t.Name ).
     ReadTime( &t.Date )
+  t.Station = t.Crs != "" && !(t.Crs[0]=='X'||t.Crs[0]=='Z')
 }
 
 // IsPublic returns true if this Location represents a public station.
