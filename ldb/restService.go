@@ -20,6 +20,8 @@ type serviceResult struct {
   Tiplocs      *darwinref.LocationMap `json:"tiploc"`
   // Map of Toc's
   Tocs         *darwinref.TocMap      `json:"toc"`
+  // Map of Via text by RID
+  Via          *darwinref.Via         `json:"via"`
   // The date of this request
   Date          time.Time             `json:"date"`
   // The URL of this departure board
@@ -81,6 +83,25 @@ func (d *LDB) serviceHandler( r *rest.Rest ) error {
 
       for _, l := range locs {
         refClient.AddToc( res.Tocs, l.Toc )
+      }
+    }
+
+    // Resolve the via text. For the service this is for the origin only
+    if len( service.Locations ) > 2 {
+      // We need the crs of the origin from the resolved tiploc map
+      if loc, exists := res.Tiplocs.Get( service.Locations[0].Tiploc ); exists && loc.Crs != "" {
+        viaRequest := &darwinref.ViaResolveRequest{
+          Crs: loc.Crs,
+          Destination: service.Locations[ len( service.Locations )-1 ].Tiploc,
+        }
+        for _, loc := range service.Locations[1:] {
+          viaRequest.Tiplocs = append( viaRequest.Tiplocs, loc.Tiploc )
+        }
+        vias := make( map[string]*darwinref.ViaResolveRequest )
+        vias[ rid ] = viaRequest
+        if resp, _ := refClient.GetVias( vias ); vias != nil {
+          res.Via = resp[ rid ]
+        }
       }
     }
 
