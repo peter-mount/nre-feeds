@@ -55,7 +55,7 @@ func (s *Station) GetServices( from *util.WorkingTime, to *util.WorkingTime ) []
   // Get a copy the services from the station within the lock, filtering as needed
   s.Update( func() error {
     for _,service := range s.services {
-      if !service.Location.Forecast.Departed && service.Location.Times.Time.Between( from, to ) {
+      if !service.Location.Forecast.Departed && service.Location.Time.Between( from, to ) {
         services = append( services, service.Clone() )
       }
     }
