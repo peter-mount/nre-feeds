@@ -10,15 +10,14 @@ info:
   license:
     name: "Apache 2.0"
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
-host: "loge.amsterdam.area51.onl:9888"
-basePath: "/ref"
+host: "ref.a.a51.li"
 #host: "railref.area51.onl"
 #basePath: "/v1"
 tags:
 - name: "darwinref"
   description: "Reference data from National Rail Enquiries"
 schemes:
-- "http"
+- "https"
 paths:
   /crs/{crs}:
     get:
