@@ -55,7 +55,6 @@ DOCKERFILE=Dockerfile.${SERVICE}.${GOOS}.${ARCH}
 echo "Building $SERVICE image $TAG on $ARCH"
 
 docker build \
-  --pull \
   --force-rm=true \
   -t ${TAG} \
   -f ${DOCKERFILE} \

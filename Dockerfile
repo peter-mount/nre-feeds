@@ -64,6 +64,11 @@ RUN if [ -z "$skipTest" ] ;then \
       go test -v darwind3 darwinref ldb util \
     ;fi
 
+# Run issue tests last
+RUN if [ -z "$skipTest" ] ;then \
+      go test -v issues \
+    ;fi
+
 # ============================================================
 # Compile the source.
 FROM source as compiler
