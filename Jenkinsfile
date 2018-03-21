@@ -65,6 +65,11 @@ properties([
   disableResume()
 ])
 
+// Run tests against a suite or library
+def runTest = {
+  test -> sh 'docker run -i --rm ' + tempImage + ' go test -v ' + test
+}
+
 def dockerFile = { architecture, service -> "Dockerfile." + service + '.' + architecture }
 
 // Build a service for a specific architecture
@@ -114,6 +119,7 @@ def multiArchService = {
     sh 'docker manifest push -p ' + multiImage( service )
 }
 
+
 // Now build everything on one node
 node('AMD64') {
   stage( "Checkout" ) {
@@ -128,16 +134,17 @@ node('AMD64') {
 
   // Run unit tests
   stage("Run Tests") {
-    def runTest = {
-      test -> sh 'docker run -i --rm ' + tempImage + ' go test -v ' + test
-    }
     parallel (
       'darwind3': { runTest( 'darwind3' ) },
       'darwinref': { runTest( 'darwinref' ) },
       'ldb': { runTest( 'ldb' ) },
-      'util': { runTest( 'util' ) }
+      'util': { runTest( 'util' ) },
     )
-    //sh 'docker build -t ' + tempImage + ' --target test .'
+  }
+
+  // Run issue tests separately as these will grow over time
+  stage( "Test Issues" ) {
+    runTest( 'issues' )
   }
 
   services.each {
