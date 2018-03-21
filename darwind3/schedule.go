@@ -59,6 +59,36 @@ func (s *Schedule) View( f func() error ) error {
   return f()
 }
 
+func (a *Schedule) Clone() *Schedule {
+  var b *Schedule
+
+  a.Update( func() error {
+    b = &Schedule{
+      RID: a.RID,
+      UID: a.UID,
+      TrainId: a.TrainId,
+      SSD: a.SSD,
+      Toc: a.Toc,
+      Status: a.Status,
+      TrainCat: a.TrainCat,
+      PassengerService: a.PassengerService,
+      Active: a.Active,
+      Deleted: a.Deleted,
+      Charter: a.Charter,
+      CancelReason: a.CancelReason,
+      LateReason: a.LateReason,
+    }
+
+    for _, l := range a.Locations {
+      b.Locations = append( b.Locations, l.Clone() )
+    }
+
+    return nil
+  })
+
+  return b
+}
+
 func (s *Schedule) SetSelf( r *rest.Rest ) {
   s.Self = r.Self( r.Context() + "/schedule/" + s.RID )
 }

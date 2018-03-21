@@ -95,6 +95,10 @@ func (d *DarwinEventManager) ListenToEvents( eventType int, f func( *DarwinEvent
 
 // PostEvent posts a DarwinEvent to all listeners listening for that specific type
 func (d *DarwinEventManager) PostEvent( e *DarwinEvent ) {
+  if e.Schedule != nil {
+    e.Schedule = e.Schedule.Clone()
+  }
+
   if b, err := json.Marshal( e ); err == nil {
     d.mq.Publish( fmt.Sprintf( "d3.event.%d", e.Type ), b )
   }
