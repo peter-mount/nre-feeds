@@ -58,5 +58,5 @@ func (t *SSD) String() string {
 }
 
 func (t *SSD) Time() time.Time {
-  return t.t
+  return t.t.In( London() )
 }
