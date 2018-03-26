@@ -45,7 +45,8 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
     refClient := &darwinref.DarwinRefClient{ Url: d.Reference }
 
     // We want everything for the next hour
-    now := time.Now()
+    location, _ := time.LoadLocation( "Europe/London" ) 
+    now := time.Now().In( location )
     from := util.WorkingTime_FromTime( now )
     to := util.WorkingTime_FromTime( now.Add( time.Hour ) )
 
