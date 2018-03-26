@@ -21,12 +21,17 @@ FROM golang:alpine as build
 # The golang alpine image is missing git so ensure we have additional tools
 RUN apk add --no-cache \
       curl \
-      git
+      git \
+      tzdata
 
 # We want to build our final image under /dest
 # A copy of /etc/ssl is required if we want to use https datasources
 RUN mkdir -p /dest/etc &&\
     cp -rp /etc/ssl /dest/etc/
+
+# We also need the zoneinfo database
+RUN mkdir -p /dest/usr/share/zoneinfo &&\
+    (cd /usr/share/;tar cp zoneinfo) | (cd /dest//usr/share;tar xp )
 
 # Ensure we have the libraries - docker will cache these between builds
 RUN go get -v \
