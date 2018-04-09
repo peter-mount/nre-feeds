@@ -5,13 +5,14 @@ import (
   "darwintimetable"
   "encoding/xml"
   "github.com/jlaffaye/ftp"
+  "io"
   "log"
   "regexp"
   "sort"
   "strings"
 )
 
-func (u *DarwinUpdate) TimetableUpdate( tt *darwintimetable.DarwinTimetable ) error {
+func (u *DarwinUpdate) RetrieveTimetable( tt *darwintimetable.DarwinTimetable, handler func( *darwintimetable.DarwinTimetable, *ftp.Entry, io.ReadCloser ) error ) error {
   return u.Ftp( func( con *ftp.ServerConn ) error {
     log.Println( "Looking for timetable updates" )
 
@@ -55,25 +56,33 @@ func (u *DarwinUpdate) TimetableUpdate( tt *darwintimetable.DarwinTimetable ) er
       return err
     }
 
-    gr, err := gzip.NewReader( resp )
-    if err != nil {
-      log.Println( "Failed to gunzip")
-      resp.Close()
-      return err
-    }
-
-    // Run a prune first
-    tt.PruneSchedules()
-
-    if err := xml.NewDecoder( gr ).Decode( tt ); err != nil {
-      log.Println( err )
-      resp.Close()
-      return err
-    }
-
-    // Run a prune afterwards
-    tt.PruneSchedules()
-
-    return resp.Close()
+    return handler( tt, file, resp )
   } )
+}
+
+func (u *DarwinUpdate) ReadTimetable( tt *darwintimetable.DarwinTimetable, file *ftp.Entry, resp io.ReadCloser ) error {
+  gr, err := gzip.NewReader( resp )
+  if err != nil {
+    log.Println( "Failed to gunzip")
+    resp.Close()
+    return err
+  }
+
+  // Run a prune first
+  tt.PruneSchedules()
+
+  if err := xml.NewDecoder( gr ).Decode( tt ); err != nil {
+    log.Println( err )
+    resp.Close()
+    return err
+  }
+
+  // Run a prune afterwards
+  tt.PruneSchedules()
+
+  return resp.Close()
+}
+
+func (u *DarwinUpdate) TimetableUpdate( tt *darwintimetable.DarwinTimetable ) error {
+  return u.RetrieveTimetable( tt, u.ReadTimetable )
 }

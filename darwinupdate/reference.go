@@ -5,13 +5,14 @@ import (
   "darwinref"
   "encoding/xml"
   "github.com/jlaffaye/ftp"
+  "io"
   "log"
   "regexp"
   "sort"
   "strings"
 )
 
-func (u *DarwinUpdate) ReferenceUpdate( ref *darwinref.DarwinReference ) error {
+func (u *DarwinUpdate) RetrieveReference( ref *darwinref.DarwinReference, handler func( *darwinref.DarwinReference, *ftp.Entry, io.ReadCloser ) error ) error {
   return u.Ftp( func( con *ftp.ServerConn ) error {
     log.Println( "Looking for reference updates" )
 
@@ -54,19 +55,28 @@ func (u *DarwinUpdate) ReferenceUpdate( ref *darwinref.DarwinReference ) error {
       return err
     }
 
-    gr, err := gzip.NewReader( resp )
-    if err != nil {
-      log.Println( "Failed to gunzip")
-      resp.Close()
-      return err
-    }
-
-    if err := xml.NewDecoder( gr ).Decode( ref ); err != nil {
-      log.Println( err )
-      resp.Close()
-      return err
-    }
-
-    return resp.Close()
+    return handler( ref, file, resp )
   } )
+}
+
+// ReferenceRead reads from a reader and performs the actual import
+func (u *DarwinUpdate) ReferenceRead( ref *darwinref.DarwinReference, file *ftp.Entry, resp io.ReadCloser ) error {
+  gr, err := gzip.NewReader( resp )
+  if err != nil {
+    log.Println( "Failed to gunzip")
+    resp.Close()
+    return err
+  }
+
+  if err := xml.NewDecoder( gr ).Decode( ref ); err != nil {
+    log.Println( err )
+    resp.Close()
+    return err
+  }
+
+  return resp.Close()
+}
+
+func (u *DarwinUpdate) ReferenceUpdate( ref *darwinref.DarwinReference ) error {
+  return u.RetrieveReference( ref, u.ReferenceRead )
 }
