@@ -96,12 +96,12 @@ func (a *Location) Compare( b *Location ) bool {
   return b != nil && a.Times.Compare( &b.Times )
 }
 
-// Equals compares two Locations based on their Tiploc & time.
+// Equals compares two Locations based on their Tiploc & working timetable.
 // This is used when trying to locate a location that's been updated
 func (a *Location) EqualInSchedule( b *Location ) bool {
   return b != nil &&
          a.Tiploc == b.Tiploc &&
-         a.Times.Time.Equals( &b.Times.Time )
+         a.Times.EqualInSchedule( &b.Times )
 }
 
 // Equals compares two Locations in their entirety
