@@ -63,8 +63,8 @@ ARG goarch
 ARG goarm
 
 # Microservice version is the commit hash from git
-RUN version="$(git rev-parse --short HEAD)" &&\
-    sed -i "s/@@version@@/${version} ${goos}(${arch})/g" bin/version.go
+#RUN version="$(git rev-parse --short HEAD)" &&\
+#    sed -i "s/@@version@@/${version} ${goos}(${arch})/g" bin/version.go
 
 # Build the microservice.
 # NB: CGO_ENABLED=0 forces a static build

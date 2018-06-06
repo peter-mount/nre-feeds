@@ -7,7 +7,7 @@ import (
 )
 
 // viaHandler returns the unique instance of a via entry
-func (dr *DarwinReference) viaHandler( r *rest.Rest ) error {
+func (dr *DarwinReference) ViaHandler( r *rest.Rest ) error {
   return dr.View( func( tx *bolt.Tx ) error {
     log.Printf( "via '%s' '%s' '%s' '%s'", r.Var( "at" ), r.Var( "dest" ), r.Var( "loc1" ), r.Var( "loc2" ) )
 

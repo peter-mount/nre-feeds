@@ -6,4 +6,5 @@ DEST=$1
 BIN=$2
 
 echo "Building ${BIN}"
-go build -o ${DEST} github.com/peter-mount/nre-feeds/bin/${BIN}
+go build -o ${DEST} github.com/peter-mount/nre-feeds/${BIN}/bin
+#go build -o ${DEST} github.com/peter-mount/nre-feeds/bin/${BIN}

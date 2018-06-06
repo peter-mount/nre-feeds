@@ -63,4 +63,5 @@ docker build \
   --build-arg goos=${GOOS} \
   --build-arg goarch=${GOARCH} \
   --build-arg goarm=${GOARM} \
+  --build-arg skipTest=true \
   .

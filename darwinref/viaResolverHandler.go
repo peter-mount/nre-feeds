@@ -16,7 +16,7 @@ type ViaResolveRequest struct {
 }
 
 // viaResolveHandler resolves The via(s) for a set of schedules
-func (dr *DarwinReference) viaResolveHandler( r *rest.Rest ) error {
+func (dr *DarwinReference) ViaResolveHandler( r *rest.Rest ) error {
 
   // The query
   queries := make( map[string]*ViaResolveRequest )
