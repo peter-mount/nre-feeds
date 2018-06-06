@@ -2,7 +2,6 @@ package darwintimetable
 
 import (
   bolt "github.com/coreos/bbolt"
-  "github.com/peter-mount/golib/rest"
   "gopkg.in/robfig/cron.v2"
   "log"
   "time"
@@ -42,14 +41,4 @@ func (t *DarwinTimetable) PruneSchedules() ( int, error ) {
     return 0, err
   }
   return count, nil
-}
-
-func (dt *DarwinTimetable) PruneSchedulesHandler( r *rest.Rest ) error {
-  if count, err := dt.PruneSchedules(); err != nil {
-    return err
-  } else {
-    r.Status( 200 ).
-    Value( count )
-    return nil
-  }
 }

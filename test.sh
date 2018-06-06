@@ -1,7 +1,8 @@
 #!/bin/sh
 
 # Module to build & run
-MODULE=darwinref
+#MODULE=darwinref
+MODULE=darwintimetable
 
 # db directory
 DB=/home/peter/tmp/nre
