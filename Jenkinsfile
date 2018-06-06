@@ -6,6 +6,9 @@ repository=''
 // image prefix
 imagePrefix = 'nre-feeds'
 
+// The git repo / package prefix
+gitRepoPrefix = 'github.com/peter-mount/nre-feeds/'
+
 // The image version, master branch is latest in docker
 version=BRANCH_NAME
 if( version == 'master' ) {
@@ -69,7 +72,7 @@ properties([
 
 // Run tests against a suite or library
 def runTest = {
-  test -> sh 'docker run -i --rm ' + tempImage + ' go test -v ' + test
+  test -> sh 'docker run -i --rm ' + tempImage + ' go test -v ' + gitRepoPrefix + test
 }
 
 def dockerFile = { architecture, service -> "Dockerfile." + service + '.' + architecture }
