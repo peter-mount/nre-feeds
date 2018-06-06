@@ -1,9 +1,12 @@
-package ldb
+package service
 
 import (
   "github.com/peter-mount/golib/rest"
   "github.com/peter-mount/nre-feeds/darwind3"
+  d3client "github.com/peter-mount/nre-feeds/darwind3/client"
   "github.com/peter-mount/nre-feeds/darwinref"
+  refclient "github.com/peter-mount/nre-feeds/darwinref/client"
+  "github.com/peter-mount/nre-feeds/ldb"
   "github.com/peter-mount/nre-feeds/util"
   "time"
 )
@@ -12,7 +15,7 @@ type stationResult struct {
   // The requested crs
   Crs         string                    `json:"crs"`
   // The departures
-  Services []*Service                   `json:"departures"`
+  Services []*ldb.Service               `json:"departures"`
   // Details about this station
   Station  []string                     `json:"station"`
   // Map of Tiploc's
@@ -31,18 +34,18 @@ type stationResult struct {
   Self        string                    `json:"self"`
 }
 
-func (d *LDB) stationHandler( r *rest.Rest ) error {
+func (d *LDBService) stationHandler( r *rest.Rest ) error {
 
   crs := r.Var( "crs" )
 
-  station := d.GetStationCrs( crs )
+  station := d.ldb.GetStationCrs( crs )
 
   if station == nil {
     r.Status( 404 )
   } else {
 
-    d3Client := &darwind3.DarwinD3Client{ Url: d.Darwin }
-    refClient := &darwinref.DarwinRefClient{ Url: d.Reference }
+    d3Client := &d3client.DarwinD3Client{ Url: d.ldb.Darwin }
+    refClient := &refclient.DarwinRefClient{ Url: d.ldb.Reference }
 
     // We want everything for the next hour
     location, _ := time.LoadLocation( "Europe/London" )
@@ -85,9 +88,9 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
       tiplocs[ s.Location.Tiploc ] = nil
 
       // Add CallingPoints tiplocs to map & via request
-      if s.schedule != nil {
-        s.CallingPoints = s.schedule.GetCallingPoints( s.locationIndex )
-        s.LastReport = s.schedule.GetLastReport()
+      if s.Schedule() != nil {
+        s.CallingPoints = s.Schedule().GetCallingPoints( s.LocationIndex() )
+        s.LastReport = s.Schedule().GetLastReport()
         if s.LastReport != nil {
           tiplocs[ s.LastReport.Tiploc ] = nil
         }

@@ -1,9 +1,11 @@
-package ldb
+package service
 
 import (
   "github.com/peter-mount/golib/rest"
   "github.com/peter-mount/nre-feeds/darwind3"
+  d3client "github.com/peter-mount/nre-feeds/darwind3/client"
   "github.com/peter-mount/nre-feeds/darwinref"
+  refclient "github.com/peter-mount/nre-feeds/darwinref/client"
   "time"
 )
 
@@ -32,19 +34,18 @@ type serviceResult struct {
 
 // serviceHandler proxies the service from d3 but fills in the required
 // details of tiplocs, toc etc
-func (d *LDB) serviceHandler( r *rest.Rest ) error {
+func (d *LDBService) serviceHandler( r *rest.Rest ) error {
 
   rid := r.Var( "rid" )
 
-  d3Client := &darwind3.DarwinD3Client{ Url: d.Darwin }
+  d3Client := &d3client.DarwinD3Client{ Url: d.ldb.Darwin }
+  refClient := &refclient.DarwinRefClient{ Url: d.ldb.Reference }
 
   if service, err := d3Client.GetSchedule( rid ); err != nil {
     return err
   } else if service == nil {
     r.Status( 404 )
   } else {
-
-    refClient := &darwinref.DarwinRefClient{ Url: d.Reference }
 
     res := &serviceResult{
       RID: rid,

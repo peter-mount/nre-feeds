@@ -2,6 +2,7 @@ package ldb
 
 import (
   "github.com/peter-mount/nre-feeds/darwind3"
+  d3client "github.com/peter-mount/nre-feeds/darwind3/client"
   "github.com/peter-mount/nre-feeds/darwinref"
   "github.com/peter-mount/nre-feeds/util"
   "sort"
@@ -71,7 +72,7 @@ func (s *Station) GetServices( from *util.WorkingTime, to *util.WorkingTime ) []
 }
 
 // GetMessages returns all station messages for this Station.
-func (s *Station) GetMessages( client *darwind3.DarwinD3Client ) []*darwind3.StationMessage {
+func (s *Station) GetMessages( client *d3client.DarwinD3Client ) []*darwind3.StationMessage {
 
   // Get a copy of the current id's within the lock
   var ids []int

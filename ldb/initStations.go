@@ -1,9 +1,8 @@
 package ldb
 
 import (
-//  bolt "github.com/coreos/bbolt"
   "github.com/peter-mount/nre-feeds/darwinref"
-//  "github.com/peter-mount/golib/codec"
+  "github.com/peter-mount/nre-feeds/darwinref/client"
   "log"
 )
 
@@ -14,7 +13,7 @@ func (d *LDB) initStations() {
   if err := d.Stations.Update( func() error {
     log.Println( "LDB: Initialising stations")
 
-    refClient := &darwinref.DarwinRefClient{ Url: d.Reference }
+    refClient := &client.DarwinRefClient{ Url: d.Reference }
 
     if locations, err := refClient.GetStations(); err != nil {
       return err
@@ -41,7 +40,4 @@ func (d *LDB) initStations() {
   } ); err != nil {
     log.Println( "LDB: Station import failed", err )
   }
-
-  //d.Darwin.ExpireStationMessages()
-  //d.Darwin.BroadcastStationMessages()
 }
