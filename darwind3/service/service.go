@@ -63,6 +63,10 @@ func (a *DarwinD3Service) PostInit() error {
 
 func (a *DarwinD3Service) Start() error {
 
+  // Connect to Rabbit & name the connection so its easier to debug
+  a.config.RabbitMQ.ConnectionName = "darwin d3"
+  a.config.RabbitMQ.Connect()
+
   em := darwind3.NewDarwinEventManager( &a.config.RabbitMQ )
 
   a.config.DbPath( &a.config.Database.PushPort, "dwd3.db" )
