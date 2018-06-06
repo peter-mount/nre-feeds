@@ -79,7 +79,7 @@ func (r *DarwinReference) getCancellationReason( id int ) ( *Reason, bool ) {
   return loc, exists
 }
 
-func (t *Reason) fromBytes( b []byte ) bool {
+func (t *Reason) FromBytes( b []byte ) bool {
   if b != nil {
     codec.NewBinaryCodecFrom( b ).Read( t )
   }
@@ -96,7 +96,7 @@ func (r *DarwinReference) GetReasonBucket ( bucket *bolt.Bucket, id int ) ( *Rea
 
   if b != nil {
     var toc *Reason = &Reason{}
-    if toc.fromBytes( b ) {
+    if toc.FromBytes( b ) {
       return toc, true
     }
   }
@@ -115,7 +115,7 @@ func addReason( bucket *bolt.Bucket, r *Reason ) error {
   b := bucket.Get( []byte( kb ) )
   if b != nil {
     var old *Reason = &Reason{}
-    if old.fromBytes( b ) && r.Equals( old ) {
+    if old.FromBytes( b ) && r.Equals( old ) {
       return nil
     }
   }

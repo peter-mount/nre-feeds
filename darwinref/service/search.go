@@ -1,21 +1,23 @@
-package darwinref
+package service
 
 import (
   bolt "github.com/coreos/bbolt"
   "fmt"
   "github.com/peter-mount/golib/codec"
+  "github.com/peter-mount/golib/rest"
+  "github.com/peter-mount/nre-feeds/darwinref"
   "sort"
   "strings"
 )
 
-func newSearchResult( l *Location, score, d float64 ) *SearchResult {
+func newSearchResult( l *darwinref.Location, score, d float64 ) *darwinref.SearchResult {
   var label = l.Name + " [" + l.Crs + "]"
   if d > 0 {
     label = fmt.Sprintf( "%s [%s] %0.1fkm", l.Name, l.Crs, d )
   } else {
     label = fmt.Sprintf( "%s [%s]", l.Name, l.Crs )
   }
-  return &SearchResult{
+  return &darwinref.SearchResult{
     Crs: l.Crs,
     Name: l.Name,
     Label: label,
@@ -24,16 +26,16 @@ func newSearchResult( l *Location, score, d float64 ) *SearchResult {
   }
 }
 
-func (dr *DarwinReference) SearchName( term string ) ([]*SearchResult, error) {
+func (dr *DarwinRefService) SearchName( term string ) ([]*darwinref.SearchResult, error) {
   if len( term ) < 3 {
     return nil, nil
   }
 
   term = strings.ToUpper( term )
 
-  set := make( map[string]*SearchResult )
+  set := make( map[string]*darwinref.SearchResult )
 
-  if err := dr.View( func( tx *bolt.Tx ) error {
+  if err := dr.reference.View( func( tx *bolt.Tx ) error {
     crsBucket := tx.Bucket( []byte( "DarwinCrs" ) )
     tiplocBucket := tx.Bucket( []byte( "DarwinTiploc" ) )
 
@@ -44,7 +46,7 @@ func (dr *DarwinReference) SearchName( term string ) ([]*SearchResult, error) {
       appendCrs := len( term ) == 3 && string(k[:]) == term
 
       for _, tpl := range tpls {
-        if loc, exists := dr.GetTiplocBucket( tiplocBucket, tpl ); exists {
+        if loc, exists := dr.reference.GetTiplocBucket( tiplocBucket, tpl ); exists {
           var score float64
 
           if appendCrs {
@@ -70,7 +72,7 @@ func (dr *DarwinReference) SearchName( term string ) ([]*SearchResult, error) {
   }
 
   // Get slice of values then sort by score descending
-  var result []*SearchResult
+  var result []*darwinref.SearchResult
   for _, l := range set {
     result = append( result, l )
   }
@@ -88,4 +90,13 @@ func (dr *DarwinReference) SearchName( term string ) ([]*SearchResult, error) {
   })
 
   return result, nil
+}
+
+func (dr *DarwinRefService) SearchHandler( r *rest.Rest ) error {
+  if results, err := dr.SearchName( r.Var( "term" ) ); err != nil {
+    return err
+  } else {
+    r.Status( 200 ).Value( results )
+    return nil
+  }
 }

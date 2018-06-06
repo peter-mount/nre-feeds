@@ -77,27 +77,27 @@ func (a *DarwinRefService) PostInit() error {
 
   // Rest services
 
-  a.restService.Handle( "/reason/cancelled", a.reference.AllReasonCancelHandler ).Methods( "GET" )
-  a.restService.Handle( "/reason/cancelled/{id}", a.reference.ReasonCancelHandler ).Methods( "GET" )
+  a.restService.Handle( "/reason/cancelled", a.AllReasonCancelHandler ).Methods( "GET" )
+  a.restService.Handle( "/reason/cancelled/{id}", a.ReasonCancelHandler ).Methods( "GET" )
 
-  a.restService.Handle( "/reason/late", a.reference.AllReasonLateHandler ).Methods( "GET" )
-  a.restService.Handle( "/reason/late/{id}", a.reference.ReasonLateHandler ).Methods( "GET" )
+  a.restService.Handle( "/reason/late", a.AllReasonLateHandler ).Methods( "GET" )
+  a.restService.Handle( "/reason/late/{id}", a.ReasonLateHandler ).Methods( "GET" )
 
-  a.restService.Handle( "/via/{at}/{dest}/{loc1}", a.reference.ViaHandler ).Methods( "GET" )
-  a.restService.Handle( "/via/{at}/{dest}/{loc1}/{loc2}", a.reference.ViaHandler ).Methods( "GET" )
-  a.restService.Handle( "/via", a.reference.ViaResolveHandler ).Methods( "POST" )
+  a.restService.Handle( "/via/{at}/{dest}/{loc1}", a.ViaHandler ).Methods( "GET" )
+  a.restService.Handle( "/via/{at}/{dest}/{loc1}/{loc2}", a.ViaHandler ).Methods( "GET" )
+  a.restService.Handle( "/via", a.ViaResolveHandler ).Methods( "POST" )
 
   // Reference retrieval methods
-  a.restService.Handle( "/crs/{id}", a.reference.CrsHandler ).Methods( "GET" )
-  a.restService.Handle( "/crs", a.reference.AllCrsHandler ).Methods( "GET" )
+  a.restService.Handle( "/crs/{id}", a.CrsHandler ).Methods( "GET" )
+  a.restService.Handle( "/crs", a.AllCrsHandler ).Methods( "GET" )
 
-  a.restService.Handle( "/tiploc", a.reference.TiplocsHandler ).Methods( "POST" )
-  a.restService.Handle( "/tiploc/{id}", a.reference.TiplocHandler ).Methods( "GET" )
+  a.restService.Handle( "/tiploc", a.TiplocsHandler ).Methods( "POST" )
+  a.restService.Handle( "/tiploc/{id}", a.TiplocHandler ).Methods( "GET" )
 
-  a.restService.Handle( "/toc", a.reference.AllTocsHandler ).Methods( "GET" )
-  a.restService.Handle( "/toc/{id}", a.reference.TocHandler ).Methods( "GET" )
+  a.restService.Handle( "/toc", a.AllTocsHandler ).Methods( "GET" )
+  a.restService.Handle( "/toc/{id}", a.TocHandler ).Methods( "GET" )
 
-  a.restService.Handle( "/search/{term}", a.reference.SearchHandler ).Methods( "GET" )
+  a.restService.Handle( "/search/{term}", a.SearchHandler ).Methods( "GET" )
 
   return nil
 }

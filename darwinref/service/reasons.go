@@ -1,35 +1,35 @@
-package darwinref
+package service
 
 import (
   bolt "github.com/coreos/bbolt"
-  "encoding/xml"
   "github.com/peter-mount/golib/rest"
+  "github.com/peter-mount/nre-feeds/darwinref"
   "sort"
   "strconv"
 )
 
-func (dr *DarwinReference) ReasonCancelHandler( r *rest.Rest ) error {
+func (dr *DarwinRefService) ReasonCancelHandler( r *rest.Rest ) error {
   return dr.reasonHandler( true, r )
 }
 
-func (dr *DarwinReference) ReasonLateHandler( r *rest.Rest ) error {
+func (dr *DarwinRefService) ReasonLateHandler( r *rest.Rest ) error {
   return dr.reasonHandler( false, r )
 }
 
-func (dr *DarwinReference) reasonHandler( cancelled bool, r *rest.Rest ) error {
+func (dr *DarwinRefService) reasonHandler( cancelled bool, r *rest.Rest ) error {
   id, err := strconv.Atoi( r.Var( "id" ) )
   if err != nil {
     return err
   }
 
-  return dr.View( func( tx *bolt.Tx ) error {
-    var reason *Reason
+  return dr.reference.View( func( tx *bolt.Tx ) error {
+    var reason *darwinref.Reason
     var exists bool
 
     if cancelled {
-      reason, exists = dr.GetCancellationReason( tx, id )
+      reason, exists = dr.reference.GetCancellationReason( tx, id )
     } else {
-      reason, exists = dr.GetLateReason( tx, id )
+      reason, exists = dr.reference.GetLateReason( tx, id )
     }
 
     if exists {
@@ -43,27 +43,21 @@ func (dr *DarwinReference) reasonHandler( cancelled bool, r *rest.Rest ) error {
   })
 }
 
-func (dr *DarwinReference) AllReasonCancelHandler( r *rest.Rest ) error {
+func (dr *DarwinRefService) AllReasonCancelHandler( r *rest.Rest ) error {
   return dr.allReasonHandler( "DarwinCancelReason", "/reason/cancelled", r )
 }
 
-func (dr *DarwinReference) AllReasonLateHandler( r *rest.Rest ) error {
+func (dr *DarwinRefService) AllReasonLateHandler( r *rest.Rest ) error {
   return dr.allReasonHandler( "DarwinLateReason", "/reason/late", r )
 }
 
-type ReasonsResponse struct {
-  XMLName     xml.Name  `json:"-" xml:"reasons"`
-  Reasons  []*Reason    `json:"reasons,omitempty" xml:"Reason"`
-  Self        string    `json:"self,omitempty" xml:"self,attr,omitempty"`
-}
-
-func (dr *DarwinReference) allReasonHandler( bname string, prefix string, r *rest.Rest ) error {
-  return dr.View( func( tx *bolt.Tx ) error {
-    resp := &ReasonsResponse{}
+func (dr *DarwinRefService) allReasonHandler( bname string, prefix string, r *rest.Rest ) error {
+  return dr.reference.View( func( tx *bolt.Tx ) error {
+    resp := &darwinref.ReasonsResponse{}
 
     if err := tx.Bucket( []byte( bname ) ).ForEach( func( k, v []byte ) error {
-      reason := &Reason{}
-      if reason.fromBytes( v ) {
+      reason := &darwinref.Reason{}
+      if reason.FromBytes( v ) {
         reason.SetSelf( r )
         resp.Reasons = append( resp.Reasons, reason )
       }

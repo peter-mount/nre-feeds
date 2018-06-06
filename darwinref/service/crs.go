@@ -1,25 +1,18 @@
-package darwinref
+package service
 
 import (
   bolt "github.com/coreos/bbolt"
-  "encoding/xml"
   "github.com/peter-mount/golib/codec"
   "github.com/peter-mount/golib/rest"
+  "github.com/peter-mount/nre-feeds/darwinref"
 )
 
-type CrsResponse struct {
-  XMLName     xml.Name  `json:"-" xml:"crs"`
-  Crs         string    `json:"crs" xml:"crs,attr"`
-  Tiploc   []*Location  `json:"locations,omitempty" xml:"LocationRef"`
-  Self        string    `json:"self,omitempty" xml:"self,attr,omitempty"`
-}
-
-func (dr *DarwinReference) CrsHandler( r *rest.Rest ) error {
-  return dr.View( func( tx *bolt.Tx ) error {
+func (dr *DarwinRefService) CrsHandler( r *rest.Rest ) error {
+  return dr.reference.View( func( tx *bolt.Tx ) error {
     crs := r.Var( "id" )
 
-    if locations, exists := dr.GetCrs( tx, crs ); exists {
-      resp := &CrsResponse{}
+    if locations, exists := dr.reference.GetCrs( tx, crs ); exists {
+      resp := &darwinref.CrsResponse{}
       r.Status( 200 ).Value( resp )
 
       resp.Crs = crs
@@ -39,10 +32,10 @@ func (dr *DarwinReference) CrsHandler( r *rest.Rest ) error {
   })
 }
 
-func (dr *DarwinReference) AllCrsHandler( r *rest.Rest ) error {
-  var t []*Location
+func (dr *DarwinRefService) AllCrsHandler( r *rest.Rest ) error {
+  var t []*darwinref.Location
 
-  if err := dr.View( func( tx *bolt.Tx ) error {
+  if err := dr.reference.View( func( tx *bolt.Tx ) error {
     crsBucket := tx.Bucket( []byte( "DarwinCrs" ) )
     tiplocBucket := tx.Bucket( []byte( "DarwinTiploc" ) )
 
@@ -51,7 +44,7 @@ func (dr *DarwinReference) AllCrsHandler( r *rest.Rest ) error {
       codec.NewBinaryCodecFrom( v ).ReadStringArray( &tpls )
 
       for _, tpl := range tpls {
-        if loc, exists := dr.GetTiplocBucket( tiplocBucket, tpl ); exists {
+        if loc, exists := dr.reference.GetTiplocBucket( tiplocBucket, tpl ); exists {
           loc.SetSelf( r )
           t = append( t, loc )
         }

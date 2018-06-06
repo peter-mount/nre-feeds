@@ -59,7 +59,7 @@ func (r *DarwinReference) getToc( tpl string ) ( *Toc, bool ) {
   return loc, exists
 }
 
-func (t *Toc) fromBytes( b []byte ) bool {
+func (t *Toc) FromBytes( b []byte ) bool {
   if b != nil {
     codec.NewBinaryCodecFrom( b ).Read( t )
   }
@@ -71,7 +71,7 @@ func (r *DarwinReference) GetTocBucket( bucket *bolt.Bucket, tpl string ) ( *Toc
 
   if b != nil {
     var toc *Toc = &Toc{}
-    if toc.fromBytes( b ) {
+    if toc.FromBytes( b ) {
       return toc, true
     }
   }
