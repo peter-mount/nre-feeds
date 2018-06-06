@@ -1,5 +1,7 @@
 // Repository name use, must end with / or be '' for none
-repository= 'area51/'
+//repository= 'area51/'
+// Disable deployment until refactor is complete
+repository=''
 
 // image prefix
 imagePrefix = 'nre-feeds'
