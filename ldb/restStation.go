@@ -1,11 +1,11 @@
 package ldb
 
 import (
-  "darwind3"
-  "darwinref"
   "github.com/peter-mount/golib/rest"
+  "github.com/peter-mount/nre-feeds/darwind3"
+  "github.com/peter-mount/nre-feeds/darwinref"
+  "github.com/peter-mount/nre-feeds/util"
   "time"
-  "util"
 )
 
 type stationResult struct {
@@ -45,7 +45,7 @@ func (d *LDB) stationHandler( r *rest.Rest ) error {
     refClient := &darwinref.DarwinRefClient{ Url: d.Reference }
 
     // We want everything for the next hour
-    location, _ := time.LoadLocation( "Europe/London" ) 
+    location, _ := time.LoadLocation( "Europe/London" )
     now := time.Now().In( location )
     from := util.WorkingTime_FromTime( now )
     to := util.WorkingTime_FromTime( now.Add( time.Hour ) )

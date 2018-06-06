@@ -1,7 +1,7 @@
 package bin
 
 import (
-  "darwinupdate"
+  "github.com/peter-mount/nre-feeds/darwinupdate"
 )
 
 func (c *Config) defaultValue( s *string, d string ) *Config {

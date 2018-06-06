@@ -2,10 +2,10 @@
 package bin
 
 import (
-  "darwinupdate"
   "github.com/peter-mount/golib/rabbitmq"
   "github.com/peter-mount/golib/rest"
   "github.com/peter-mount/golib/statistics"
+  "github.com/peter-mount/nre-feeds/darwinupdate"
   "gopkg.in/robfig/cron.v2"
   "gopkg.in/yaml.v2"
   "io/ioutil"

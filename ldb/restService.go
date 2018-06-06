@@ -1,9 +1,9 @@
 package ldb
 
 import (
-  "darwind3"
-  "darwinref"
   "github.com/peter-mount/golib/rest"
+  "github.com/peter-mount/nre-feeds/darwind3"
+  "github.com/peter-mount/nre-feeds/darwinref"
   "time"
 )
 

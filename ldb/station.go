@@ -1,11 +1,11 @@
 package ldb
 
 import (
-  "darwind3"
-  "darwinref"
+  "github.com/peter-mount/nre-feeds/darwind3"
+  "github.com/peter-mount/nre-feeds/darwinref"
+  "github.com/peter-mount/nre-feeds/util"
   "sort"
   "sync"
-  "util"
 )
 
 // The holder for a station's departure boards

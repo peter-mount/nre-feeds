@@ -1,8 +1,8 @@
 package darwind3
 
 import (
-  "darwinkb"
   "encoding/xml"
+  "github.com/peter-mount/nre-feeds/darwinkb"
   "time"
 )
 

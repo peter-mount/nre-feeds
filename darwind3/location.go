@@ -5,8 +5,8 @@ import (
   "encoding/json"
   "encoding/xml"
   "github.com/peter-mount/golib/codec"
+  "github.com/peter-mount/nre-feeds/util"
   "strconv"
-  "util"
 )
 
 // A location in a schedule.

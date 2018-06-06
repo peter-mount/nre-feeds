@@ -55,7 +55,7 @@ func RunApplication( app func( *Config ) ( func(), error ) ) {
 
   config.Cron.Start()
 
-  if err := config.Server.server.Start(); err != nil {
-    log.Fatal( err )
-  }
+  //if err := config.Server.server.Start(); err != nil {
+  //  log.Fatal( err )
+  //}
 }

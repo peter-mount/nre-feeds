@@ -3,9 +3,9 @@
 package main
 
 import (
-  "darwinref"
   "encoding/xml"
   "flag"
+  "github.com/peter-mount/nre-feeds/darwinref"
   "io/ioutil"
   "log"
   "os"

@@ -2,8 +2,8 @@
 package main
 
 import (
-  "bin"
-  "darwinref"
+  "github.com/peter-mount/nre-feeds/bin"
+  "github.com/peter-mount/nre-feeds/darwinref"
   "log"
 )
 

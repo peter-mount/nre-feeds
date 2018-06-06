@@ -2,10 +2,10 @@ package darwinrest
 
 import (
   bolt "github.com/coreos/bbolt"
-  "darwinref"
-  "darwintimetable"
   "encoding/xml"
   "github.com/peter-mount/golib/rest"
+  "github.com/peter-mount/nre-feeds/darwinref"
+  "github.com/peter-mount/nre-feeds/darwintimetable"
 )
 
 type result struct {

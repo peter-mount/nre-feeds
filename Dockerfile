@@ -33,31 +33,17 @@ RUN mkdir -p /dest/etc &&\
 RUN mkdir -p /dest/usr/share/zoneinfo &&\
     (cd /usr/share/;tar cp zoneinfo) | (cd /dest//usr/share;tar xp )
 
+# Our build scripts
+ADD scripts/ /usr/local/bin/
+
 # Ensure we have the libraries - docker will cache these between builds
-RUN go get -v \
-      flag \
-      github.com/coreos/bbolt/... \
-      github.com/gorilla/mux \
-      github.com/jlaffaye/ftp \
-      github.com/muesli/cache2go \
-      github.com/peter-mount/golib/codec \
-      github.com/peter-mount/golib/rabbitmq \
-      github.com/peter-mount/golib/rest \
-      github.com/peter-mount/golib/statistics \
-      github.com/peter-mount/golib/util \
-      gopkg.in/robfig/cron.v2 \
-      gopkg.in/yaml.v2 \
-      io/ioutil \
-      log \
-      net/http \
-      path/filepath \
-      time
+RUN get.sh
 
 # ============================================================
 # source container contains the source as it exists within the
 # repository.
 FROM build as source
-WORKDIR /go/src
+WORKDIR /go/src/github.com/peter-mount/nre-feeds
 ADD . .
 
 # ============================================================
@@ -65,14 +51,7 @@ ADD . .
 # the final build.
 FROM source as test
 ARG skipTest
-RUN if [ -z "$skipTest" ] ;then \
-      go test -v darwind3 darwinref ldb util \
-    ;fi
-
-# Run issue tests last
-RUN if [ -z "$skipTest" ] ;then \
-      go test -v issues \
-    ;fi
+RUN if [ -z "$skipTest" ] ;then test.sh; fi
 
 # ============================================================
 # Compile the source.
@@ -93,9 +72,7 @@ RUN CGO_ENABLED=0 \
     GOOS=${goos} \
     GOARCH=${goarch} \
     GOARM=${goarm} \
-    go build \
-      -o /dest/${service} \
-      bin/${service}
+    compile.sh /dest/${service} ${service}
 
 # ============================================================
 # Finally build the final runtime container for the specific

@@ -2,9 +2,9 @@ package darwinupdate
 
 import (
   "compress/gzip"
-  "darwintimetable"
   "encoding/xml"
   "github.com/jlaffaye/ftp"
+  "github.com/peter-mount/nre-feeds/darwintimetable"
   "io"
   "log"
   "regexp"

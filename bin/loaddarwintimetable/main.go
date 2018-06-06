@@ -3,9 +3,9 @@
 package main
 
 import (
-  "darwintimetable"
   "encoding/xml"
   "flag"
+  "github.com/peter-mount/nre-feeds/darwintimetable"
   "io/ioutil"
   "log"
   "path/filepath"

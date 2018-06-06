@@ -2,8 +2,8 @@
 package main
 
 import (
-  "bin"
-  "darwind3"
+  "github.com/peter-mount/nre-feeds/bin"
+  "github.com/peter-mount/nre-feeds/darwind3"
   "ldb"
 )
 

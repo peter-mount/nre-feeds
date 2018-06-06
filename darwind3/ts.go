@@ -2,7 +2,7 @@ package darwind3
 
 import (
   "encoding/xml"
-  "util"
+  "github.com/peter-mount/nre-feeds/util"
 )
 
 // Train Status. Update to the "real time" forecast data for a service.

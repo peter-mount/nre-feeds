@@ -1,7 +1,7 @@
 package darwind3
 
 import (
-  "util"
+  "github.com/peter-mount/nre-feeds/util"
 )
 
 // A calling point of a service after a station.

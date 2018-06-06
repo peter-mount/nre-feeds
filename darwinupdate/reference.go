@@ -2,9 +2,9 @@ package darwinupdate
 
 import (
   "compress/gzip"
-  "darwinref"
   "encoding/xml"
   "github.com/jlaffaye/ftp"
+  "github.com/peter-mount/nre-feeds/darwinref"
   "io"
   "log"
   "regexp"

@@ -1,10 +1,10 @@
 package darwind3
 
 import (
+  "github.com/peter-mount/nre-feeds/util"
   "log"
   "sort"
   "testing"
-  "util"
 )
 
 // create new location

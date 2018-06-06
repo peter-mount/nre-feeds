@@ -3,10 +3,10 @@ package ldb
 import (
   "encoding/json"
   "fmt"
+  "github.com/peter-mount/nre-feeds/util"
   "log"
   "sort"
   "testing"
-  "util"
 )
 
 const serviceJson = "{" +

@@ -1,7 +1,7 @@
 package ldb
 
 import (
-  "darwinref"
+  "github.com/peter-mount/nre-feeds/darwinref"
   "sync"
 )
 

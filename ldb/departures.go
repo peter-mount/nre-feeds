@@ -2,7 +2,7 @@
 package ldb
 
 import (
-  "darwind3"
+  "github.com/peter-mount/nre-feeds/darwind3"
 )
 
 type LDB struct {

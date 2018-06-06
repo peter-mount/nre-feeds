@@ -5,7 +5,7 @@ import (
   //bolt "github.com/coreos/bbolt"
   "encoding/xml"
   "github.com/peter-mount/golib/codec"
-  "util"
+  "github.com/peter-mount/nre-feeds/util"
 )
 
 // Common location object used in persistence

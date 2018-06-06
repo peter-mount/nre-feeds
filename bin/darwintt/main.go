@@ -2,8 +2,8 @@
 package main
 
 import (
-  "bin"
-  "darwintimetable"
+  "github.com/peter-mount/nre-feeds/bin"
+  "github.com/peter-mount/nre-feeds/darwintimetable"
   "log"
 )
 

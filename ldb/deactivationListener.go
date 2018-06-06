@@ -1,7 +1,7 @@
 package ldb
 
 import (
-  "darwind3"
+  "github.com/peter-mount/nre-feeds/darwind3"
 )
 
 // deactivationListener removes services when a schedule is deactivated

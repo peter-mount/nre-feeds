@@ -2,10 +2,10 @@ package ldb
 
 import (
   "bytes"
-  "darwind3"
   "encoding/json"
+  "github.com/peter-mount/nre-feeds/darwind3"
+  "github.com/peter-mount/nre-feeds/util"
   "time"
-  "util"
 )
 
 // A representation of a service at a location

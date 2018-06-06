@@ -4,10 +4,10 @@ import (
   "encoding/xml"
   "github.com/peter-mount/golib/codec"
   "github.com/peter-mount/golib/rest"
+  "github.com/peter-mount/nre-feeds/util"
   "sort"
   "sync"
   "time"
-  "util"
 )
 
 // Train Schedule

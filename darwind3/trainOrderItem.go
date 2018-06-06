@@ -2,7 +2,7 @@ package darwind3
 
 import (
   "encoding/xml"
-  "util"
+  "github.com/peter-mount/nre-feeds/util"
 )
 
 // Describes the identifier of a train in the train order

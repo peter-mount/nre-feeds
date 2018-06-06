@@ -1,8 +1,8 @@
 package issues
 
 import (
-  "darwind3"
   "encoding/json"
+  "github.com/peter-mount/nre-feeds/darwind3"
   "sort"
   "testing"
   "log"

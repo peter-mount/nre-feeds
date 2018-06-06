@@ -1,7 +1,7 @@
 package darwind3
 
 import (
-  "darwintimetable"
+  "github.com/peter-mount/nre-feeds/darwintimetable"
   "strconv"
 )
 
