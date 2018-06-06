@@ -34,6 +34,20 @@ func (sm *StationMessages) Update( f func() error ) error {
   return f()
 }
 
+func (sm *StationMessages) ForEach( f func(*StationMessage) error ) error {
+  sm.mutex.Lock()
+  defer sm.mutex.Unlock()
+
+  for _, m := range sm.messages {
+    err := f(m)
+    if err != nil {
+      return err
+    }
+  }
+
+  return nil
+}
+
 // Get returns the specified StationMessage or nil if none
 func (sm *StationMessages) Get( id int ) *StationMessage {
   var s *StationMessage

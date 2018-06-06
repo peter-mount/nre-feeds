@@ -1,7 +1,7 @@
 package darwind3
 
 import (
-  "github.com/peter-mount/nre-feeds/darwintimetable"
+  "github.com/peter-mount/nre-feeds/darwintimetable/client"
   "strconv"
 )
 
@@ -12,7 +12,7 @@ func (d *Transaction) ResolveSchedule( rid string ) *Schedule {
     return nil
   }
 
-  client := &darwintimetable.DarwinTimetableClient{ Url: d.d3.Timetable }
+  client := &client.DarwinTimetableClient{ Url: d.d3.Timetable }
 
   if journey, err := client.GetJourney( rid ); err != nil {
     return nil

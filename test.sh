@@ -2,7 +2,8 @@
 
 # Module to build & run
 #MODULE=darwinref
-MODULE=darwintimetable
+#MODULE=darwintimetable
+MODULE=darwind3
 
 # db directory
 DB=/home/peter/tmp/nre
