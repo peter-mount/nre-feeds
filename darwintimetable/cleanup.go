@@ -2,16 +2,9 @@ package darwintimetable
 
 import (
   bolt "github.com/coreos/bbolt"
-  "gopkg.in/robfig/cron.v2"
   "log"
   "time"
 )
-
-func (t *DarwinTimetable) ScheduleCleanup( c *cron.Cron ) {
-  c.AddFunc( "0 0 2 * * *", func() {
-    t.PruneSchedules()
-  })
-}
 
 // PruneSchedules prunes all expired schedules
 func (t *DarwinTimetable) PruneSchedules() ( int, error ) {
