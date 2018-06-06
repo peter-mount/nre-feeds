@@ -1,11 +1,15 @@
-package darwinref
+package client
+
+import (
+  "github.com/peter-mount/nre-feeds/darwinref"
+)
 
 // GetVias makes a batch lookup of one or more ViaResolveRequest's and returns
 // a map of matched Via's.
 // The result will only contain those entries that were matched.
-func (c *DarwinRefClient) GetVias( request map[string]*ViaResolveRequest ) ( map[string]*Via, error ) {
+func (c *DarwinRefClient) GetVias( request map[string]*ViaResolveRequest ) ( map[string]*darwinref.Via, error ) {
 
-  response := make( map[string]*Via )
+  response := make( map[string]*darwinref.Via )
 
   if found, err := c.post( "/via", request, &response ); err != nil {
     return nil, err

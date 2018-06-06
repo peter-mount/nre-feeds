@@ -1,8 +1,12 @@
-package darwinref
+package client
+
+import (
+  "github.com/peter-mount/nre-feeds/darwinref"
+)
 
 // GetStations returns all Location's with a CRS code
-func (c *DarwinRefClient) GetStations() ( []*Location, error ) {
-  ary := make( []*Location, 0 )
+func (c *DarwinRefClient) GetStations() ( []*darwinref.Location, error ) {
+  ary := make( []*darwinref.Location, 0 )
 
   if found, err := c.get( "/crs", &ary ); err != nil {
     return nil, err
@@ -13,8 +17,8 @@ func (c *DarwinRefClient) GetStations() ( []*Location, error ) {
   }
 }
 
-func (c *DarwinRefClient) GetCrs( crs string ) ( *CrsResponse, error ) {
-  res := &CrsResponse{}
+func (c *DarwinRefClient) GetCrs( crs string ) ( *darwinref.CrsResponse, error ) {
+  res := &darwinref.CrsResponse{}
 
   if found, err := c.get( "/crs/" + crs , &res ); err != nil {
     return nil, err

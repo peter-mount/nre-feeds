@@ -1,7 +1,11 @@
-package darwinref
+package client
 
-func (c *DarwinRefClient) GetTiplocs( tpl []string ) ( []*Location, error ) {
-  ary := make( []*Location, 0 )
+import (
+  "github.com/peter-mount/nre-feeds/darwinref"
+)
+
+func (c *DarwinRefClient) GetTiplocs( tpl []string ) ( []*darwinref.Location, error ) {
+  ary := make( []*darwinref.Location, 0 )
 
   if found, err := c.post( "/tiploc", tpl, &ary ); err != nil {
     return nil, err
@@ -12,7 +16,7 @@ func (c *DarwinRefClient) GetTiplocs( tpl []string ) ( []*Location, error ) {
   }
 }
 
-func (c *DarwinRefClient) GetTiplocsMapKeys( m map[string]interface{} ) ( []*Location, error ) {
+func (c *DarwinRefClient) GetTiplocsMapKeys( m map[string]interface{} ) ( []*darwinref.Location, error ) {
   var tpl []string
   for k, _ := range m {
     tpl = append( tpl, k )
@@ -20,8 +24,8 @@ func (c *DarwinRefClient) GetTiplocsMapKeys( m map[string]interface{} ) ( []*Loc
   return c.GetTiplocs( tpl )
 }
 
-func (c *DarwinRefClient) GetTiploc( tpl string ) ( *Location, error ) {
-  res := &Location{}
+func (c *DarwinRefClient) GetTiploc( tpl string ) ( *darwinref.Location, error ) {
+  res := &darwinref.Location{}
 
   if found, err := c.get( "/tiploc/" + tpl , &res ); err != nil {
     return nil, err

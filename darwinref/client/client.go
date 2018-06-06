@@ -1,4 +1,4 @@
-package darwinref
+package client
 
 import (
   "bytes"
