@@ -1,4 +1,4 @@
-package darwind3
+package client
 
 import (
   "encoding/json"
