@@ -7,10 +7,8 @@ import (
 )
 
 func main() {
-  log.Println( "DarwinRef Start" )
   err := kernel.Launch( &service.DarwinRefService{} )
   if err != nil {
     log.Fatal( err )
   }
-  log.Println( "DarwinRef End" )
 }
