@@ -41,9 +41,14 @@ type Config struct {
   RabbitMQ      rabbitmq.RabbitMQ `yaml:"rabbitmq"`
 
   D3 struct {
-    ResolveSched  bool      `yaml:"resolveSchedules"`
-    QueueName     string    `yaml:"queueName"`
-    RoutingKey    string    `yaml:"routingKey"`
+    // Set to true to use the darwintt service to try to resulve unknown schedules
+    ResolveSched    bool    `yaml:"resolveSchedules"`
+    // The queue name to create
+    QueueName       string  `yaml:"queueName"`
+    // The routingKey to listen for inbound d3 messages
+    RoutingKey      string  `yaml:"routingKey"`
+    // Prefix to the routingKeys used by the Event subsystem
+    EventKeyPrefix  string  `yaml:"eventKeyPrefix"`
   }                         `yaml:"d3"`
 
   Server struct {

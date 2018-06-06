@@ -67,7 +67,7 @@ func (a *DarwinD3Service) Start() error {
   a.config.RabbitMQ.ConnectionName = "darwin d3"
   a.config.RabbitMQ.Connect()
 
-  em := darwind3.NewDarwinEventManager( &a.config.RabbitMQ )
+  em := darwind3.NewDarwinEventManager( &a.config.RabbitMQ, a.config.D3. EventKeyPrefix )
 
   a.config.DbPath( &a.config.Database.PushPort, "dwd3.db" )
   if err := a.darwind3.OpenDB( a.config.Database.PushPort, em ); err != nil {

@@ -41,7 +41,7 @@ database:
 # See also http://nrodwiki.rockshore.net/index.php/About_the_NRE_Feeds
 ftp:
   # Is the ftp functionality enabled
-  enabled: false
+  #enabled: true
 
   # The server to connect to. Defaults to "datafeeds.nationalrail.co.uk:21"
   #server: "datafeeds.nationalrail.co.uk:21"
@@ -77,6 +77,12 @@ d3:
   queueName: ldb
   # The routingKey to bind to the queue
   routingKey: nre.push
+
+  # routingKey prefix for events from the darwind3 service.
+  # The ldb service will also use this when listening to events.
+  # This is optional but useful if running multiple systems on the same RabbitMQ,
+  # e.g. a development and production environment
+  #eventKeyPrefix: dev
 
 # Statistics management
 statistics:

@@ -38,20 +38,29 @@ type DarwinEvent struct {
 
 // The core of the eventing system
 type DarwinEventManager struct {
-  mq         *rabbitmq.RabbitMQ
-  prefix      string
-  sequence    int
+  mq             *rabbitmq.RabbitMQ
+  prefix          string
+  sequence        int
+  eventKeyPrefix  string
 }
 
 // NewDarwinEventManager creates a new DarwinEventManager
-func NewDarwinEventManager( mq *rabbitmq.RabbitMQ ) *DarwinEventManager {
+func NewDarwinEventManager( mq *rabbitmq.RabbitMQ, eventKeyPrefix string ) *DarwinEventManager {
   d := &DarwinEventManager{}
   d.mq = mq
+
+  // Queue prefix, try to use the local hostname (e.g. of the container)
   if hostname, err := os.Hostname(); err != nil {
     d.prefix = "error"
   } else {
     d.prefix = hostname
   }
+
+  // The eventKeyPrefix added to the routingKey & queueName to keep them unique
+  if eventKeyPrefix != "" {
+    d.eventKeyPrefix = eventKeyPrefix + "."
+  }
+
   return d
 }
 
@@ -61,8 +70,8 @@ func (d *DarwinEventManager) ListenToEvents( eventType int, f func( *DarwinEvent
   seq := d.sequence
   d.sequence++
 
-  queueName := fmt.Sprintf( "%s.d3.event.%d.%d", d.prefix, eventType, seq)
-  routingKey := fmt.Sprintf( "d3.event.%d", eventType )
+  queueName := fmt.Sprintf( "%s.%sd3.event.%d.%d", d.prefix, d.eventKeyPrefix, eventType, seq)
+  routingKey := fmt.Sprintf( "%sd3.event.%d", d.eventKeyPrefix, eventType )
 
   if channel, err := d.mq.NewChannel(); err != nil {
     log.Println( err )
@@ -100,6 +109,6 @@ func (d *DarwinEventManager) PostEvent( e *DarwinEvent ) {
   }
 
   if b, err := json.Marshal( e ); err == nil {
-    d.mq.Publish( fmt.Sprintf( "d3.event.%d", e.Type ), b )
+    d.mq.Publish( fmt.Sprintf( "%sd3.event.%d", d.eventKeyPrefix, e.Type ), b )
   }
 }
