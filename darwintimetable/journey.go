@@ -12,13 +12,30 @@ import (
 
 type Journey struct {
   XMLName         xml.Name      `json:"-" xml:"Journey"`
+  // RTTI unique Train ID
   RID             string        `json:"rid" xml:"rid,attr"`
+  // Train UID
   UID             string        `json:"uid" xml:"uid,attr"`
+  // Train ID (Headcode)
   TrainID         string        `json:"trainId" xml:"trainId"`
+  // Scheduled Start Date
   SSD             util.SSD      `json:"ssd" xml:"ssd,attr"`
+  // ATOC Code
   Toc             string        `json:"toc" xml:"toc,attr"`
+  // Type of service, i.e. Train/Bus/Ship.
+  Status          string        `json:"status,omitempty" xml:"status,attr,omitempty"`
+  // Category of service.
   TrainCat        string        `json:"trainCat" xml:"trainCat,attr"`
+  // True if Darwin classifies the train category as a passenger service.
   Passenger       bool          `json:"isPassengerSvc" xml:"isPassengerSvc,attr"`
+  // Service has been deleted and should not be used/displayed.
+  Deleted         bool          `json:"deleted,omitempty" xml:"deleted,attr,omitempty"`
+  // Indicates if this service is a charter service.
+  Charter         bool          `json:"isCharter,omitempty" xml:"isCharter,attr,omitempty"`
+  // True if this is a Q Train (runs as required) that has not yet been activated.
+  // Note that a Q Train that has been activated before the XML Timetable file
+  // has been built will not have this attribute set true.
+  QTrain          bool          `json:"qtrain,omitempty" xml:"qtrain,attr,omitempty"`
   // The schedule
   Schedule      []*Location     `json:"locations" xml:location`
   CancelReason    int           `json:"cancelReason" xml:"cancelReason,attr"`

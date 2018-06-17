@@ -11,22 +11,38 @@ import (
 // Common location object used in persistence
 type Location struct {
     XMLName     xml.Name    `json:"-" xml:"location"`
+    // The type of this location:
+    //   OR Origin location
+    // OPOR Operational origin location
+    //   IP Intermediate calling location
+    // OPIP Intermediate operational calling location
+    //   PP Passing location
+    //   DT Destination location
+    // OPDT Operational destination location
     Type        string      `json:"type" xml:"type,attr"`
+    // Location Tiploc
     Tiploc      string      `json:"tpl" xml:"tpl,attr"`
+    // Activity at this location
     Act         string      `json:"act,omitempty" xml:"act,attr,omitempty"`
+    // Planned Activity Codes (if different to current activities)
     PlanAct     string      `json:"planAct,omitempty" xml:"planAct,attr,omitempty"`
+    // Cancelled at this location
     Cancelled   bool        `json:"cancelled,omitempty" xml:"can,attr,omitempty"`
+    // Platform at this location
     Platform    string      `json:"plat,omitempty" xml:"plat,attr,omitempty"`
-    // CallPtAttributes
+    // Public Scheduled Time of Arrival
     Pta        *util.PublicTime  `json:"pta,omitempty" xml:"pta,attr,omitempty"`
+    // Public Scheduled Time of Departure
     Ptd        *util.PublicTime  `json:"ptd,omitempty" xml:"ptd,attr,omitempty"`
-    // Working times
+    // Working Scheduled Time of Arrival
     Wta        *util.WorkingTime `json:"wta,omitempty" xml:"wta,attr,omitempty"`
+    // Working Scheduled Time of Departure
     Wtd        *util.WorkingTime `json:"wtd,omitempty" xml:"wtd,attr,omitempty"`
+    // Working Scheduled Time of Passing
     Wtp        *util.WorkingTime `json:"wtp,omitempty" xml:"wtp,attr,omitempty"`
-    // Delay implied by a change to the services route
+    // A delay value that is implied by a change to the service's route.
     RDelay      string      `json:"rdelay,omitempty" xml:"rdelay,attr,omitempty"`
-    // False destination to be used at this location
+    // TIPLOC of False Destination to be used at this location
     FalseDest   string      `json:"fd,omitempty" xml:"fd,attr,omitempty"`
 }
 
