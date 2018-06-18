@@ -67,7 +67,10 @@ def goarm = {
 properties([
   buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '10')),
   disableConcurrentBuilds(),
-  disableResume()
+  disableResume(),
+  pipelineTriggers([
+    cron('H H * * *')
+  ])
 ])
 
 // Run tests against a suite or library
