@@ -29,7 +29,7 @@ func (c *DarwinRefClient) AddToc( m *darwinref.TocMap, toc string ) {
 }
 
 // GetTocs returns all current Train Operating Companies
-func (c *DarwinRefClient) GetTocs() ( *darwinref.Toc, error ) {
+func (c *DarwinRefClient) GetTocs() ( *darwinref.TocsResponse, error ) {
   res := &darwinref.TocsResponse{};
 
   if found, err := c.get( "/toc", &res ); err != nil {
