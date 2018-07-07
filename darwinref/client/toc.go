@@ -8,13 +8,13 @@ import (
 func (c *DarwinRefClient) GetToc( toc string ) ( *darwinref.Toc, error ) {
   res := &darwinref.Toc{};
 
-    if found, err := c.get( "/toc/" + toc, &res ); err != nil {
-      return nil, err
-    } else if found {
-      return res, nil
-    } else {
-      return nil, nil
-    }
+  if found, err := c.get( "/toc/" + toc, &res ); err != nil {
+    return nil, err
+  } else if found {
+    return res, nil
+  } else {
+    return nil, nil
+  }
 }
 
 // AddToc adds a Toc to a TocMap
@@ -25,5 +25,18 @@ func (c *DarwinRefClient) AddToc( m *darwinref.TocMap, toc string ) {
         m.Add( t )
       }
     }
+  }
+}
+
+// GetTocs returns all current Train Operating Companies
+func (c *DarwinRefClient) GetTocs() ( *darwinref.Toc, error ) {
+  res := &darwinref.TocsResponse{};
+
+  if found, err := c.get( "/toc", &res ); err != nil {
+    return nil, err
+  } else if found {
+    return res, nil
+  } else {
+    return nil, nil
   }
 }
