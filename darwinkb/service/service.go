@@ -2,7 +2,6 @@ package service
 
 import (
   "github.com/peter-mount/golib/kernel"
-  "github.com/peter-mount/golib/kernel/cron"
   "github.com/peter-mount/golib/rest"
   "github.com/peter-mount/nre-feeds/bin"
   "github.com/peter-mount/nre-feeds/darwinkb"
@@ -13,7 +12,6 @@ type DarwinKBService struct {
 
   config       *bin.Config
 
-  cron         *cron.CronService
   restService  *rest.Server
 }
 
@@ -35,12 +33,6 @@ func (a *DarwinKBService) Init( k *kernel.Kernel ) error {
   }
   a.darwinkb = (service).(*darwinkb.DarwinKB)
 
-  service, err = k.AddService( &cron.CronService{} )
-  if err != nil {
-    return err
-  }
-  a.cron = (service).(*cron.CronService)
-
   service, err = k.AddService( &rest.Server{} )
   if err != nil {
     return err
@@ -52,9 +44,11 @@ func (a *DarwinKBService) Init( k *kernel.Kernel ) error {
 }
 
 func (a *DarwinKBService) Start() error {
-  // Expire old messages every 15 minutes & run an expire on startup
-  //a.cron.AddFunc( "0 0/15 * * * *", a.darwind3.ExpireStationMessages )
-  //go a.darwind3.ExpireStationMessages()
+
+  a.restService.Handle( "/station/{crs}", a.StationHandler ).Methods( "GET" )
+
+  // Expose the static directory so we offer the raw xml & full json files
+  a.restService.Static( "/static/", a.config.KB.DataDir + "static/" )
 
   return nil
 }

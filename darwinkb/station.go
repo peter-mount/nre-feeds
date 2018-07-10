@@ -11,7 +11,28 @@ const (
   stationXml = "station.xml"
   stationJson = "station.json"
 )
-func (r *DarwinKB) refreshStations() error {
+
+func (r *DarwinKB) GetStation( crs string ) ([]byte, error) {
+  var data []byte
+  err := r.boltDb.View( func( tx *bolt.Tx ) error {
+    bucket := tx.Bucket( "stations" )
+    if bucket == nil {
+      return errors.New( "Bucket not found" )
+    }
+    data = bucket.Get( crs )
+    return nil
+  } )
+  return data, err
+}
+
+func (r *DarwinKB) refreshStations() {
+  err := r.refreshStationsImpl()
+  if err != nil {
+    log.Println( "refreshStations:", err )
+  }
+}
+
+func (r *DarwinKB) refreshStationsImpl() error {
 
   updateRequired, err := r.refreshFile( stationXml, "https://datafeeds.nationalrail.co.uk/api/staticfeeds/4.0/stations" )
   if err != nil {
