@@ -24,15 +24,6 @@ RUN apk add --no-cache \
       git \
       tzdata
 
-# We want to build our final image under /dest
-# A copy of /etc/ssl is required if we want to use https datasources
-RUN mkdir -p /dest/etc &&\
-    cp -rp /etc/ssl /dest/etc/
-
-# We also need the zoneinfo database
-RUN mkdir -p /dest/usr/share/zoneinfo &&\
-    (cd /usr/share/;tar cp zoneinfo) | (cd /dest//usr/share;tar xp )
-
 # Our build scripts
 ADD scripts/ /usr/local/bin/
 
@@ -77,14 +68,17 @@ RUN CGO_ENABLED=0 \
 # ============================================================
 # Finally build the final runtime container for the specific
 # microservice
-FROM scratch
+FROM alpine
+RUN apk add --no-cache \
+      curl \
+      tzdata
 
 # The default database directory
 Volume /database
 
 # Install our built image
-COPY --from=compiler /dest/ /
+COPY --from=compiler /dest/ /usr/bin/
 
 #ENTRYPOINT ["/docker-entrypoint"]
-ENTRYPOINT ["/@@entrypoint@@"]
+ENTRYPOINT ["@@entrypoint@@"]
 CMD [ "-c", "/config.yaml"]

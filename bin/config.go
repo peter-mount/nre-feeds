@@ -38,6 +38,12 @@ type Config struct {
     Schedule      string    `yaml:"schedule"`
   }                         `yaml:"ftp"`
 
+  KB struct {
+    Username      string    `yaml:"username"`
+    Password      string    `yaml:"password"`
+    DataDir       string    `yaml:"datadir"`
+  }
+
   RabbitMQ      rabbitmq.RabbitMQ `yaml:"rabbitmq"`
 
   D3 struct {

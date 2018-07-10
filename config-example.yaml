@@ -59,6 +59,13 @@ ftp:
   # hopefully get an update in a subsequent attempt.
   schedule: "0 30 2-6 * * *"
 
+# The credentials for accessing the nre portal & the Knowledgebase feeds
+kb:
+  username: "your email address here"
+  password: "your portal password"
+  # Path to the data directory for darwinkb
+  datadir: "/data/"
+
 # RabbitMQ config
 rabbitmq:
   # URL of the connection. If this is not set then RabbitMQ is not used
