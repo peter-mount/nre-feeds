@@ -183,6 +183,9 @@ node('AMD64') {
         },
         'ldb': {
           multiArchService( 'ldb' )
+        },
+        'darwinkb': {
+          multiArchService( 'darwinkb' )
         }
       )
     }
