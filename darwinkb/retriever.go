@@ -65,26 +65,26 @@ func (k *DarwinKB) setToken( mainReq *http.Request ) error {
   return nil
 }
 
-func (k *DarwinKB) refreshFile( filename, url string ) error {
-  fname := k.config.KB.DataDir + filename
+func (k *DarwinKB) refreshFile( filename, url string ) (bool,error) {
+  fname := k.config.KB.DataDir + "static/" + filename
 
   finfo, err := os.Stat( fname )
   if err != nil {
     if os.IsNotExist( err ) {
       log.Println( "DarwinKB: File not exist", fname )
-      return k.retrieveFile( fname, url )
+      return true, k.retrieveFile( fname, url )
     }
     log.Println( "DarwinKB:", err )
-    return err
+    return false, err
   }
 
   now := time.Now()
   if now.Sub( finfo.ModTime() ) > time.Hour {
-    return k.retrieveFile( fname, url )
+    return true, k.retrieveFile( fname, url )
   }
 
   log.Println( "DarwinKB: Keeping file", fname )
-  return nil
+  return false, nil
 }
 
 func (k *DarwinKB) retrieveFile( fname, url string ) error {

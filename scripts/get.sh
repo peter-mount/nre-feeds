@@ -11,11 +11,11 @@ go get -v \
       github.com/peter-mount/golib/rest \
       github.com/peter-mount/golib/statistics \
       github.com/peter-mount/golib/util \
+      github.com/peter-mount/goxml2json \
       gopkg.in/yaml.v2
 
 exit 0
 
-github.com/coreos/bbolt/... \
 github.com/gorilla/mux \
 github.com/peter-mount/golib/codec \
 github.com/peter-mount/golib/rabbitmq \
