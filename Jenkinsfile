@@ -19,7 +19,7 @@ if( version == 'master' ) {
 architectures = [ 'amd64', 'arm64v8' ]
 
 // The services to build
-services = [ 'darwinref', 'darwintt', 'darwind3', 'ldb' ]
+services = [ 'darwinref', 'darwintt', 'darwind3', 'ldb', 'darwinkb' ]
 
 // Temp docker image name
 tempImage = 'temp/' + imagePrefix + ':' + version
