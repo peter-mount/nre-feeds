@@ -3,6 +3,7 @@ package darwinkb
 import (
   "github.com/peter-mount/golib/kernel/bolt"
   "log"
+  "time"
 )
 
 const (
@@ -28,7 +29,7 @@ func (r *DarwinKB) refreshStations() {
 
 func (r *DarwinKB) refreshStationsImpl() error {
 
-  updateRequired, err := r.refreshFile( stationXml, "https://datafeeds.nationalrail.co.uk/api/staticfeeds/4.0/stations" )
+  updateRequired, err := r.refreshFile( stationXml, "https://datafeeds.nationalrail.co.uk/api/staticfeeds/4.0/stations", 2 * time.Hour )
   if err != nil {
     return err
   }

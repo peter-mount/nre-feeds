@@ -3,6 +3,7 @@ package darwinkb
 import (
   "github.com/peter-mount/golib/kernel/bolt"
   "log"
+  "time"
 )
 
 const (
@@ -34,7 +35,7 @@ func (r *DarwinKB) refreshServiceIndicators() {
 
 func (r *DarwinKB) refreshServiceIndicatorsImpl() error {
 
-  updateRequired, err := r.refreshFile( serviceIndicatorsXml, "https://datafeeds.nationalrail.co.uk/api/staticfeeds/4.0/serviceIndicators" )
+  updateRequired, err := r.refreshFile( serviceIndicatorsXml, "https://datafeeds.nationalrail.co.uk/api/staticfeeds/4.0/serviceIndicators", 9 * time.Minute )
   if err != nil {
     return err
   }

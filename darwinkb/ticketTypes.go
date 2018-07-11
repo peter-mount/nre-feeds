@@ -5,6 +5,7 @@ import (
   "github.com/peter-mount/sortfold"
   "log"
   "sort"
+  "time"
 )
 
 const (
@@ -47,7 +48,7 @@ func (r *DarwinKB) refreshTicketTypes() {
 
 func (r *DarwinKB) refreshTicketTypesImpl() error {
 
-  updateRequired, err := r.refreshFile( ticketTypesXml, "https://datafeeds.nationalrail.co.uk/api/staticfeeds/4.0/ticket-types" )
+  updateRequired, err := r.refreshFile( ticketTypesXml, "https://datafeeds.nationalrail.co.uk/api/staticfeeds/4.0/ticket-types", 6 * time.Hour)
   if err != nil {
     return err
   }

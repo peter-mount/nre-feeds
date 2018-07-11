@@ -66,7 +66,7 @@ func (k *DarwinKB) setToken( mainReq *http.Request ) error {
   return nil
 }
 
-func (k *DarwinKB) refreshFile( filename, url string ) (bool,error) {
+func (k *DarwinKB) refreshFile( filename, url string, maxAge time.Duration ) (bool,error) {
   fname := k.config.KB.DataDir + "static/" + filename
 
   finfo, err := os.Stat( fname )
@@ -80,7 +80,7 @@ func (k *DarwinKB) refreshFile( filename, url string ) (bool,error) {
   }
 
   now := time.Now()
-  if now.Sub( finfo.ModTime() ) > ( 3 * time.Hour ) {
+  if now.Sub( finfo.ModTime() ) >= maxAge {
     return true, k.retrieveFile( fname, url )
   }
 
