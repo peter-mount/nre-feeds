@@ -80,7 +80,7 @@ func (k *DarwinKB) refreshFile( filename, url string ) (bool,error) {
   }
 
   now := time.Now()
-  if now.Sub( finfo.ModTime() ) > time.Hour {
+  if now.Sub( finfo.ModTime() ) > ( 3 * time.Hour ) {
     return true, k.retrieveFile( fname, url )
   }
 

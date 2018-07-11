@@ -1,10 +1,8 @@
 package darwinkb
 
 import (
-  "encoding/json"
   "github.com/peter-mount/golib/kernel/bolt"
   "log"
-  "errors"
 )
 
 const (
@@ -14,11 +12,7 @@ const (
 
 func (r *DarwinKB) GetStation( crs string ) ([]byte, error) {
   var data []byte
-  err := r.boltDb.View( func( tx *bolt.Tx ) error {
-    bucket := tx.Bucket( "stations" )
-    if bucket == nil {
-      return errors.New( "Bucket not found" )
-    }
+  err := r.View( "stations", func( bucket *bolt.Bucket ) error {
     data = bucket.Get( crs )
     return nil
   } )
@@ -41,18 +35,7 @@ func (r *DarwinKB) refreshStationsImpl() error {
 
   // If no update check to see if the bucket is empty forcing an update
   if !updateRequired {
-    err = r.boltDb.View( func( tx *bolt.Tx ) error {
-      bucket := tx.Bucket( "stations" )
-      if bucket == nil {
-        return errors.New( "Bucket not found" )
-      }
-      cursor := bucket.Cursor()
-      k, _ := cursor.First()
-      if k == "" {
-        updateRequired = true
-      }
-      return nil
-    })
+    updateRequired, err = r.bucketEmpty( "stations" )
     if err != nil {
       return err
     }
@@ -70,26 +53,16 @@ func (r *DarwinKB) refreshStationsImpl() error {
 
   log.Println( "Parsing JSON" )
 
-  a := make( map[string]map[string]interface{} )
-  err = json.Unmarshal( b.Bytes(), &a )
+  root, err := unmarshalBytes( b )
   if err != nil {
     return err
   }
 
-  stations := a["StationList"]["Station"].([]interface{})
+  stations, _ := GetJsonArray( root, "StationList", "Station" )
   log.Printf( "Found %d stations", len(stations) )
 
-  err = r.boltDb.Update( func( tx *bolt.Tx ) error {
-    bucket := tx.Bucket( "stations" )
-    if bucket == nil {
-      return errors.New( "Bucket not found" )
-    }
-
-    // Clear existing entries
-    log.Println( "Clearing existing entries" )
-    err = bucket.ForEach( func(k string, v []byte) error {
-      return bucket.Delete( k )
-    })
+  err = r.Update( "stations", func( bucket *bolt.Bucket ) error {
+    err := bucketRemoveAll( bucket )
     if err != nil {
       return err
     }
@@ -100,12 +73,7 @@ func (r *DarwinKB) refreshStationsImpl() error {
       d := c.(map[string]interface{})
       crs := d["CrsCode"].(string)
 
-      b, err := json.Marshal( d )
-      if err != nil {
-        return err
-      }
-
-      err = bucket.Put( crs, b )
+      err = bucket.PutJSON( crs, d )
       if err != nil {
         return err
       }

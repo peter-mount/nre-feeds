@@ -45,6 +45,9 @@ func (a *DarwinKBService) Init( k *kernel.Kernel ) error {
 
 func (a *DarwinKBService) Start() error {
 
+  a.restService.Handle( "/incidents", a.IncidentsHandler ).Methods( "GET" )
+  a.restService.Handle( "/incident/{id}", a.IncidentHandler ).Methods( "GET" )
+
   a.restService.Handle( "/station/{crs}", a.StationHandler ).Methods( "GET" )
 
   // Expose the static directory so we offer the raw xml & full json files
