@@ -90,7 +90,7 @@ func (a *DarwinKB) Start() error {
   a.refreshStations()
 
   // Incidents are regular intervals but not during the early hours
-  a.cron.AddFunc( "0 0 0-1,5-23 * * *", a.refreshIncidents )
+  a.cron.AddFunc( "0 0/15 0-1,5-23 * * *", a.refreshIncidents )
   a.refreshIncidents()
 
   // Refresh companies during the morning
