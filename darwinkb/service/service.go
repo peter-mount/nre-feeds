@@ -57,6 +57,10 @@ func (a *DarwinKBService) Start() error {
 
   a.restService.Handle( "/station/{crs}", a.StationHandler ).Methods( "GET" )
 
+  a.restService.Handle( "/ticket/types", a.TicketTypesHandler ).Methods( "GET" )
+  a.restService.Handle( "/ticket/type/ids", a.TicketIdsHandler ).Methods( "GET" )
+  a.restService.Handle( "/ticket/type/{id}", a.TicketTypeHandler ).Methods( "GET" )
+
   // Expose the static directory so we offer the raw xml & full json files
   a.restService.Static( "/static/", a.config.KB.DataDir + "static/" )
 

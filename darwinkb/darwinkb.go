@@ -21,7 +21,12 @@ func (r *DarwinKB) Name() string {
 }
 
 var (
-  buckets = []string{ "companies", "incidents", "serviceIndicators", "stations" }
+  buckets = []string{
+    "companies",
+    "incidents",
+    "serviceIndicators",
+    "stations",
+    "ticketTypes" }
 )
 
 func (a *DarwinKB) Init( k *kernel.Kernel ) error {
@@ -92,7 +97,11 @@ func (a *DarwinKB) Start() error {
   a.cron.AddFunc( "0 35 4-9 * * *", a.refreshCompanies )
   a.refreshCompanies()
 
+  a.cron.AddFunc( "0 0/10 0-1,4-23 * * *", a.refreshServiceIndicators )
   a.refreshServiceIndicators()
-  
+
+  a.cron.AddFunc( "0 40 4-9 * * *", a.refreshTicketTypes )
+  a.refreshTicketTypes()
+
   return nil
 }
