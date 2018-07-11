@@ -83,11 +83,16 @@ func (r *DarwinKB) refreshIncidentsImpl() error {
 
     for _, incident := range incidents {
       o := incident.(map[string]interface{})
+
       indexEntry := &IncidentEntry{
         Id: o["IncidentNumber"].(string),
         Summary: o[ "Summary" ].(string),
       }
       index = append( index, indexEntry )
+
+      // Force entries which can be arrays but not when just 1 entry into arrays
+      ForceJsonArray( o, "Affects", "Operators", "AffectedOperator" )
+      ForceJsonArray( o, "Affects", "InfoLinks", "InfoLink" )
 
       // The individual entry
       err = bucket.PutJSON( indexEntry.Id, incident )

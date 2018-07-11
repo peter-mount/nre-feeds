@@ -73,6 +73,37 @@ func (r *DarwinKB) refreshStationsImpl() error {
       d := c.(map[string]interface{})
       crs := d["CrsCode"].(string)
 
+      // Fix certain fields into correct objects,
+      // e.g. single values into an array if the element is "unbounded"
+      // or "" into {}
+
+      // This one isn't in the feed but as it's "unbounded" then we need to fix it
+      ForceJsonArray( d, "AlternativeIdentifiers", "Tiplocs", "Tiploc")
+
+      ForceJsonArray( d, "Fares", "PenaltyFares", "TrainOperator")
+      ForceJsonArray( d, "Accessibility", "StaffHelpAvailable", "Open", "DayAndTimeAvailability")
+      ForceJsonArray( d, "Accessibility", "StaffHelpAvailable", "Open", "DayAndTimeAvailability", "OpeningHours", "OpenPeriod")
+
+      ForceJsonArray( d, "Fares", "PenaltyFares", "TrainOperator")
+      ForceJsonArray( d, "Fares", "TicketOffice", "Open", "DayAndTimeAvailability")
+      ForceJsonArray( d, "Fares", "TicketOffice", "Open", "DayAndTimeAvailability", "OpeningHours", "OpenPeriod")
+
+      ForceJsonObject( d, "InformationSystems" )
+      ForceJsonArray( d, "InformationSystems", "CIS")
+      ForceJsonArray( d, "InformationSystems", "DayAndTimeAvailability")
+      ForceJsonArray( d, "InformationSystems", "DayAndTimeAvailability", "OpeningHours", "OpenPeriod")
+      ForceJsonArray( d, "InformationSystems", "InformationServicesOpen", "DayAndTimeAvailability")
+      ForceJsonArray( d, "InformationSystems", "InformationServicesOpen", "DayAndTimeAvailability", "OpeningHours", "OpenPeriod")
+      ForceJsonArray( d, "InformationSystems", "InformationAvailableFromStaff")
+
+      ForceJsonArray( d, "Interchange", "CarPark")
+      ForceJsonArray( d, "Interchange", "CarPark", "Open", "DayAndTimeAvailability")
+      ForceJsonArray( d, "Interchange", "CarPark", "Open", "DayAndTimeAvailability", "OpeningHours", "OpenPeriod")
+      ForceJsonArray( d, "Interchange", "CycleStorage", "Type")
+      ForceJsonArray( d, "Interchange", "RailReplacementServices", "RailReplacementMap")
+
+      ForceJsonArray( d, "TrainOperatingCompanies", "TocRef")
+
       err = bucket.PutJSON( crs, d )
       if err != nil {
         return err
