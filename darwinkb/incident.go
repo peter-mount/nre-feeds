@@ -2,7 +2,9 @@ package darwinkb
 
 import (
   "github.com/peter-mount/golib/kernel/bolt"
+  "github.com/peter-mount/sortfold"
   "log"
+  "sort"
 )
 
 const (
@@ -129,12 +131,14 @@ func (r *DarwinKB) refreshIncidentsImpl() error {
     }
 
     // Now the index entry
+    sort.SliceStable( index, func( i, j int ) bool { return sortfold.CompareFold( index[i].Summary, index[j].Summary ) < 0 } )
     err = bucket.PutJSON( "index", index )
     if err != nil {
       return err
     }
 
     for k, v := range tocIndex {
+      sort.SliceStable( v, func( i, j int ) bool { return sortfold.CompareFold( v[i].Summary, v[j].Summary ) < 0 } )
       err = bucket.PutJSON( k, v )
       if err != nil {
         return err

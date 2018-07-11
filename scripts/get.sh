@@ -12,6 +12,7 @@ go get -v \
       github.com/peter-mount/golib/statistics \
       github.com/peter-mount/golib/util \
       github.com/peter-mount/goxml2json \
+      github.com/peter-mount/sortfold \
       gopkg.in/yaml.v2
 
 exit 0
