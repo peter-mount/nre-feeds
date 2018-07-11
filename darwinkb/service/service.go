@@ -45,6 +45,9 @@ func (a *DarwinKBService) Init( k *kernel.Kernel ) error {
 
 func (a *DarwinKBService) Start() error {
 
+  a.restService.Handle( "/companies", a.CompaniesHandler ).Methods( "GET" )
+  a.restService.Handle( "/company/{id}", a.CompanyHandler ).Methods( "GET" )
+
   a.restService.Handle( "/incidents", a.IncidentsHandler ).Methods( "GET" )
   a.restService.Handle( "/incidents/{toc}", a.IncidentsTocHandler ).Methods( "GET" )
   a.restService.Handle( "/incident/{id}", a.IncidentHandler ).Methods( "GET" )

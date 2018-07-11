@@ -21,7 +21,7 @@ func (r *DarwinKB) Name() string {
 }
 
 var (
-  buckets = []string{ "incidents", "stations" }
+  buckets = []string{ "companies", "incidents", "stations" }
 )
 
 func (a *DarwinKB) Init( k *kernel.Kernel ) error {
@@ -85,8 +85,10 @@ func (a *DarwinKB) Start() error {
   a.refreshStations()
 
   // Incidents are regular intervals but not during the early hours
-  //a.cron.AddFunc( "0 0 0-1,5-23 * * *", a.refreshIncidents )
+  a.cron.AddFunc( "0 0 0-1,5-23 * * *", a.refreshIncidents )
   a.refreshIncidents()
+
+  a.refreshCompanies()
 
   return nil
 }
