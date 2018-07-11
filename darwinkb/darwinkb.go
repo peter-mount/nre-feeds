@@ -88,6 +88,8 @@ func (a *DarwinKB) Start() error {
   a.cron.AddFunc( "0 0 0-1,5-23 * * *", a.refreshIncidents )
   a.refreshIncidents()
 
+  // Refresh companies during the morning
+  a.cron.AddFunc( "0 35 4-9 * * *", a.refreshCompanies )
   a.refreshCompanies()
 
   return nil
