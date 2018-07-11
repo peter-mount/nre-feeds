@@ -2,7 +2,7 @@ package darwind3
 
 import (
   "encoding/xml"
-  "github.com/peter-mount/nre-feeds/darwinkb"
+  //"github.com/peter-mount/nre-feeds/darwinkb"
   "time"
 )
 
@@ -12,7 +12,7 @@ type Pport struct {
   TS          time.Time `json:"ts" xml:"ts,attr"`
   Version     string    `json:"version" xml:"version,attr"`
   Actions   []Processor
-  KBActions []KBProcessor
+  //KBActions []KBProcessor
 }
 
 func (s *Pport) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error {
@@ -64,6 +64,7 @@ func (s *Pport) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) err
         }
       }
 
+    /* Removed for now
     case "uk.co.nationalrail.xml.incident.PtIncidentStructure":
       elem := &darwinkb.KBIncident{}
       if err := decoder.DecodeElement( elem, &start ); err != nil {
@@ -71,6 +72,7 @@ func (s *Pport) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) err
       }
       s.KBActions = append( s.KBActions, elem )
       return nil
+    */
 
     default:
       return nil
@@ -92,6 +94,7 @@ func (p *Pport) Process( d3 *DarwinD3 ) error {
     }
   }
 
+  /* Removed for now
   if len( p.KBActions ) > 0 {
     for _, s := range p.KBActions {
       if err := s.Process(); err != nil {
@@ -99,6 +102,7 @@ func (p *Pport) Process( d3 *DarwinD3 ) error {
       }
     }
   }
+  */
 
   return nil
 }
