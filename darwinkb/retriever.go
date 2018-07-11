@@ -23,8 +23,9 @@ type KBToken struct {
 // Set the authentication token, requesting a new one as required
 func (k *DarwinKB) setToken( mainReq *http.Request ) error {
 
+  // Tokens last for an hour so if it's older than 45 minutes we'll request a new one
   now := time.Now().UTC()
-  refresh := k.token.tokenDate.Add( 6 * time.Hour )
+  refresh := k.token.tokenDate.Add( 45 * time.Minute )
   if now.After( refresh ) {
     authString := "username=" + k.config.KB.Username + "&password=" + k.config.KB.Password
     payload := strings.NewReader( authString )
