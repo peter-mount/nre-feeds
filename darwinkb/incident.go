@@ -22,6 +22,12 @@ func (r *DarwinKB) GetIncidents() ([]byte, error) {
   return b, err
 }
 
+func (r *DarwinKB) GetIncidentsToc( toc string ) ([]byte, error) {
+  // Works as we have the toc incidents as a single key
+  b, err := r.GetIncident( toc )
+  return b, err
+}
+
 func (r *DarwinKB) GetIncident( id string ) ([]byte, error) {
   var data []byte
   err := r.View( "incidents", func( bucket *bolt.Bucket ) error {
@@ -81,6 +87,9 @@ func (r *DarwinKB) refreshIncidentsImpl() error {
     // slice containing index of all entries
     var index []*IncidentEntry
 
+    // index by toc
+    tocIndex := make( map[string][]*IncidentEntry )
+
     for _, incident := range incidents {
       o := incident.(map[string]interface{})
 
@@ -89,6 +98,24 @@ func (r *DarwinKB) refreshIncidentsImpl() error {
         Summary: o[ "Summary" ].(string),
       }
       index = append( index, indexEntry )
+
+      operators, e := GetJsonArray( o, "Affects", "Operators", "AffectedOperator")
+      if e {
+        for _, ao := range operators {
+          if aoo, ok := ao.(map[string]interface{}); ok {
+            toc, e := GetJsonObjectValue( aoo, "OperatorRef" )
+            if e {
+              if s, ok := toc.(string); ok {
+                tocIdx, exists := tocIndex[ s ]
+                if !exists {
+                  tocIdx = []*IncidentEntry{}
+                }
+                tocIndex[ s ] = append( tocIdx, indexEntry )
+              }
+            }
+          }
+        }
+      }
 
       // Force entries which can be arrays but not when just 1 entry into arrays
       ForceJsonArray( o, "Affects", "Operators", "AffectedOperator" )
@@ -105,6 +132,13 @@ func (r *DarwinKB) refreshIncidentsImpl() error {
     err = bucket.PutJSON( "index", index )
     if err != nil {
       return err
+    }
+
+    for k, v := range tocIndex {
+      err = bucket.PutJSON( k, v )
+      if err != nil {
+        return err
+      }
     }
 
     return nil
