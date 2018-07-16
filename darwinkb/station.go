@@ -88,6 +88,7 @@ func (r *DarwinKB) refreshStationsImpl() error {
       ForceJsonArray( d, "Fares", "PenaltyFares", "TrainOperator")
       ForceJsonArray( d, "Fares", "TicketOffice", "Open", "DayAndTimeAvailability")
       ForceJsonArray( d, "Fares", "TicketOffice", "Open", "DayAndTimeAvailability", "OpeningHours", "OpenPeriod")
+      ForceJsonArray( d, "Fares", "Travelcard", "TravelcardZone")
 
       ForceJsonObject( d, "InformationSystems" )
       ForceJsonArray( d, "InformationSystems", "CIS")
