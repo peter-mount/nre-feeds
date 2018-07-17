@@ -70,11 +70,12 @@ type Config struct {
     Methods     []string
   }                         `yaml:"server"`
 
-  Statistics struct {
-    Log           bool      `yaml:"log"`
-    Rest          string    `yaml:"rest"`
+  Graphite struct {
+    Enabled       bool      `yaml:"enabled"`
+    Prefix        string    `yaml:"prefix"`
+    Exchange      string    `yaml:"exchange"`
     Schedule      string    `yaml:"schedule"`
-  }                         `yaml:"statistics"`
+  }                         `yaml:"graphite"`
 
   configFile   *string
 }

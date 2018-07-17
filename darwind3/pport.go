@@ -2,6 +2,7 @@ package darwind3
 
 import (
   "encoding/xml"
+  "github.com/peter-mount/golib/statistics"
   //"github.com/peter-mount/nre-feeds/darwinkb"
   "time"
 )
@@ -82,6 +83,8 @@ func (s *Pport) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) err
 
 // Process this message
 func (p *Pport) Process( d3 *DarwinD3 ) error {
+
+  statistics.Set( "darwin.d3.ts", int64( time.Now().Sub( p.TS ) / time.Second ) )
 
   if len( p.Actions ) > 0 {
     for _, s := range p.Actions {
