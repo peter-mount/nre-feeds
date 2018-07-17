@@ -5,7 +5,6 @@ import (
   "github.com/peter-mount/golib/kernel"
   "github.com/peter-mount/golib/statistics"
   "github.com/streadway/amqp"
-  "strings"
 )
 
 type Graphite struct {
