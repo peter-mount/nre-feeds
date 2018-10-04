@@ -75,7 +75,7 @@ properties([
 
 // Run tests against a suite or library
 def runTest = {
-  test -> sh 'docker run -i --rm ' + tempImage + ' go test -v ' + gitRepoPrefix + test
+  test -> sh 'docker run -i --rm -e CGO_ENABLED=0 ' + tempImage + ' go test -v ' + gitRepoPrefix + test
 }
 
 def dockerFile = { architecture, service -> "Dockerfile." + service + '.' + architecture }
