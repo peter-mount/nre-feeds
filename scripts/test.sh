@@ -10,5 +10,5 @@ for bin in \
   issues
 do
   echo "Testing ${bin}"
-  go test -v github.com/peter-mount/nre-feeds/${bin}
+  CGO_ENABLED=0 go test -v github.com/peter-mount/nre-feeds/${bin}
 done
