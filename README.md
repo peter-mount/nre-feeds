@@ -1,4 +1,5 @@
-![Build Status](http://jenkins.area51.onl/buildStatus/icon?job=Public/Badges) ![Issues](https://badge.area51.onl/github/issues/peter-mount/nre-feeds.svg) ![Last commit](https://badge.area51.onl/github/last-commit/peter-mount/nre-feeds.svg)
+![Build Status Master](https://badge.area51.onl/jenkins/s/https/jenkins.area51.onl/job/peter-mount/job/nre-feeds/job/master.svg?label=Build:%20master) ![Build Status 0.4](https://badge.area51.onl/jenkins/s/https/jenkins.area51.onl/job/peter-mount/job/nre-feeds/job/0.4.svg?label=Build:%200.4)
+
 # Darwin
 go library &amp; suite of microservices for handling the NRE DarwinD3 feeds
 
