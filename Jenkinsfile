@@ -70,7 +70,7 @@ modules.each {
               sh './build.sh ' + imageTag + ' ' + arch + ' ' + version + ' ' + module
 
               if( repository != '' ) {
-                sh 'docker push ' + imageTag + ':' + ( module != 'Build' ? ( '-' + module ) : '' ) + arch + '-' + version
+                sh 'docker push ' + imageTag + ':' + ( module != 'Build' ? ( module + '-' ) : '' ) + arch + '-' + version
               }
             }
           }
