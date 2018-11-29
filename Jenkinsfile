@@ -91,6 +91,7 @@ if( repository != '' ) {
       builders[mod] = {
         node( 'AMD64' ) {
           stage( mod ) {
+            sh 'ls -l'
             sh './multiarch.sh' +
               ' ' + imageTag +
               ' ' + version +
