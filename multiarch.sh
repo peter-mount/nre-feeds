@@ -22,7 +22,6 @@ shift
 MODULE=$1
 shift
 
-# The final multiarch image
 if [ "$MODULE" = "Build" ]
 then
   MULTIIMAGE=${IMAGE}:${VERSION}
