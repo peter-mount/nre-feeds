@@ -22,7 +22,7 @@ if [ "$MODULE" = "Build" ]
 then
   TAG=${IMAGE}:${ARCH}-${VERSION}
 else
-  TAG=${IMAGE}:${ARCH}-${MODULE}-${VERSION}
+  TAG=${IMAGE}:${MODULE}-${ARCH}-${VERSION}
 fi
 
 . functions.sh

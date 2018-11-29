@@ -47,9 +47,3 @@ function goarm() {
     ;;
   esac
 }
-
-# Resolve the image for an architecture
-function dockerImage() {
-  ARCH=$1
-  echo ${IMAGE}:${ARCH}-${VERSION}
-}
