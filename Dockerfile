@@ -1,14 +1,3 @@
-# ============================================================
-# Dockerfile used to build the various microservices
-#
-# To build run something like:
-#
-# docker build -t mytag --build-arg service=darwinref .
-#
-# where the value of service is:
-#   darwinref     The Darwin Reference API
-# ============================================================
-
 ARG arch=amd64
 ARG goos=linux
 
@@ -22,13 +11,22 @@ FROM golang:alpine as build
 RUN apk add --no-cache \
       curl \
       git \
-      tzdata
+      tzdata \
+      zip
 
-# Our build scripts
-ADD scripts/ /usr/local/bin/
-
-# Ensure we have the libraries - docker will cache these between builds
-RUN get.sh
+RUN go get -v \
+      github.com/coreos/bbolt/... \
+      github.com/jlaffaye/ftp \
+      github.com/muesli/cache2go \
+      github.com/peter-mount/golib/codec \
+      github.com/peter-mount/golib/rabbitmq \
+      github.com/peter-mount/golib/kernel \
+      github.com/peter-mount/golib/rest \
+      github.com/peter-mount/golib/statistics \
+      github.com/peter-mount/golib/util \
+      github.com/peter-mount/goxml2json \
+      github.com/peter-mount/sortfold \
+      gopkg.in/yaml.v2
 
 # ============================================================
 # source container contains the source as it exists within the
@@ -42,28 +40,57 @@ ADD . .
 # the final build.
 FROM source as test
 ARG skipTest
-RUN if [ -z "$skipTest" ] ;then test.sh; fi
+RUN if [ -z "$skipTest" ] ;then \
+      for bin in \
+        util \
+        darwinref \
+        darwind3 \
+        ldb \
+        issues ;\
+      do\
+        echo "Testing ${bin}" ;\
+        CGO_ENABLED=0 go test -v github.com/peter-mount/nre-feeds/${bin} ;\
+      done ;\
+    fi
 
 # ============================================================
 # Compile the source.
 FROM source as compiler
-ARG service
+ARG module=
 ARG arch
 ARG goos
 ARG goarch
 ARG goarm
 
-# Microservice version is the commit hash from git
-#RUN version="$(git rev-parse --short HEAD)" &&\
-#    sed -i "s/@@version@@/${version} ${goos}(${arch})/g" bin/version.go
-
-# Build the microservice.
 # NB: CGO_ENABLED=0 forces a static build
-RUN CGO_ENABLED=0 \
+RUN PACKAGE=${module};\
+    if [ "$PACKAGE" = "darwintt" ];\
+    then\
+      PACKAGE="darwintimetable";\
+    fi;\
+    echo "Building ${module} as ${PACKAGE}";\
+    CGO_ENABLED=0 \
     GOOS=${goos} \
     GOARCH=${goarch} \
     GOARM=${goarm} \
-    compile.sh /dest/${service} ${service}
+    go build \
+      -o /dest/${module} \
+      github.com/peter-mount/nre-feeds/${PACKAGE}/bin
+
+# ============================================================
+# Optional stage, upload the binaries as a tar file
+FROM compiler AS upload
+ARG uploadPath=
+ARG uploadCred=
+ARG uploadName=
+RUN if [ -n "${uploadCred}" -a -n "${uploadPath}" -a -n "${uploadName}" ] ;\
+    then \
+      cd /dest; \
+      tar cvzpf /tmp/${uploadName}.tgz * && \
+      zip /tmp/${uploadName}.zip * && \
+      curl -u ${uploadCred} --upload-file /tmp/${uploadName}.tgz ${uploadPath}/ && \
+      curl -u ${uploadCred} --upload-file /tmp/${uploadName}.zip ${uploadPath}/; \
+    fi
 
 # ============================================================
 # Finally build the final runtime container for the specific
@@ -73,12 +100,7 @@ RUN apk add --no-cache \
       curl \
       tzdata
 
-# The default database directory
-Volume /database
-
-# Install our built image
 COPY --from=compiler /dest/ /usr/bin/
 
-#ENTRYPOINT ["/docker-entrypoint"]
 ENTRYPOINT ["@@entrypoint@@"]
 CMD [ "-c", "/config.yaml"]
