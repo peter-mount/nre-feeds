@@ -35,9 +35,6 @@ architectures = [
 // Note 'Build' is a magic keyword here for a single module project
 modules = [ 'darwinref', 'darwintt', 'darwind3', 'ldb', 'darwinkb' ]
 
-// The git repo / package prefix
-gitRepoPrefix = 'github.com/peter-mount/nre-feeds/'
-
 // ======================================================================
 // Do not modify anything below this point
 // ======================================================================
