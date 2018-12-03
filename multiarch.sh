@@ -35,7 +35,14 @@ fi
 CMD="docker manifest create -a ${MULTIIMAGE}"
 for arch in $@
 do
-  CMD="$CMD $(dockerImage $arch $MODULE)"
+  if [ "$MODULE" = "Build" ]
+  then
+    TAG="${IMAGE}:${ARCH}-${VERSION}"
+  else
+    TAG="${IMAGE}:${MODULE}-${ARCH}-${VERSION}"
+  fi
+
+  CMD="$CMD $TAG"
 done
 execute $CMD
 
@@ -47,7 +54,7 @@ do
   else
     TAG="${IMAGE}:${MODULE}-${ARCH}-${VERSION}"
   fi
-  
+
   # ensure this node has the latest image for this architecture
   execute "docker pull ${TAG}"
 
