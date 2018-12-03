@@ -33,7 +33,7 @@ fi
 . functions.sh
 
 CMD="docker manifest create -a ${MULTIIMAGE}"
-for arch in $@
+for ARCH in $@
 do
   if [ "$MODULE" = "Build" ]
   then
@@ -46,7 +46,7 @@ do
 done
 execute $CMD
 
-for arch in $@
+for ARCH in $@
 do
   if [ "$MODULE" = "Build" ]
   then
@@ -60,11 +60,11 @@ do
 
   CMD="docker manifest annotate"
   CMD="$CMD --os linux"
-  CMD="$CMD --arch $(goarch $arch)"
+  CMD="$CMD --arch $(goarch $ARCH)"
 
-  if [ "$(goarch $arch)" = "arm" ]
+  if [ "$(goarch $ARCH)" = "arm" ]
   then
-    CMD="$CMD --variant v$(goarm $arch)"
+    CMD="$CMD --variant v$(goarm $ARCH)"
   fi
 
   CMD="$CMD $MULTIIMAGE $TAG"
