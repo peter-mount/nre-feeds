@@ -15,7 +15,7 @@ RUN apk add --no-cache \
       zip
 
 RUN go get -v \
-      github.com/coreos/bbolt/... \
+      github.com/coreos/bbolt \
       github.com/jlaffaye/ftp \
       github.com/muesli/cache2go \
       github.com/peter-mount/golib/codec \
