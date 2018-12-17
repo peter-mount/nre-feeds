@@ -1,7 +1,7 @@
 package service
 
 import (
-  bolt "github.com/coreos/bbolt"
+  bolt "github.com/etcd-io/bbolt"
   "github.com/peter-mount/golib/codec"
   "github.com/peter-mount/golib/rest"
   "github.com/peter-mount/nre-feeds/darwinref"

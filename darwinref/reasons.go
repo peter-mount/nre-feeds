@@ -1,7 +1,7 @@
 package darwinref
 
 import (
-  bolt "github.com/coreos/bbolt"
+  bolt "github.com/etcd-io/bbolt"
   "encoding/xml"
   "fmt"
   "github.com/peter-mount/golib/codec"

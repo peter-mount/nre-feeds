@@ -1,7 +1,7 @@
 package service
 
 import (
-  bolt "github.com/coreos/bbolt"
+  bolt "github.com/etcd-io/bbolt"
   "github.com/peter-mount/golib/rest"
   "log"
 )

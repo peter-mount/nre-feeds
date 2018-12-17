@@ -2,7 +2,7 @@
 package darwintimetable
 
 import (
-  bolt "github.com/coreos/bbolt"
+  bolt "github.com/etcd-io/bbolt"
   "errors"
   "github.com/peter-mount/golib/codec"
   "log"
