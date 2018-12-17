@@ -14,25 +14,29 @@ RUN apk add --no-cache \
       tzdata \
       zip
 
-RUN go get -v \
-      github.com/coreos/bbolt \
-      github.com/jlaffaye/ftp \
-      github.com/muesli/cache2go \
-      github.com/peter-mount/golib/codec \
-      github.com/peter-mount/golib/rabbitmq \
-      github.com/peter-mount/golib/kernel \
-      github.com/peter-mount/golib/rest \
-      github.com/peter-mount/golib/statistics \
-      github.com/peter-mount/golib/util \
-      github.com/peter-mount/goxml2json \
-      github.com/peter-mount/sortfold \
-      gopkg.in/yaml.v2
+WORKDIR /work
+COPY go.mod .
+RUN go mod download
+
+#RUN go get -v \
+#      github.com/etcd-io/bbolt \
+#      github.com/jlaffaye/ftp \
+#      github.com/muesli/cache2go \
+#      github.com/peter-mount/golib/codec \
+#      github.com/peter-mount/golib/rabbitmq \
+#      github.com/peter-mount/golib/kernel \
+#      github.com/peter-mount/golib/rest \
+#      github.com/peter-mount/golib/statistics \
+#      github.com/peter-mount/golib/util \
+#      github.com/peter-mount/goxml2json \
+#      github.com/peter-mount/sortfold \
+#      gopkg.in/yaml.v2
 
 # ============================================================
 # source container contains the source as it exists within the
 # repository.
 FROM build as source
-WORKDIR /go/src/github.com/peter-mount/nre-feeds
+WORKDIR /work
 ADD . .
 
 # ============================================================
@@ -49,7 +53,7 @@ RUN if [ -z "$skipTest" ] ;then \
         issues ;\
       do\
         echo "Testing ${bin}" ;\
-        CGO_ENABLED=0 go test -v github.com/peter-mount/nre-feeds/${bin} ;\
+        CGO_ENABLED=0 go test -v ./${bin} ;\
       done ;\
     fi
 
@@ -61,6 +65,7 @@ ARG arch
 ARG goos
 ARG goarch
 ARG goarm
+WORKDIR /work
 
 # NB: CGO_ENABLED=0 forces a static build
 RUN PACKAGE=${module};\
@@ -75,7 +80,7 @@ RUN PACKAGE=${module};\
     GOARM=${goarm} \
     go build \
       -o /dest/${module} \
-      github.com/peter-mount/nre-feeds/${PACKAGE}/bin
+      ./${PACKAGE}/bin
 
 # ============================================================
 # Optional stage, upload the binaries as a tar file
