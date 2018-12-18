@@ -12,7 +12,9 @@ func (dr *DarwinRefService) TocHandler( r *rest.Rest ) error {
 
     if toc, exists := dr.reference.GetToc( tx, id ); exists {
       toc.SetSelf( r )
-      r.Status( 200 ).Value( toc )
+      r.Status( 200 ).
+        JSON().
+        Value( toc )
     } else {
       r.Status( 404 )
     }
@@ -36,7 +38,9 @@ func (dr *DarwinRefService) AllTocsHandler( r *rest.Rest ) error {
      return err
     } else {
       resp.Self = r.Self( r.Context() + "/toc" )
-      r.Status( 200 ).Value( resp )
+      r.Status( 200 ).
+        JSON().
+        Value( resp )
     }
 
     return nil

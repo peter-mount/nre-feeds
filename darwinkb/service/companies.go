@@ -16,8 +16,9 @@ func (d *DarwinKBService) CompaniesHandler( r *rest.Rest ) error {
     r.Status( 404 )
   } else {
     r.Status( 200 ).
-    Writer().
-    Write( data )
+      JSON().
+      Writer().
+      Write( data )
   }
 
   return nil
@@ -34,8 +35,9 @@ func (d *DarwinKBService) CompanyHandler( r *rest.Rest ) error {
     r.Status( 404 )
   } else {
     r.Status( 200 ).
-    Writer().
-    Write( data )
+      JSON().
+      Writer().
+      Write( data )
   }
 
   return nil

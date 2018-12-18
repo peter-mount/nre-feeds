@@ -155,6 +155,7 @@ func (d *LDBService) stationHandler( r *rest.Rest ) error {
     }
 
     r.Status( 200 ).
+      JSON().
       Value( res )
   }
 

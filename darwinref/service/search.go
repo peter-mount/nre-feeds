@@ -96,7 +96,9 @@ func (dr *DarwinRefService) SearchHandler( r *rest.Rest ) error {
   if results, err := dr.SearchName( r.Var( "term" ) ); err != nil {
     return err
   } else {
-    r.Status( 200 ).Value( results )
+    r.Status( 200 ).
+      JSON().
+      Value( results )
     return nil
   }
 }

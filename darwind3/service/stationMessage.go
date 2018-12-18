@@ -12,7 +12,9 @@ func (d *DarwinD3Service) StationMessageHandler( r *rest.Rest ) error {
     r.Status( 404 )
   } else if msg := d.darwind3.Messages.Get( id ); msg != nil {
     msg.Self = r.Self( r.Context() + "/message/" + r.Var( "id" ) )
-    r.Status( 200 ).Value( msg )
+    r.Status( 200 ).
+      JSON().
+      Value( msg )
   } else {
     r.Status( 404 )
   }
@@ -23,7 +25,9 @@ func (d *DarwinD3Service) StationMessageHandler( r *rest.Rest ) error {
 // BroadcastStationMessagesHandler allows us to re-broadcast all messages
 func (d *DarwinD3Service) BroadcastStationMessagesHandler( r *rest.Rest ) error {
   d.darwind3.BroadcastStationMessages()
-  r.Status( 200 ).Value( "OK" )
+  r.Status( 200 ).
+    JSON().
+    Value( "OK" )
 
   return nil
 }
@@ -37,7 +41,9 @@ func (d *DarwinD3Service) AllMessageHandler( r *rest.Rest ) error {
     return nil
   })
 
-  r.Status( 200 ).Value( messages )
+  r.Status( 200 ).
+    JSON().
+    Value( messages )
 
   return nil
 }
@@ -58,7 +64,9 @@ func (d *DarwinD3Service) CrsMessageHandler( r *rest.Rest ) error {
     return nil
   })
 
-  r.Status( 200 ).Value( messages )
+  r.Status( 200 ).
+    JSON().
+    Value( messages )
 
   return nil
 }

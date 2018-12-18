@@ -13,7 +13,9 @@ func (dr *DarwinRefService) CrsHandler( r *rest.Rest ) error {
 
     if locations, exists := dr.reference.GetCrs( tx, crs ); exists {
       resp := &darwinref.CrsResponse{}
-      r.Status( 200 ).Value( resp )
+      r.Status( 200 ).
+        JSON().
+        Value( resp )
 
       resp.Crs = crs
       resp.Self = r.Self( r.Context() + "/crs/" + crs )
@@ -50,14 +52,20 @@ func (dr *DarwinRefService) AllCrsHandler( r *rest.Rest ) error {
         }
       }
 
-      r.Status( 200 ).Value( t )
+      r.Status( 200 ).
+        JSON().
+        Value( t )
 
       return nil
     } )
   }); err != nil {
-    r.Status( 500 ).Value( err )
+    r.Status( 500 ).
+      JSON().
+      Value( err )
   }
 
-  r.Status( 200 ).Value( t )
+  r.Status( 200 ).
+    JSON().
+    Value( t )
   return nil
 }

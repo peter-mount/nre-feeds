@@ -34,7 +34,9 @@ func (dr *DarwinRefService) reasonHandler( cancelled bool, r *rest.Rest ) error 
 
     if exists {
       reason.SetSelf( r )
-      r.Status( 200 ).Value( reason )
+      r.Status( 200 ).
+        JSON().
+        Value( reason )
     } else {
       r.Status( 404 )
     }
@@ -74,7 +76,9 @@ func (dr *DarwinRefService) allReasonHandler( bname string, prefix string, r *re
       })
 
       resp.Self = r.Self( r.Context() + prefix )
-      r.Status( 200 ).Value( resp )
+      r.Status( 200 ).
+        JSON().
+        Value( resp )
     }
 
     return nil

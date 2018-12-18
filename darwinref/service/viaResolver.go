@@ -29,7 +29,9 @@ func (dr *DarwinRefService) ViaResolveHandler( r *rest.Rest ) error {
       }
     }
 
-    r.Status( 200 ).Value( response )
+    r.Status( 200 ).
+      JSON().
+      Value( response )
   }
 
   return nil

@@ -12,7 +12,9 @@ func (dr *DarwinRefService) TiplocHandler( r *rest.Rest ) error {
 
     if location, exists := dr.reference.GetTiploc( tx, tpl ); exists {
       location.SetSelf( r )
-      r.Status( 200 ).Value( location )
+      r.Status( 200 ).
+        JSON().
+        Value( location )
     } else {
       r.Status( 404 )
     }
@@ -39,7 +41,9 @@ func (dr *DarwinRefService) TiplocsHandler( r *rest.Rest ) error {
       }
     }
 
-    r.Status( 200 ).Value( ary )
+    r.Status( 200 ).
+      JSON().
+      Value( ary )
 
     return nil
   })

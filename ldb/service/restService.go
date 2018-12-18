@@ -123,6 +123,7 @@ func (d *LDBService) serviceHandler( r *rest.Rest ) error {
     }
 
     r.Status( 200 ).
+      JSON().
       Value( res )
   }
 
