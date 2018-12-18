@@ -51,6 +51,10 @@ func (s *UR) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error 
           case "OW":
             elem = &StationMessage{}
 
+          // Added in v16 2018-12-18
+          case "formationLoading":
+            elem = &Loading{}
+
           default:
             if err := decoder.Skip(); err != nil {
               return err

@@ -33,6 +33,9 @@ type TSTime struct {
   // Note that this attribute will only be set to "true" once, when the actual
   // time is removed, and will not be set in any snapshot.
   ATRemoved   bool        `json:"atRemoved,omitempty" xml:"atRemoved,attr,omitempty"`
+  // The class of the actual time.
+  // Added 2018-12-18 in rttiPPTForecasts_v3.xsd
+  ATClass     string      `json:"atClass,omitempty" xml:"atClass,attr,omitempty"`
   // Indicates that this estimated time is a forecast of "unknown delay".
   // Displayed  as "Delayed" in LDB.
   // Note that this value indicates that this forecast is "unknown delay",
