@@ -90,4 +90,9 @@ type CoachLoadingData struct {
   // CoachLoadingData/LoadingValue only
   // length 2
   SrcInst       string      `json:"srcInst,omitempty" xml:"srcInst,omitempty"`
+  // The availability of a toilet in this coach.
+  // E.g. "Unknown", "None" , "Standard" or "Accessible".
+  // Note that other values may be supplied in the future without a schema change.
+  // If no toilet availability is supplied then it should be assumed to be "Unknown".
+  Toilet        Toilet      `json:"toilet" xml:"toilet,omitempty"`
 }
