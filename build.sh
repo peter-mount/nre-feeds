@@ -91,7 +91,7 @@ then
 fi
 
 # Uncomment to run just the tests
-CMD="$CMD --target test"
+#CMD="$CMD --target test"
 
 CMD="$CMD ."
 
