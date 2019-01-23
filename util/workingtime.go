@@ -4,7 +4,6 @@ import (
   "encoding/json"
   "encoding/xml"
   "fmt"
-  "github.com/peter-mount/golib/codec"
   "strconv"
   "time"
 )
@@ -59,35 +58,6 @@ func WorkingTimeEquals( a *WorkingTime, b *WorkingTime ) bool {
          ( a != nil && a.Equals( b ) )
 }
 
-// BinaryCodec writer
-func (t *WorkingTime) Write( c *codec.BinaryCodec ) {
-  if t.IsZero() {
-    // If zero then write a single byte value 255
-    c.WriteByte( byte(255) )
-  } else {
-    // 24 bit number, Big endian so we should not hit 255,xxx,xxx in the stream
-    c.WriteByte( byte( t.t >> 16 ) ).
-      WriteByte( byte( t.t >> 8 ) ).
-      WriteByte( byte( t.t ) )
-  }
-}
-
-// BinaryCodec reader
-func (t *WorkingTime) Read( c *codec.BinaryCodec ) {
-  var b byte
-
-  c.ReadByte( &b )
-  if b == byte(255) {
-    t.t = -1
-  } else {
-    var i uint64 = uint64(b)<<16
-    c.ReadByte( &b )
-    i |= uint64(b)<<8
-    c.ReadByte( &b )
-    t.t = int( i | uint64(b) )
-  }
-}
-
 // NewWorkingTime returns a new WorkingTime instance from a string of format "HH:MM:SS"
 func NewWorkingTime( s string ) *WorkingTime {
   v := &WorkingTime{}
@@ -107,30 +77,6 @@ func (v *WorkingTime) Parse( s string ) {
     } else {
       v.Set( (a *3600) + (b * 60) )
     }
-  }
-}
-
-// WorkingTimeRead is a workaround issue where a custom type cannot be
-// omitempty in JSON unless it's a nil
-// So instead of using BinaryCodec.Read( v ), we call this & set the return
-// value in the struct as a pointer.
-func WorkingTimeRead( c *codec.BinaryCodec ) *WorkingTime {
-  t := &WorkingTime{}
-  c.Read( t )
-  if t.IsZero() {
-    return nil
-  }
-  return t
-}
-
-// WorkingTimeWrite is a workaround for writing null times.
-// If the pointer is null then a time is written where IsZero()==true
-func WorkingTimeWrite( c *codec.BinaryCodec, t *WorkingTime ) {
-  if t == nil {
-    // Null so mark as zero
-    c.WriteByte( byte(255) )
-  } else {
-    c.Write( t )
   }
 }
 

@@ -2,7 +2,6 @@ package darwind3
 
 import (
   "encoding/xml"
-  "github.com/peter-mount/golib/codec"
   "strconv"
   "time"
 )
@@ -124,28 +123,4 @@ func (s *StationMessage) UnmarshalXML( decoder *xml.Decoder, start xml.StartElem
       }
     }
   }
-}
-
-func (t *StationMessage) Write( c *codec.BinaryCodec ) {
-  c.WriteInt( t.ID ).
-    WriteString( t.Message ).
-    WriteString( t.Category ).
-    WriteByte( byte( t.Severity ) ).
-    WriteBool( t.Suppress ).
-    WriteTime( t.Date ).
-    WriteStringArray( t.Station )
-}
-
-func (t *StationMessage) Read( c *codec.BinaryCodec ) {
-  c.ReadInt( &t.ID ).
-    ReadString( &t.Message ).
-    ReadString( &t.Category )
-
-  var b byte
-  c.ReadByte( &b )
-  t.Severity = int(b)
-
-  c.ReadBool( &t.Suppress ).
-    ReadTime( &t.Date ).
-    ReadStringArray( &t.Station )
 }

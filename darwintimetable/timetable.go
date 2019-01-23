@@ -3,8 +3,8 @@ package darwintimetable
 
 import (
   bolt "github.com/etcd-io/bbolt"
+  "encoding/json"
   "errors"
-  "github.com/peter-mount/golib/codec"
   "log"
   "time"
 )
@@ -20,16 +20,6 @@ type DarwinTimetable struct {
   importDate            time.Time
   //Journeys      []*Journey            `xml:"Journey"`
   journeys        *bolt.Bucket
-}
-
-func (t *DarwinTimetable) Write( c *codec.BinaryCodec ) {
-  c.WriteString( t.timetableId ).
-    WriteTime( t.importDate )
-}
-
-func (t *DarwinTimetable) Read( c *codec.BinaryCodec ) {
-  c.ReadString( &t.timetableId ).
-    ReadTime( &t.importDate )
 }
 
 // OpenDB opens a DarwinReference database.
@@ -71,7 +61,10 @@ func (r *DarwinTimetable) useDB( db *bolt.DB ) error {
   return r.View( func( tx *bolt.Tx ) error {
     b := tx.Bucket( []byte( "Meta" ) ).Get( []byte( "DarwinTimetable" ) )
     if b != nil {
-      codec.NewBinaryCodecFrom( b ).Read( r )
+      err := json.Unmarshal( b, r )
+      if err != nil {
+        return err
+      }
     }
 
     if r.timetableId == "" {

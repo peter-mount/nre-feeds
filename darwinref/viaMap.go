@@ -2,7 +2,7 @@ package darwinref
 
 import (
   bolt "github.com/etcd-io/bbolt"
-  "github.com/peter-mount/golib/codec"
+  "encoding/json"
   "sync"
 )
 
@@ -25,7 +25,10 @@ func (d *DarwinReference) NewViaMap() *ViaMap {
       return tx.Bucket( []byte( "DarwinVia" ) ).
         ForEach( func( k, v []byte ) error {
           via := &Via{}
-          codec.NewBinaryCodecFrom( v ).Read( via )
+          err := json.Unmarshal( v, via )
+          if err != nil {
+            return err
+          }
           vm.addVia( via )
           return nil
         })

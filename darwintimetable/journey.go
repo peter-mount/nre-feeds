@@ -3,8 +3,8 @@ package darwintimetable
 
 import (
   bolt "github.com/etcd-io/bbolt"
+  "encoding/json"
   "encoding/xml"
-  "github.com/peter-mount/golib/codec"
   "github.com/peter-mount/golib/rest"
   "github.com/peter-mount/nre-feeds/util"
   "time"
@@ -65,43 +65,6 @@ func (a *Journey) Equals( b *Journey ) bool {
     a.CancelReason == b.CancelReason
 }
 
-func (t *Journey) Write( c *codec.BinaryCodec ) {
-  c.WriteString( t.RID ).
-    WriteString( t.UID ).
-    WriteString( t.TrainID ).
-    Write( &t.SSD ).
-    WriteString( t.Toc ).
-    WriteString( t.TrainCat ).
-    WriteBool( t.Passenger ).
-    WriteInt( t.CancelReason ).
-    WriteTime( t.Date )
-
-  c.WriteInt16( int16( len( t.Schedule ) ) )
-  for _, l := range t.Schedule {
-    c.Write( l )
-  }
-}
-
-func (t *Journey) Read( c *codec.BinaryCodec ) {
-  c.ReadString( &t.RID ).
-    ReadString( &t.UID ).
-    ReadString( &t.TrainID ).
-    Read( &t.SSD ).
-    ReadString( &t.Toc ).
-    ReadString( &t.TrainCat ).
-    ReadBool( &t.Passenger ).
-    ReadInt( &t.CancelReason ).
-    ReadTime( &t.Date )
-
-  var lc int16
-  c.ReadInt16( &lc )
-  for i := 0; i < int(lc); i++ {
-    l := &Location{}
-    c.Read( l )
-    t.Schedule = append( t.Schedule, l )
-  }
-}
-
 func (t *Journey) SetSelf( r *rest.Rest ) {
   t.Self = r.Self( r.Context() + "/journey/" + t.RID )
 }
@@ -118,21 +81,16 @@ func (r *DarwinTimetable) getJourney( rid string ) ( *Journey, bool ) {
   return loc, exists
 }
 
-func (t *Journey) fromBytes( b []byte ) bool {
-  if b != nil {
-    codec.NewBinaryCodecFrom( b ).Read( t )
-  }
-  return t.RID != ""
-}
-
 func (r *DarwinTimetable) GetJourneyBucket( bucket *bolt.Bucket, rid string ) ( *Journey, bool ) {
   b := bucket.Get( []byte( rid ) )
 
   if b != nil {
     var journey *Journey = &Journey{}
-    if journey.fromBytes( b ) {
-      return journey, true
+    err := json.Unmarshal( b, journey )
+    if err != nil {
+      return nil, false
     }
+    return journey, true
   }
 
   return nil, false
@@ -142,13 +100,14 @@ func (r *DarwinTimetable) addJourney( journey *Journey ) ( error, bool ) {
   // Update only if it does not exist or is different
   if old, exists := r.getJourney( journey.RID ); !exists || !journey.Equals( old ) {
     journey.Date = time.Now()
-    codec := codec.NewBinaryCodec()
-    codec.Write( journey )
-    if codec.Error() != nil {
-      return codec.Error(), false
+
+    b, err := json.Marshal( journey )
+    if err != nil {
+      return err, false
     }
 
-    if err := r.journeys.Put( []byte( journey.RID ), codec.Bytes() ); err != nil {
+    err = r.journeys.Put( []byte( journey.RID ), b )
+    if err != nil {
       return err, false
     }
 

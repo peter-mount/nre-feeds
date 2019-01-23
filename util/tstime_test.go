@@ -2,7 +2,6 @@ package util
 
 import (
   "encoding/json"
-  "github.com/peter-mount/golib/codec"
   "testing"
 )
 
@@ -137,56 +136,4 @@ func tstime_test( t *testing.T, a *TSTime ) bool {
            tstime_testTime( t, "AT", a.AT, c.AT )
   }
 
-}
-
-func TestTSTime_ReadWrite( t *testing.T ) {
-  gett := func( s string ) *WorkingTime {
-    if s == "00:00:00" {
-      return nil
-    }
-    return NewWorkingTime( s )
-  }
-
-  tst := func( f func( a *TSTime, s string ) ) bool {
-    return runHHMMSS_TimeSeries( t, func(s string) bool {
-      a := &TSTime{}
-      f( a, s )
-
-      encoder := codec.NewBinaryCodec()
-      encoder.Write( a )
-      if encoder.Error() != nil {
-        t.Errorf( "%s failed to encode: %v", s, encoder.Error() )
-        return true
-      }
-
-      b := encoder.Bytes()
-
-      c := &TSTime{}
-      decoder := codec.NewBinaryCodecFrom( b ).Read( c )
-      if decoder.Error() != nil {
-        t.Errorf( "%s failed to decode: %v", s, decoder.Error() )
-        return true
-      }
-
-      if !a.Equals( c ) {
-        t.Errorf( "%s failed, got %v expected %v", s, c, a )
-        return true
-      }
-
-      return false
-    } )
-  }
-
-  tst( func( v *TSTime, s string ) {
-    v.ET = gett( s )
-  } )
-  tst( func( v *TSTime, s string ) {
-    v.ETMin = gett( s )
-  } )
-  tst( func( v *TSTime, s string ) {
-    v.WET = gett( s )
-  } )
-  tst( func( v *TSTime, s string ) {
-    v.AT = gett( s )
-  } )
 }

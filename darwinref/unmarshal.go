@@ -2,8 +2,8 @@ package darwinref
 
 import (
   bolt "github.com/etcd-io/bbolt"
+  "encoding/json"
   "encoding/xml"
-  "github.com/peter-mount/golib/codec"
   "log"
   "time"
 )
@@ -138,12 +138,12 @@ func (r *DarwinReference) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start
 
         // Finally update the meta data
         r.importDate = time.Now()
-        codec := codec.NewBinaryCodec()
-        codec.Write( r )
-        if codec.Error() != nil {
-          return codec.Error()
+
+        b, err := json.Marshal( r )
+        if err != nil {
+          return err
         }
-        return tx.Bucket( []byte( "Meta" ) ).Put( []byte( "DarwinReference" ), codec.Bytes() )
+        return tx.Bucket( []byte( "Meta" ) ).Put( []byte( "DarwinReference" ), b )
       }
       inReason = false
     }

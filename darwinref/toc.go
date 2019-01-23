@@ -2,8 +2,8 @@ package darwinref
 
 import (
   bolt "github.com/etcd-io/bbolt"
+  "encoding/json"
   "encoding/xml"
-  "github.com/peter-mount/golib/codec"
   "github.com/peter-mount/golib/rest"
   "time"
 )
@@ -29,20 +29,6 @@ func (a *Toc) Equals( b *Toc ) bool {
     a.Url == b.Url
 }
 
-func (t *Toc) Write( c *codec.BinaryCodec ) {
-  c.WriteString( t.Toc ).
-    WriteString( t.Name ).
-    WriteString( t.Url ).
-    WriteTime( t.Date )
-}
-
-func (t *Toc) Read( c *codec.BinaryCodec ) {
-  c.ReadString( &t.Toc ).
-    ReadString( &t.Name ).
-    ReadString( &t.Url ).
-    ReadTime( &t.Date )
-}
-
 func (t *Toc) SetSelf( r *rest.Rest ) {
   t.Self = r.Self( r.Context() + "/toc/" + t.Toc )
 }
@@ -61,7 +47,10 @@ func (r *DarwinReference) getToc( tpl string ) ( *Toc, bool ) {
 
 func (t *Toc) FromBytes( b []byte ) bool {
   if b != nil {
-    codec.NewBinaryCodecFrom( b ).Read( t )
+    err := json.Unmarshal( b, t )
+    if err != nil {
+      return false
+    }
   }
   return t.Toc != ""
 }
@@ -83,13 +72,13 @@ func (r *DarwinReference) addToc( toc *Toc ) ( error, bool ) {
   // Update only if it does not exist or is different
   if old, exists := r.getToc( toc.Toc ); !exists || !toc.Equals( old ) {
     toc.Date = time.Now()
-    codec := codec.NewBinaryCodec()
-    codec.Write( toc )
-    if codec.Error() != nil {
-      return codec.Error(), false
+
+    b, err := json.Marshal( toc )
+    if err != nil {
+      return err, false
     }
 
-    if err := r.toc.Put( []byte( toc.Toc ), codec.Bytes() ); err != nil {
+    if err := r.toc.Put( []byte( toc.Toc ), b ); err != nil {
       return err, false
     }
 

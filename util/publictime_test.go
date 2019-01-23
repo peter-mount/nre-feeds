@@ -3,8 +3,6 @@ package util
 import (
   "encoding/json"
   "fmt"
-  "github.com/peter-mount/golib/codec"
-//  "log"
   "testing"
 )
 
@@ -120,38 +118,6 @@ func TestPublicTime_Equals( t *testing.T ) {
   tst( a, nil, false )
   tst( a, c, false )
   tst( c, a, false )
-}
-
-func TestPublicTime_ReadWrite( t *testing.T ) {
-  runHHMM_TimeSeries( t, func( s string ) bool {
-    a := NewPublicTime( s )
-
-    encoder := codec.NewBinaryCodec()
-    encoder.Write( a )
-    if encoder.Error() != nil {
-      t.Errorf( "%s failed to encode: %v", s, encoder.Error() )
-      return true
-    }
-
-    b := encoder.Bytes()
-
-    c := &PublicTime{}
-    decoder := codec.NewBinaryCodecFrom( b ).Read( c )
-    if decoder.Error() != nil {
-      t.Errorf( "%s failed to decode: %v", s, decoder.Error() )
-      return true
-    }
-
-    if a.IsZero() != c.IsZero() {
-      t.Errorf( "%s failed isZero, got %v expected %v", s, c.Get(), a.Get() )
-      return true
-    } else if !a.Equals( c ) {
-      t.Errorf( "%s failed, got %v expected %v", s, c.Get(), a.Get() )
-      return true
-    }
-
-    return false
-  } )
 }
 
 func TestPublicTime_JSON( t *testing.T ) {

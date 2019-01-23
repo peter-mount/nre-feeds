@@ -3,7 +3,6 @@ package util
 import (
   "encoding/json"
   "encoding/xml"
-  "github.com/peter-mount/golib/codec"
   "time"
 )
 
@@ -22,16 +21,6 @@ func (t *SSD) Parse( s string ) {
 // Before is an SSD before a specified time
 func (s *SSD) Before( t time.Time ) bool {
   return s.t.Before( t )
-}
-
-// BinaryCodec writer
-func (t *SSD) Write( c *codec.BinaryCodec ) {
-  c.WriteTime( t.t )
-}
-
-// BinaryCodec reader
-func (t *SSD) Read( c *codec.BinaryCodec ) {
-  c.ReadTime( &t.t )
 }
 
 // Custom JSON Marshaler.

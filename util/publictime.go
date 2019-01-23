@@ -4,7 +4,6 @@ import (
   "encoding/json"
   "encoding/xml"
   "fmt"
-  "github.com/peter-mount/golib/codec"
   "strconv"
 )
 
@@ -12,6 +11,7 @@ import (
 // Note: 00:00 is not possible as in CIF that means no-time
 type PublicTime struct {
   t int
+  n bool
 }
 
 func (a *PublicTime) Equals( b *PublicTime ) bool {
@@ -53,32 +53,6 @@ func PublicTimeEquals( a *PublicTime, b *PublicTime ) bool {
          ( a != nil && a.Equals( b ) )
 }
 
-// BinaryCodec writer
-func (t *PublicTime) Write( c *codec.BinaryCodec ) {
-  if t.IsZero() {
-    // If zero then write a single byte value 255
-    c.WriteByte( byte(255) )
-  } else {
-    // 16 bit number, Big endian so we should not hit 255,xxx in the stream
-    c.WriteByte( byte( t.t >> 8 ) ).
-      WriteByte( byte( t.t ) )
-  }
-}
-
-// BinaryCodec reader
-func (t *PublicTime) Read( c *codec.BinaryCodec ) {
-  var b byte
-
-  c.ReadByte( &b )
-  if b == byte(255) {
-    t.t = -1
-  } else {
-    var i uint64 = uint64(b)<<8
-    c.ReadByte( &b )
-    t.t = int( i | uint64(b) )
-  }
-}
-
 // NewPublicTime returns a new PublicTime instance from a string of format "HH:MM"
 func NewPublicTime( s string ) *PublicTime {
   v := &PublicTime{}
@@ -93,30 +67,6 @@ func (v *PublicTime) Parse( s string ) {
     a, _ := strconv.Atoi( s[0:2] )
     b, _ := strconv.Atoi( s[3:5] )
     v.Set( (a *60) + b )
-  }
-}
-
-// PublicTimeRead is a workaround issue where a custom type cannot be
-// omitempty in JSON unless it's a nil
-// So instead of using BinaryCodec.Read( v ), we call this & set the return
-// value in the struct as a pointer.
-func PublicTimeRead( c *codec.BinaryCodec ) *PublicTime {
-  t := &PublicTime{}
-  c.Read( t )
-  if t.IsZero() {
-    return nil
-  }
-  return t
-}
-
-// PublicTimeWrite is a workaround for writing null times.
-// If the pointer is null then a time is written where IsZero()==true
-func PublicTimeWrite( c *codec.BinaryCodec, t *PublicTime ) {
-  if t == nil {
-    // Null so mark as zero
-    c.WriteByte( byte(255) )
-  } else {
-    c.Write( t )
   }
 }
 
@@ -166,4 +116,9 @@ func (t *PublicTime) Set( v int ) {
 // IsZero returns true if the time is not present
 func (t *PublicTime) IsZero() bool {
   return t.t <= 0
+}
+
+// Is this instance representing nil
+func (t *PublicTime) IsNil() bool {
+  return t.n
 }

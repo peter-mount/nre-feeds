@@ -2,9 +2,9 @@ package darwinref
 
 import (
   bolt "github.com/etcd-io/bbolt"
+  "encoding/json"
   "encoding/xml"
   "fmt"
-  "github.com/peter-mount/golib/codec"
   "github.com/peter-mount/golib/rest"
   "time"
 )
@@ -41,20 +41,6 @@ func (a *Reason) Equals( b *Reason ) bool {
     a.Text == b.Text
 }
 
-func (t *Reason) Write( c *codec.BinaryCodec ) {
-  c.WriteInt( t.Code ).
-    WriteString( t.Text ).
-    WriteBool( t.Cancelled ).
-    WriteTime( t.Date )
-}
-
-func (t *Reason) Read( c *codec.BinaryCodec ) {
-  c.ReadInt( &t.Code ).
-    ReadString( &t.Text ).
-    ReadBool( &t.Cancelled ).
-    ReadTime( &t.Date )
-}
-
 // GetToc returns details of a TOC
 func (r *DarwinReference) GetLateReason( tx *bolt.Tx, id int ) ( *Reason, bool ) {
   loc, exists := r.GetReasonBucket( tx.Bucket( []byte("DarwinLateReason") ), id )
@@ -81,7 +67,10 @@ func (r *DarwinReference) getCancellationReason( id int ) ( *Reason, bool ) {
 
 func (t *Reason) FromBytes( b []byte ) bool {
   if b != nil {
-    codec.NewBinaryCodecFrom( b ).Read( t )
+    err := json.Unmarshal( b, t )
+    if err != nil {
+      return false
+    }
   }
   return t.Code != 0
 }
@@ -120,12 +109,11 @@ func addReason( bucket *bolt.Bucket, r *Reason ) error {
     }
   }
 
-  codec := codec.NewBinaryCodec()
-  codec.Write( r )
+  b, err := json.Marshal( r )
 
-  if err := codec.Error(); err != nil {
+  if err != nil {
     return err
   }
 
-  return bucket.Put( kb, codec.Bytes() )
+  return bucket.Put( kb, b )
 }

@@ -4,7 +4,6 @@ import (
   "bytes"
   "encoding/json"
   "encoding/xml"
-  "github.com/peter-mount/golib/codec"
   "github.com/peter-mount/nre-feeds/util"
   "strconv"
 )
@@ -122,73 +121,6 @@ func (a *Location) Equals( b *Location ) bool {
          a.Forecast.Length == b.Forecast.Length &&
          a.Forecast.DetachFront == b.Forecast.DetachFront &&
          a.Forecast.TrainOrder == b.Forecast.TrainOrder
-}
-
-func (t *Location) Write( c *codec.BinaryCodec ) {
-  c.WriteString( t.Type ).
-    WriteString( t.Tiploc ).
-    WriteString( t.FalseDestination ).
-    WriteBool( t.Cancelled )
-
-  // CircularTimes
-  c.Write( &t.Times )
-
-  // Planned
-  c.WriteString( t.Planned.ActivityType ).
-    WriteString( t.Planned.PlannedActivity ).
-    WriteInt( t.Planned.RDelay )
-
-  // Forecast
-  c.Write( &t.Forecast.Arrival ).
-    Write( &t.Forecast.Departure ).
-    Write( &t.Forecast.Pass ).
-    Write( &t.Forecast.Platform ).
-    WriteBool( t.Forecast.Suppressed ).
-    WriteBool( t.Forecast.DetachFront ).
-    WriteInt16( int16( t.Forecast.Length ) )
-
-  if t.Forecast.TrainOrder == nil || t.Forecast.TrainOrder.Order == 0 {
-    c.WriteByte( byte( 0 ) )
-  } else {
-    c.WriteByte( byte( t.Forecast.TrainOrder.Order ) ).
-      WriteString( t.Forecast.TrainOrder.Platform )
-  }
-}
-
-func (t *Location) Read( c *codec.BinaryCodec ) {
-  c.ReadString( &t.Type ).
-    ReadString( &t.Tiploc ).
-    ReadString( &t.FalseDestination ).
-    ReadBool( &t.Cancelled )
-
-  // CircularTimes
-  c.Read( &t.Times )
-
-  // Planned
-  c.ReadString( &t.Planned.ActivityType ).
-    ReadString( &t.Planned.PlannedActivity ).
-    ReadInt( &t.Planned.RDelay )
-
-  // Forecast
-  c.Read( &t.Forecast.Arrival ).
-    Read( &t.Forecast.Departure ).
-    Read( &t.Forecast.Pass ).
-    Read( &t.Forecast.Platform ).
-    ReadBool( &t.Forecast.Suppressed ).
-    ReadBool( &t.Forecast.DetachFront )
-
-  var l int16
-  c.ReadInt16( &l )
-  t.Forecast.Length = int(l)
-
-  var b byte
-  c.ReadByte( &b )
-  if b > 0 {
-    t.Forecast.TrainOrder = &TrainOrder{ Order: int( b ) }
-    c.ReadString( &t.Forecast.TrainOrder.Platform )
-  }
-
-  t.update()
 }
 
 func (s *Location) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error {

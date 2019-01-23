@@ -1,7 +1,7 @@
 package darwinref
 
 import (
-  "github.com/peter-mount/golib/codec"
+  "encoding/json"
 )
 
 type crsimport struct {
@@ -45,7 +45,10 @@ func (c *crsimport) writeCrs( k string, v map[string]string ) (error,bool) {
   b := c.ref.crs.Get( []byte( k ) )
   if b != nil {
     var ar []string
-    codec.NewBinaryCodecFrom( b ).ReadStringArray( &ar )
+    err := json.Unmarshal( b, &ar )
+    if err != nil {
+      return err, false
+    }
 
     if crsCompare( v, ar ) {
       return nil, false
@@ -58,13 +61,12 @@ func (c *crsimport) writeCrs( k string, v map[string]string ) (error,bool) {
     tiplocs = append( tiplocs, t )
   }
 
-  codec := codec.NewBinaryCodec()
-  codec.WriteStringArray( tiplocs )
-  if codec.Error() != nil {
-    return codec.Error(), false
+  b, err := json.Marshal( tiplocs )
+  if err != nil {
+    return err, false
   }
 
-  if err := c.ref.crs.Put( []byte( k ), codec.Bytes() ); err != nil {
+  if err := c.ref.crs.Put( []byte( k ), b ); err != nil {
     return err, false
   }
 

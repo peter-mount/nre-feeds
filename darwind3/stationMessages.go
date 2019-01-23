@@ -1,7 +1,7 @@
 package darwind3
 
 import (
-  "github.com/peter-mount/golib/codec"
+  "encoding/json"
   "io/ioutil"
   "log"
   "os"
@@ -133,52 +133,39 @@ func (d *DarwinD3) ExpireStationMessages() {
 // Load reloads the station messages from disk
 func (sm *StationMessages) Load() error {
   return sm.Update( func() error {
-    if err := os.MkdirAll( sm.cacheDir, 0777 ); err != nil {
+    err := os.MkdirAll( sm.cacheDir, 0777 )
+    if err != nil {
       return err
     }
 
-    if buf, err := ioutil.ReadFile( sm.cache ); err != nil {
+    buf, err := ioutil.ReadFile( sm.cache )
+    if err != nil {
       return err
-    } else {
-      codec.NewBinaryCodecFrom( buf ).Read( sm )
-      log.Println( "Loaded", len( sm.messages ), "StationMessage's" )
-      return nil
     }
+
+    err = json.Unmarshal( buf, sm )
+    if err != nil {
+      return err
+    }
+
+    log.Println( "Loaded", len( sm.messages ), "StationMessage's" )
+    return nil
   })
 }
 
 // Persist stores all StationMessage's to disk
 func (sm *StationMessages) Persist() error {
   return sm.Update( func() error {
-    if err := os.MkdirAll( sm.cacheDir, 0777 ); err != nil {
+    err := os.MkdirAll( sm.cacheDir, 0777 )
+    if err != nil {
       return err
     }
 
-    encoder := codec.NewBinaryCodec()
-    encoder.Write( sm )
-    if encoder.Error() != nil {
-      return encoder.Error()
+    b, err := json.Marshal( sm )
+    if err != nil {
+      return err
     }
 
-    return ioutil.WriteFile( sm.cache, encoder.Bytes(), 0x655 )
+    return ioutil.WriteFile( sm.cache, b, 0x655 )
   })
-}
-
-func (sm *StationMessages) Write( c *codec.BinaryCodec ) {
-  c.WriteInt( len( sm.messages ) )
-  for k, v := range sm.messages {
-    c.WriteInt( k ).Write( v )
-  }
-}
-
-func (sm *StationMessages) Read( c *codec.BinaryCodec ) {
-  var cnt int
-  c.ReadInt( &cnt )
-  for i := 0; i<cnt; i++ {
-    var k int
-    s := &StationMessage{}
-    c.ReadInt( &k ).
-    Read( s )
-    sm.messages[ k ] = s
-  }
 }

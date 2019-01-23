@@ -2,7 +2,6 @@ package darwinref
 
 import (
   "encoding/xml"
-  "github.com/peter-mount/golib/codec"
   "github.com/peter-mount/golib/rest"
   "time"
 )
@@ -39,23 +38,6 @@ func (a *Location) Equals( b *Location ) bool {
     a.Crs == b.Crs &&
     a.Toc == b.Toc &&
     a.Name == b.Name
-}
-
-func (t *Location) Write( c *codec.BinaryCodec ) {
-  c.WriteString( t.Tiploc ).
-    WriteString( t.Crs ).
-    WriteString( t.Toc ).
-    WriteString( t.Name ).
-    WriteTime( t.Date )
-}
-
-func (t *Location) Read( c *codec.BinaryCodec ) {
-  c.ReadString( &t.Tiploc ).
-    ReadString( &t.Crs ).
-    ReadString( &t.Toc ).
-    ReadString( &t.Name ).
-    ReadTime( &t.Date )
-  t.Station = t.Crs != "" && !(t.Crs[0]=='X'||t.Crs[0]=='Z')
 }
 
 // IsPublic returns true if this Location represents a public station.

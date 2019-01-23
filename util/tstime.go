@@ -4,7 +4,6 @@ import (
   "bytes"
   "encoding/json"
   "encoding/xml"
-  "github.com/peter-mount/golib/codec"
 )
 
 // Type describing time-based forecast attributes for a TS arrival/departure/pass
@@ -132,30 +131,6 @@ func (a *TSTime) Equals( b *TSTime ) bool {
          a.Delayed == b.Delayed &&
          a.Src == b.Src &&
          a.SrcInst == b.SrcInst
-}
-
-func (t *TSTime) Write( c *codec.BinaryCodec ) {
-  WorkingTimeWrite( c, t.ET )
-  WorkingTimeWrite( c, t.ETMin )
-  WorkingTimeWrite( c, t.WET )
-  WorkingTimeWrite( c, t.AT )
-  c.WriteBool( t.ETUnknown ).
-    WriteBool( t.ATRemoved ).
-    WriteBool( t.Delayed ).
-    WriteString( t.Src ).
-    WriteString( t.SrcInst )
-}
-
-func (t *TSTime) Read( c *codec.BinaryCodec ) {
-  t.ET = WorkingTimeRead( c )
-  t.ETMin = WorkingTimeRead( c )
-  t.WET = WorkingTimeRead( c )
-  t.AT = WorkingTimeRead( c )
-  c.ReadBool( &t.ETUnknown ).
-    ReadBool( &t.ATRemoved ).
-    ReadBool( &t.Delayed ).
-    ReadString( &t.Src ).
-    ReadString( &t.SrcInst )
 }
 
 func (s *TSTime) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error {

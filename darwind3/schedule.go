@@ -1,8 +1,8 @@
 package darwind3
 
 import (
+  "encoding/json"
   "encoding/xml"
-  "github.com/peter-mount/golib/codec"
   "github.com/peter-mount/golib/rest"
   "github.com/peter-mount/nre-feeds/util"
   "sort"
@@ -136,8 +136,8 @@ func ScheduleFromBytes( b []byte ) *Schedule {
   }
 
   sched := &Schedule{}
-  codec.NewBinaryCodecFrom( b ).Read( sched )
-  if sched.RID == "" {
+  err := json.Unmarshal( b, sched )
+  if err != nil || sched.RID == "" {
     return nil
   }
   return sched
@@ -145,63 +145,8 @@ func ScheduleFromBytes( b []byte ) *Schedule {
 
 // Bytes returns the schedule as an encoded byte slice
 func (s *Schedule) Bytes() ( []byte, error ) {
-  encoder := codec.NewBinaryCodec()
-
-  if err := s.Update( func() error {
-    encoder.Write( s )
-    return encoder.Error()
-  }); err != nil {
-    return nil, err
-  }
-
-  return encoder.Bytes(), nil
-}
-
-func (t *Schedule) Write( c *codec.BinaryCodec ) {
-  c.WriteString( t.RID ).
-    WriteString( t.UID ).
-    WriteString( t.TrainId )
-  c.Write( &t.SSD )
-  c.WriteString( t.Toc ).
-    WriteString( t.Status ).
-    WriteString( t.TrainCat ).
-    WriteBool( t.PassengerService ).
-    WriteBool( t.Active ).
-    WriteBool( t.Deleted ).
-    WriteBool( t.Charter ).
-    Write( &t.CancelReason ).
-    Write( &t.LateReason ).
-    WriteTime( t.Date )
-
-  c.WriteInt16( int16(len( t.Locations )) )
-  for _, l := range t.Locations {
-    c.Write( l )
-  }
-}
-
-func (t *Schedule) Read( c *codec.BinaryCodec ) {
-  c.ReadString( &t.RID ).
-    ReadString( &t.UID ).
-    ReadString( &t.TrainId )
-  c.Read( &t.SSD )
-  c.ReadString( &t.Toc ).
-    ReadString( &t.Status ).
-    ReadString( &t.TrainCat ).
-    ReadBool( &t.PassengerService ).
-    ReadBool( &t.Active ).
-    ReadBool( &t.Deleted ).
-    ReadBool( &t.Charter ).
-    Read( &t.CancelReason ).
-    Read( &t.LateReason ).
-    ReadTime( &t.Date )
-
-  var n int16
-  c.ReadInt16( &n )
-  for i := 0; i < int(n); i++ {
-    l := &Location{}
-    c.Read( l )
-    t.Locations = append( t.Locations, l )
-  }
+  b, err := json.Marshal( s )
+  return b, err
 }
 
 // Defaults sets the default values for a schedule

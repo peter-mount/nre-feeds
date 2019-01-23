@@ -1,9 +1,8 @@
 package util
 
 import (
-  //"encoding/json"
+  "encoding/json"
   "fmt"
-  "github.com/peter-mount/golib/codec"
   "testing"
 )
 
@@ -34,24 +33,21 @@ func TestSSD_Parse( t *testing.T ) {
   })
 }
 
-func TestSSD_ReadWrite( t *testing.T ) {
+func TestSSD_JSON( t *testing.T ) {
   runDate_TimeSeries( t, func(s string) bool {
     a := &SSD{}
     a.Parse( s )
 
-    encoder := codec.NewBinaryCodec()
-    encoder.Write( a )
-    if encoder.Error() != nil {
-      t.Errorf( "%s failed to encode: %v", s, encoder.Error() )
+    b, err := json.Marshal( a )
+    if err != nil {
+      t.Errorf( "%s failed to encode: %v", s, err )
       return true
     }
 
-    b := encoder.Bytes()
-
     c := &SSD{}
-    decoder := codec.NewBinaryCodecFrom( b ).Read( c )
-    if decoder.Error() != nil {
-      t.Errorf( "%s failed to decode: %v", s, decoder.Error() )
+    err = json.Unmarshal( b, c )
+    if err != nil {
+      t.Errorf( "%s failed to decode: %v", s, err )
       return true
     }
 

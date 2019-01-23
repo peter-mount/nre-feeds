@@ -3,8 +3,8 @@ package darwinref
 
 import (
   bolt "github.com/etcd-io/bbolt"
+  "encoding/json"
   "errors"
-  "github.com/peter-mount/golib/codec"
   "log"
   "time"
 )
@@ -35,16 +35,6 @@ type DarwinReference struct {
   via                  *bolt.Bucket
   // For speed, via's in memory
   viaMap               *ViaMap
-}
-
-func (t *DarwinReference) Write( c *codec.BinaryCodec ) {
-  c.WriteString( t.timetableId ).
-    WriteTime( t.importDate )
-}
-
-func (t *DarwinReference) Read( c *codec.BinaryCodec ) {
-  c.ReadString( &t.timetableId ).
-    ReadTime( &t.importDate )
 }
 
 // OpenDB opens a DarwinReference database.
@@ -88,7 +78,10 @@ func (r *DarwinReference) useDB( db *bolt.DB ) error {
   return r.View( func( tx *bolt.Tx ) error {
     b := tx.Bucket( []byte( "Meta" ) ).Get( []byte( "DarwinReference" ) )
     if b != nil {
-      codec.NewBinaryCodecFrom( b ).Read( r )
+      err := json.Unmarshal( b, r )
+      if err != nil {
+        return err
+      }
     }
 
     if r.timetableId == "" {

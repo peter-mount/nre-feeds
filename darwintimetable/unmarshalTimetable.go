@@ -3,8 +3,8 @@ package darwintimetable
 
 import (
   bolt "github.com/etcd-io/bbolt"
+  "encoding/json"
   "encoding/xml"
-  "github.com/peter-mount/golib/codec"
   "log"
   "time"
 )
@@ -66,7 +66,7 @@ func (t *DarwinTimetable) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start
     case xml.EndElement:
 
       log.Println( "Journey's", journeyCount )
-      
+
       /*
       for _, a := range assocs {
         if j1, ok := t.Journeys[a.Main.RID]; ok {
@@ -85,12 +85,13 @@ func (t *DarwinTimetable) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start
 
       // Finally update the meta data
       t.importDate = time.Now()
-      codec := codec.NewBinaryCodec()
-      codec.Write( t )
-      if codec.Error() != nil {
-        return codec.Error()
+
+      b, err := json.Marshal( t )
+      if err != nil {
+        return err
       }
-      return tx.Bucket( []byte( "Meta" ) ).Put( []byte( "DarwinTimetable" ), codec.Bytes() )
+
+      return tx.Bucket( []byte( "Meta" ) ).Put( []byte( "DarwinTimetable" ), b )
     }
   }
 }

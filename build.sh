@@ -90,6 +90,9 @@ then
   CMD="$CMD --build-arg uploadName=${repoName}"
 fi
 
+# Uncomment to run just the tests
+CMD="$CMD --target test"
+
 CMD="$CMD ."
 
 execute $CMD

@@ -2,9 +2,9 @@ package darwinref
 
 import (
   bolt "github.com/etcd-io/bbolt"
+  "encoding/json"
   "encoding/xml"
   "fmt"
-  "github.com/peter-mount/golib/codec"
   "github.com/peter-mount/golib/rest"
   "time"
 )
@@ -29,24 +29,6 @@ func (v *Via) Equals( o *Via ) bool {
     return false
   }
   return v.At == o.At && v.Dest == o.Dest && v.Loc1 == o.Loc1 && v.Loc2 == o.Loc2
-}
-
-func (v *Via) Write( c *codec.BinaryCodec ) {
-  c.WriteString( v.At ).
-    WriteString( v.Dest ).
-    WriteString( v.Loc1 ).
-    WriteString( v.Loc2 ).
-    WriteString( v.Text ).
-    WriteTime( v.Date )
-}
-
-func (v *Via) Read( c *codec.BinaryCodec ) {
-  c.ReadString( &v.At ).
-    ReadString( &v.Dest ).
-    ReadString( &v.Loc1 ).
-    ReadString( &v.Loc2 ).
-    ReadString( &v.Text ).
-    ReadTime( &v.Date )
 }
 
 // SetSelf sets the Self field to match this request
@@ -79,20 +61,14 @@ func (r *DarwinReference) getVia( at string, dest string, loc1 string, loc2 stri
   return loc, exists
 }
 
-func (t *Via) fromBytes( b []byte ) bool {
-  if b != nil {
-    codec.NewBinaryCodecFrom( b ).Read( t )
-  }
-  return t.At != ""
-}
-
 func (r *DarwinReference) GetViaBucket( bucket *bolt.Bucket, at string, dest string, loc1 string, loc2 string ) ( *Via, bool ) {
   key := fmt.Sprintf( "%s %s %s %s", at, dest, loc1, loc2 )
   b := bucket.Get( []byte( key ) )
 
   if b != nil {
     var via *Via = &Via{}
-    if via.fromBytes( b ) {
+    err := json.Unmarshal( b, via )
+    if err == nil {
       return via, true
     }
   }
@@ -104,13 +80,14 @@ func (r *DarwinReference) addVia( via *Via ) ( error, bool ) {
   // Update only if it does not exist or is different
   if old, exists := r.getVia( via.At, via.Dest, via.Loc1, via.Loc2 ); !exists || !via.Equals( old ) {
     via.Date = time.Now()
-    codec := codec.NewBinaryCodec()
-    codec.Write( via )
-    if codec.Error() != nil {
-      return codec.Error(), false
+
+    b, err := json.Marshal( via )
+    if err != nil {
+      return err, false
     }
 
-    if err := r.via.Put( []byte( via.key() ), codec.Bytes() ); err != nil {
+    err = r.via.Put( []byte( via.key() ), b )
+    if err != nil {
       return err, false
     }
 

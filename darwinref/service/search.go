@@ -2,8 +2,8 @@ package service
 
 import (
   bolt "github.com/etcd-io/bbolt"
+  "encoding/json"
   "fmt"
-  "github.com/peter-mount/golib/codec"
   "github.com/peter-mount/golib/rest"
   "github.com/peter-mount/nre-feeds/darwinref"
   "sort"
@@ -41,7 +41,11 @@ func (dr *DarwinRefService) SearchName( term string ) ([]*darwinref.SearchResult
 
     return crsBucket.ForEach( func( k, v []byte ) error {
       var tpls []string
-      codec.NewBinaryCodecFrom( v ).ReadStringArray( &tpls )
+
+      err := json.Unmarshal( v, &tpls )
+      if err != nil {
+        return err
+      }
 
       appendCrs := len( term ) == 3 && string(k[:]) == term
 

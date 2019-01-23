@@ -2,9 +2,7 @@
 package darwintimetable
 
 import (
-  //bolt "github.com/etcd-io/bbolt"
   "encoding/xml"
-  "github.com/peter-mount/golib/codec"
   "github.com/peter-mount/nre-feeds/util"
 )
 
@@ -44,38 +42,6 @@ type Location struct {
     RDelay      string      `json:"rdelay,omitempty" xml:"rdelay,attr,omitempty"`
     // TIPLOC of False Destination to be used at this location
     FalseDest   string      `json:"fd,omitempty" xml:"fd,attr,omitempty"`
-}
-
-func (t *Location) Write( c *codec.BinaryCodec ) {
-  c.WriteString( t.Type ).
-    WriteString( t.Tiploc ).
-    WriteString( t.Act ).
-    WriteString( t.PlanAct ).
-    WriteBool( t.Cancelled ).
-    WriteString( t.Platform ).
-    WriteString( t.RDelay ).
-    WriteString( t.FalseDest )
-  util.PublicTimeWrite( c, t.Pta )
-  util.PublicTimeWrite( c, t.Ptd )
-  util.WorkingTimeWrite( c, t.Wta )
-  util.WorkingTimeWrite( c, t.Wtd )
-  util.WorkingTimeWrite( c, t.Wtp )
-}
-
-func (t *Location) Read( c *codec.BinaryCodec ) {
-  c.ReadString( &t.Type ).
-    ReadString( &t.Tiploc ).
-    ReadString( &t.Act ).
-    ReadString( &t.PlanAct ).
-    ReadBool( &t.Cancelled ).
-    ReadString( &t.Platform ).
-    ReadString( &t.RDelay ).
-    ReadString( &t.FalseDest )
-  t.Pta = util.PublicTimeRead( c )
-  t.Ptd = util.PublicTimeRead( c )
-  t.Wta = util.WorkingTimeRead( c )
-  t.Wtd = util.WorkingTimeRead( c )
-  t.Wtp = util.WorkingTimeRead( c )
 }
 
 type OR struct {

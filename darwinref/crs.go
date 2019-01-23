@@ -2,7 +2,7 @@ package darwinref
 
 import (
   bolt "github.com/etcd-io/bbolt"
-  "github.com/peter-mount/golib/codec"
+  "encoding/json"
 )
 
 // Return a *Location for a tiploc
@@ -24,7 +24,10 @@ func (r *DarwinReference) GetCrsBucket( crsbucket *bolt.Bucket, tiplocbucket *bo
   }
 
   var ar []string
-  codec.NewBinaryCodecFrom( b ).ReadStringArray( &ar )
+  err := json.Unmarshal( b, &ar )
+  if err != nil {
+    return nil, false
+  }
 
   if len( ar ) == 0 {
     return nil, false

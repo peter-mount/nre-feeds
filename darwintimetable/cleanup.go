@@ -2,11 +2,13 @@ package darwintimetable
 
 import (
   bolt "github.com/etcd-io/bbolt"
+  "encoding/json"
   "log"
   "time"
 )
 
 // PruneSchedules prunes all expired schedules
+// NB: Corrupt schedules are also removed
 func (t *DarwinTimetable) PruneSchedules() ( int, error ) {
   count := 0
 
@@ -19,7 +21,8 @@ func (t *DarwinTimetable) PruneSchedules() ( int, error ) {
 
     if err := bucket.ForEach( func( k, v []byte ) error {
       j := &Journey{}
-      if j.fromBytes( v ) && j.SSD.Before( lim ) {
+      err := json.Unmarshal( v, j )
+      if err != nil || j.SSD.Before( lim ) {
         count++
         return bucket.Delete( k )
       }

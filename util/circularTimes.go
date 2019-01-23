@@ -3,7 +3,6 @@ package util
 import (
   "encoding/xml"
   "fmt"
-  "github.com/peter-mount/golib/codec"
 )
 
 // A scheduled time used to distinguish a location on circular routes.
@@ -109,23 +108,6 @@ func (a *CircularTimes) EqualInSchedule( b *CircularTimes ) bool {
     WorkingTimeEquals( a.Wta, b.Wta ) &&
     WorkingTimeEquals( a.Wtd, b.Wtd ) &&
     WorkingTimeEquals( a.Wtp, b.Wtp )
-}
-
-func (t *CircularTimes) Write( c *codec.BinaryCodec ) {
-  PublicTimeWrite( c, t.Pta )
-  PublicTimeWrite( c, t.Ptd )
-  WorkingTimeWrite( c, t.Wta )
-  WorkingTimeWrite( c, t.Wtd )
-  WorkingTimeWrite( c, t.Wtp )
-}
-
-func (t *CircularTimes) Read( c *codec.BinaryCodec ) {
-  t.Pta = PublicTimeRead( c )
-  t.Ptd = PublicTimeRead( c )
-  t.Wta = WorkingTimeRead( c )
-  t.Wtd = WorkingTimeRead( c )
-  t.Wtp = WorkingTimeRead( c )
-  t.UpdateTime()
 }
 
 func (l *CircularTimes) String() string {

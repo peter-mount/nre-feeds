@@ -4,7 +4,6 @@ package darwintimetable
 import (
   //bolt "github.com/etcd-io/bbolt"
   "encoding/xml"
-  "github.com/peter-mount/golib/codec"
   //"github.com/peter-mount/golib/rest"
   "time"
 )
@@ -35,49 +34,11 @@ func (a *Association) Equals( b *Association ) bool {
     a.Deleted == b.Deleted
 }
 
-func (t *Association) Write( c *codec.BinaryCodec ) {
-  c.Write( &t.Main ).
-    Write( &t.Assoc ).
-    WriteString( t.Tiploc ).
-    WriteString( t.Category ).
-    WriteBool( t.Cancelled ).
-    WriteBool( t.Deleted ).
-    WriteTime( t.Date )
-}
-
-func (t *Association) Read( c *codec.BinaryCodec ) {
-  c.Read( &t.Main ).
-    Read( &t.Assoc ).
-    ReadString( &t.Tiploc ).
-    ReadString( &t.Category ).
-    ReadBool( &t.Cancelled ).
-    ReadBool( &t.Deleted ).
-    ReadTime( &t.Date )
-}
-
 type AssocService struct {
   RID       string    `json:"rid" xml:"rid,attr"`
-  Wta       string    `json:"wta" xml:"wta,attr"`
-  Wtd       string    `json:"wtd" xml:"wtd,attr"`
-  Wtp       string    `json:"wtp" xml:"wtp,attr"`
-  Pta       string    `json:"pta" xml:"pta,attr"`
-  Ptd       string    `json:"ptd" xml:"ptd,attr"`
-}
-
-func (t *AssocService) Write( c *codec.BinaryCodec ) {
-  c.WriteString( t.RID ).
-    WriteString( t.Wta ).
-    WriteString( t.Wtd ).
-    WriteString( t.Wtp ).
-    WriteString( t.Pta ).
-    WriteString( t.Ptd )
-}
-
-func (t *AssocService) Read( c *codec.BinaryCodec ) {
-  c.ReadString( &t.RID ).
-    ReadString( &t.Wta ).
-    ReadString( &t.Wtd ).
-    ReadString( &t.Wtp ).
-    ReadString( &t.Pta ).
-    ReadString( &t.Ptd )
+  Wta       string    `json:"wta,omitempty" xml:"wta,attr"`
+  Wtd       string    `json:"wtd,omitempty" xml:"wtd,attr"`
+  Wtp       string    `json:"wtp,omitempty" xml:"wtp,attr"`
+  Pta       string    `json:"pta,omitempty" xml:"pta,attr"`
+  Ptd       string    `json:"ptd,omitempty" xml:"ptd,attr"`
 }

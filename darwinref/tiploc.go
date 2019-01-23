@@ -2,7 +2,7 @@ package darwinref
 
 import (
   bolt "github.com/etcd-io/bbolt"
-  "github.com/peter-mount/golib/codec"
+  "encoding/json"
 )
 
 // Return a *Location for a tiploc
@@ -25,7 +25,10 @@ func (r *DarwinReference) GetTiplocBucket( bucket *bolt.Bucket, tpl string ) ( *
 
   var loc *Location = &Location{}
 
-  codec.NewBinaryCodecFrom( b ).Read( loc )
+  err := json.Unmarshal( b, loc )
+  if err != nil {
+    return nil, false
+  }
 
   if( loc.Tiploc == "" ) {
     return nil,false
@@ -37,13 +40,12 @@ func (r *DarwinReference) GetTiplocBucket( bucket *bolt.Bucket, tpl string ) ( *
 func (r *DarwinReference) addTiploc( loc *Location ) ( error, bool ) {
   // Update only if it does not exist or is different
   if old, exists := r.getTiploc( loc.Tiploc ); !exists || !loc.Equals( old ) {
-    codec := codec.NewBinaryCodec()
-    codec.Write( loc )
-    if codec.Error() != nil {
-      return codec.Error(), false
+    b, err := json.Marshal( loc )
+    if err != nil {
+      return err, false
     }
 
-    if err := r.tiploc.Put( []byte( loc.Tiploc ), codec.Bytes() ); err != nil {
+    if err := r.tiploc.Put( []byte( loc.Tiploc ), b ); err != nil {
       return err, false
     }
 
