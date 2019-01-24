@@ -8,11 +8,11 @@ ARG goos=linux
 FROM golang as build
 
 # The golang alpine image is missing git so ensure we have additional tools
-RUN apk add --no-cache \
-      curl \
-      git \
-      tzdata \
-      zip
+#RUN apk add --no-cache \
+#      curl \
+#      git \
+#      tzdata \
+#      zip
 
 WORKDIR /work
 COPY go.mod .
