@@ -96,10 +96,10 @@ func (s *Schedule) SetSelf( r *rest.Rest ) {
 
 // Sort sorts the locations in a schedule by time order
 func (s *Schedule) Sort() {
+  s.UpdateTime()
   sort.SliceStable( s.Locations, func( i, j int ) bool {
     return s.Locations[ i ].Compare( s.Locations[ j ] )
   } )
-  s.UpdateTime()
 }
 
 func (a *Schedule) Equals( b *Schedule ) bool {
