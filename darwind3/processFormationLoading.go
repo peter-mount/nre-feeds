@@ -22,6 +22,9 @@ func (l *Loading) Process( tx *Transaction ) error {
     return nil
   }
 
+  // Set the Date field to the TS time
+  l.Date = tx.pport.TS
+
   sched.Update( func() error {
 
     for _, loc := range sched.Locations {

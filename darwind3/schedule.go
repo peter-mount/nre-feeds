@@ -16,6 +16,7 @@ type Schedule struct {
   UID               string                `json:"uid"`
   TrainId           string                `json:"trainId"`
   SSD               util.SSD              `json:"ssd"`
+  // The Train Operating Company
   Toc               string                `json:"toc"`
   // Default P
   Status            string                `json:"status"`
@@ -36,7 +37,11 @@ type Schedule struct {
   // of this service which are not marked as cancelled
   LateReason        DisruptionReason      `json:"lateReason"`
   // The locations in this schedule
-  Locations       []*Location             `json:"locations"`
+  Locations      []*Location             `json:"locations"`
+  // The origin of this service
+  Origin           *Location              `json:"originLocation"`
+  // The destination of this service
+  Destintion       *Location              `json:"destinationLocation"`
   // Usually this is the date we insert into the db but here we use the TS time
   // as returned from darwin
   Date              time.Time             `json:"date,omitempty" xml:"date,attr,omitempty"`
@@ -147,9 +152,37 @@ func ScheduleFromBytes( b []byte ) *Schedule {
 }
 
 func (s *Schedule) UpdateTime() {
+  s.Origin = nil
+  s.Destintion = nil
+
   for _, l := range s.Locations {
     l.UpdateTime()
+
+    // Set origin or destination.
+    // Note: OR & DT override OPOR & OPDT
+    switch l.Type {
+      case "OR":
+        if s.Origin == nil || s.Origin.Type == "OPOR" {
+          s.Origin = l
+        }
+
+      case "OPOR":
+        if s.Origin == nil || s.Origin.Type != "OR" {
+          s.Origin = l
+        }
+
+      case "DT":
+        if s.Destintion == nil || s.Destintion.Type == "OPDT" {
+          s.Destintion = l
+        }
+
+      case "OPDT":
+        if s.Destintion == nil || s.Destintion.Type != "DT" {
+          s.Destintion = l
+        }
+    }
   }
+
 }
 
 // Bytes returns the schedule as an encoded byte slice

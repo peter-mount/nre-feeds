@@ -3,6 +3,7 @@ package darwind3
 import (
   "encoding/xml"
   "github.com/peter-mount/nre-feeds/util"
+  "time"
 )
 
 // Loading data for an individual location in a schedule linked to a formation.
@@ -21,6 +22,9 @@ type Loading struct {
   Loading          []*CoachLoadingData    `json:"loading" xml:"loading"`
   // attrbuteGroup CircularTimes
   Times               util.CircularTimes  `json:"time"`
+  // This is the TS time from Darwin so we keep a copy of when this struct
+  // was sent to us
+  Date              time.Time             `json:"date,omitempty"`
 }
 
 func (s *Loading) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error {
