@@ -5,14 +5,14 @@ ARG goos=linux
 # Build container containing our pre-pulled libraries.
 # As this changes rarely it means we can use the cache between
 # building each microservice.
-FROM golang as build
+FROM golang:alpine as build
 
 # The golang alpine image is missing git so ensure we have additional tools
-#RUN apk add --no-cache \
-#      curl \
-#      git \
-#      tzdata \
-#      zip
+RUN apk add --no-cache \
+      curl \
+      git \
+      tzdata \
+      zip
 
 WORKDIR /work
 COPY go.mod .
