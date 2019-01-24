@@ -60,6 +60,27 @@ func (s *TS) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error 
             if err := decoder.DecodeElement( loc, &tok ); err != nil {
               return err
             }
+
+            // Try to resolve Type based on timetable
+            ct := loc.Times
+            if ct.Pta == nil && ct.Ptd != nil {
+              loc.Type = "OR"
+            } else if ct.Pta != nil && ct.Ptd != nil {
+              loc.Type = "IP"
+            } else if ct.Pta != nil && ct.Ptd == nil {
+              loc.Type = "DT"
+            } else if ct.Pta == nil && ct.Ptd == nil {
+              if ct.Wtp != nil {
+                loc.Type = "PP"
+              } else if ct.Wta == nil && ct.Wtd != nil {
+                loc.Type = "OPOR"
+              } else if ct.Wta != nil && ct.Wtd != nil {
+                loc.Type = "OPIP"
+              } else if ct.Wta != nil && ct.Wtd == nil {
+                loc.Type = "OPDT"
+              }
+            }
+
             s.Locations = append( s.Locations, loc )
 
           case "LateReason":
