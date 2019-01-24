@@ -86,6 +86,7 @@ func (a *Schedule) Clone() *Schedule {
     return nil
   })
 
+  b.UpdateTime()
   return b
 }
 
@@ -98,6 +99,7 @@ func (s *Schedule) Sort() {
   sort.SliceStable( s.Locations, func( i, j int ) bool {
     return s.Locations[ i ].Compare( s.Locations[ j ] )
   } )
+  s.UpdateTime()
 }
 
 func (a *Schedule) Equals( b *Schedule ) bool {
@@ -140,10 +142,14 @@ func ScheduleFromBytes( b []byte ) *Schedule {
   if err != nil || sched.RID == "" {
     return nil
   }
-  for _, l := range sched.Locations {
+  sched.UpdateTime()
+  return sched
+}
+
+func (s *Schedule) UpdateTime() {
+  for _, l := range s.Locations {
     l.UpdateTime()
   }
-  return sched
 }
 
 // Bytes returns the schedule as an encoded byte slice
@@ -243,7 +249,6 @@ func (s *Schedule) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) 
           if err := decoder.DecodeElement( elem, &tok ); err != nil {
             return err
           }
-          elem.UpdateTime()
           s.Locations = append( s.Locations, elem )
         }
 

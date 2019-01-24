@@ -14,7 +14,7 @@ type Loading struct {
   // RTTI unique Train ID
   RID                 string              `json:"rid" xml:"rid"`
   // TIPLOC where the loading data applies.
-  Tpl                 string              `json:"tpl" xml:"tpl"`
+  Tiploc              string              `json:"tpl" xml:"tpl"`
   // Loading data for an individual coach in the formation.
   // If no loading data is provided for a coach in the formation then it
   // should be assumed to have been cleared.
@@ -33,7 +33,7 @@ func (s *Loading) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) e
         s.RID = attr.Value
 
       case "tpl":
-        s.Tpl = attr.Value
+        s.Tiploc = attr.Value
     }
   }
 

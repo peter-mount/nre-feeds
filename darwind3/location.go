@@ -1,8 +1,8 @@
 package darwind3
 
 import (
-  "bytes"
-  "encoding/json"
+  //"bytes"
+  //"encoding/json"
   "encoding/xml"
   "github.com/peter-mount/nre-feeds/util"
   "strconv"
@@ -85,7 +85,9 @@ type Location struct {
     TrainOrder       *TrainOrder  `json:"trainOrder,omitempty"`
   }                               `json:"forecast"`
   // The delay in seconds calculated as difference between forecast.time and timetable.time
-  Delay               int
+  Delay               int         `json:"delay"`
+  // Loading data for this location.
+  Loading            *Loading     `json:"loading"`
   // updated if true trigger an event
   updated             bool
 }
@@ -219,6 +221,10 @@ func (s *Location) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) 
 func (l *Location) UpdateTime() {
   l.Times.UpdateTime()
 
+  if l.Loading != nil {
+    l.Loading.Times.UpdateTime()
+  }
+
   passed := l.Forecast.Pass.AT != nil && !l.Forecast.Pass.AT.IsZero()
   l.Forecast.Departed = ( l.Forecast.Departure.AT != nil && !l.Forecast.Departure.AT.IsZero() ) || passed
   l.Forecast.Arrived = ( l.Forecast.Arrival.AT != nil && !l.Forecast.Arrival.AT.IsZero() ) || passed
@@ -270,11 +276,13 @@ func (a *Location) Clone() *Location {
     Cancelled: a.Cancelled,
     Planned: a.Planned,
     Forecast: a.Forecast,
+    Loading: a.Loading,
   }
   b.UpdateTime()
   return b
 }
 
+/*
 func (t *Location) append( b *bytes.Buffer, c bool, f string, v interface{} ) bool {
   // Any null, "" or false ignore
   if vb, err := json.Marshal( v );
@@ -337,3 +345,4 @@ func (t *Location) MarshalJSON() ( []byte, error ) {
   b.WriteByte( '}' )
   return b.Bytes(), nil
 }
+*/
