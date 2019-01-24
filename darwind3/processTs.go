@@ -28,6 +28,11 @@ func (p *TS) Process( tx *Transaction ) error {
     return nil
   }
 
+  // set forecast date of the new entries
+  for _, a := range p.Locations {
+    a.Forecast.Date = tx.pport.TS
+  }
+
   sched.Update( func() error {
     // Update the LateReason
     sched.LateReason = p.LateReason
@@ -45,6 +50,7 @@ func (p *TS) Process( tx *Transaction ) error {
     }
 
     // Append any locations not in the schedule
+    sortRequired := false
     for _, a := range p.Locations {
       f := true
       for _, b := range sched.Locations {
@@ -54,8 +60,17 @@ func (p *TS) Process( tx *Transaction ) error {
       }
       if f {
         sched.Locations = append( sched.Locations, a)
+        sortRequired = true
       }
     }
+
+    // Sort if required else just update the times
+    if sortRequired {
+      sched.Sort()
+    } else {
+      sched.UpdateTime()
+    }
+
     return nil
   })
 

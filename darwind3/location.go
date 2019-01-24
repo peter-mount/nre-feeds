@@ -6,6 +6,7 @@ import (
   "encoding/xml"
   "github.com/peter-mount/nre-feeds/util"
   "strconv"
+  "time"
 )
 
 // A location in a schedule.
@@ -83,6 +84,8 @@ type Location struct {
     DetachFront       bool        `json:"detachFront,omitempty"`
     // The train order at this location (1, 2 or 3). 0 Means no TrainOrder has been set
     TrainOrder       *TrainOrder  `json:"trainOrder,omitempty"`
+    // This is the TS time from Darwin when this Forecast was updated
+    Date              time.Time   `json:"date,omitempty"`
   }                               `json:"forecast"`
   // The delay in seconds calculated as difference between forecast.time and timetable.time
   Delay               int         `json:"delay"`

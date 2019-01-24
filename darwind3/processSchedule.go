@@ -49,6 +49,7 @@ func (p *Schedule) Process( tx *Transaction ) error {
   }
 
   p.Date = tx.pport.TS
+  p.Sort()
   tx.d3.putSchedule( p )
   tx.d3.EventManager.PostEvent( &DarwinEvent{
     Type: Event_ScheduleUpdated,

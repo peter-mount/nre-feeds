@@ -54,16 +54,20 @@ func (to *trainOrderWrapper) processOrder( tx *Transaction, order int, tod *trai
 
         if to.Clear {
           l.Forecast.TrainOrder = nil
-          } else {
-            l.Forecast.TrainOrder = &TrainOrder{ Order: order, Platform: to.Platform }
+        } else {
+          l.Forecast.TrainOrder = &TrainOrder{
+            Order: order,
+            Platform: to.Platform,
+            Date: tx.pport.TS,
           }
-
-          // Mark as updated
-          l.updated = true
         }
-      }
 
-      return nil
+        // Mark as updated
+        l.updated = true
+      }
+    }
+
+    return nil
   }); err != nil {
     return err
   }

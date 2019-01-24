@@ -2,6 +2,7 @@ package darwind3
 
 import (
   "encoding/xml"
+  "time"
 )
 
 // Defines the expected Train order at a platform
@@ -9,6 +10,9 @@ type TrainOrder struct {
   Order     int       `json:"order" xml:"order,attr"`
   // The platform number where the train order applies
   Platform  string    `json:"plat,omitempty" xml:"plat,attr,omitempty"`
+  // This is the TS time from Darwin so we keep a copy of when this struct
+  // was sent to us
+  Date              time.Time             `json:"date,omitempty"`
 }
 
 // The trainOrder as received from darwin
