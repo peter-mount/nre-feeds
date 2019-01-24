@@ -209,14 +209,16 @@ func (s *Location) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) 
         }
 
       case xml.EndElement:
-        s.update()
+        s.UpdateTime()
         return nil
     }
   }
 }
 
 // update sets all "calculated" fields
-func (l *Location) update() {
+func (l *Location) UpdateTime() {
+  l.Times.UpdateTime()
+
   passed := l.Forecast.Pass.AT != nil && !l.Forecast.Pass.AT.IsZero()
   l.Forecast.Departed = ( l.Forecast.Departure.AT != nil && !l.Forecast.Departure.AT.IsZero() ) || passed
   l.Forecast.Arrived = ( l.Forecast.Arrival.AT != nil && !l.Forecast.Arrival.AT.IsZero() ) || passed
@@ -269,7 +271,7 @@ func (a *Location) Clone() *Location {
     Planned: a.Planned,
     Forecast: a.Forecast,
   }
-  b.update()
+  b.UpdateTime()
   return b
 }
 

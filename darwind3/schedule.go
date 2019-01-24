@@ -140,6 +140,9 @@ func ScheduleFromBytes( b []byte ) *Schedule {
   if err != nil || sched.RID == "" {
     return nil
   }
+  for _, l := range sched.Locations {
+    l.UpdateTime()
+  }
   return sched
 }
 
@@ -240,6 +243,7 @@ func (s *Schedule) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) 
           if err := decoder.DecodeElement( elem, &tok ); err != nil {
             return err
           }
+          elem.UpdateTime()
           s.Locations = append( s.Locations, elem )
         }
 

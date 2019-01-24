@@ -94,5 +94,5 @@ type CoachLoadingData struct {
   // E.g. "Unknown", "None" , "Standard" or "Accessible".
   // Note that other values may be supplied in the future without a schema change.
   // If no toilet availability is supplied then it should be assumed to be "Unknown".
-  Toilet        Toilet      `json:"toilet" xml:"toilet,omitempty"`
+  Toilet       *Toilet      `json:"toilet" xml:"toilet,omitempty"`
 }

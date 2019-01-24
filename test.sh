@@ -3,18 +3,17 @@
 # Module to build & run
 #MODULE=darwinref
 #MODULE=darwintimetable
-#MODULE=darwind3
-MODULE=darwinkb
+MODULE=darwind3
+#MODULE=darwinkb
 
 # db directory
 DB=/home/peter/tmp/nre
 
-./scripts/build.sh test ${MODULE} amd64 latest &&\
+./build.sh test amd64 latest ${MODULE} &&\
 docker run \
   -it \
   --rm \
   --name ${MODULE} \
-  --net europanet \
   -v ${DB}:/database \
   -v $(pwd)/config.yaml:/config.yaml:ro \
   test:${MODULE}-amd64-latest

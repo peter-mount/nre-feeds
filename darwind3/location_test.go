@@ -31,8 +31,7 @@ func location_new( i int, s string ) *Location {
       v.Times.Wtd = util.NewWorkingTime( s )
       v.Forecast.Departure.AT = v.Times.Wtd
   }
-  v.Times.UpdateTime()
-  v.update()
+  v.UpdateTime()
 
   return v
 }
