@@ -37,10 +37,10 @@ type Journey struct {
   // has been built will not have this attribute set true.
   QTrain          bool          `json:"qtrain,omitempty" xml:"qtrain,attr,omitempty"`
   // The schedule
-  Schedule      []*Location     `json:"locations" xml:location`
+  Schedule     []*Location      `json:"locations" xml:location`
   CancelReason    int           `json:"cancelReason" xml:"cancelReason,attr"`
   // Associations
-  //Associations  []*Association  `xml:"-"`
+  Associations []*Association   `json:"association" xml:"-"`
   // Date entry was inserted into the database
   Date        time.Time `json:"date" xml:"date,attr"`
   // URL to this entity
@@ -101,12 +101,7 @@ func (r *DarwinTimetable) addJourney( journey *Journey ) ( error, bool ) {
   if old, exists := r.getJourney( journey.RID ); !exists || !journey.Equals( old ) {
     journey.Date = time.Now()
 
-    b, err := json.Marshal( journey )
-    if err != nil {
-      return err, false
-    }
-
-    err = r.journeys.Put( []byte( journey.RID ), b )
+    err := r.putJourney( journey )
     if err != nil {
       return err, false
     }
@@ -115,4 +110,13 @@ func (r *DarwinTimetable) addJourney( journey *Journey ) ( error, bool ) {
   }
 
   return nil, false
+}
+
+func (r *DarwinTimetable) putJourney( journey *Journey) error {
+  b, err := json.Marshal( journey )
+  if err != nil {
+    return err
+  }
+
+  return r.journeys.Put( []byte( journey.RID ), b )
 }

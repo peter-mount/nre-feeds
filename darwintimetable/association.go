@@ -2,9 +2,7 @@
 package darwintimetable
 
 import (
-  //bolt "github.com/etcd-io/bbolt"
   "encoding/xml"
-  //"github.com/peter-mount/golib/rest"
   "time"
 )
 
@@ -23,15 +21,25 @@ type Association struct {
 }
 
 func (a *Association) Equals( b *Association ) bool {
+  if a == nil {
+    return b == nil
+  }
   if b == nil {
     return false
   }
-  return a.Main.RID == b.Main.RID &&
-    a.Assoc.RID == b.Assoc.RID &&
-    a.Tiploc == b.Tiploc &&
-    a.Category == b.Category &&
-    a.Cancelled == b.Cancelled &&
-    a.Deleted == b.Deleted
+  return a.Main.Equals( &b.Main ) &&
+         a.Assoc.Equals( &b.Assoc ) &&
+         a.Tiploc == b.Tiploc &&
+         a.Category == b.Category
+}
+
+func (r *DarwinTimetable) addAssociation( a *Association ) error {
+  err := r.addJourneyAssociation( a, a.Main )
+  if err != nil {
+    return err
+  }
+
+  return r.addJourneyAssociation( a, a.Assoc )
 }
 
 type AssocService struct {
@@ -41,4 +49,36 @@ type AssocService struct {
   Wtp       string    `json:"wtp,omitempty" xml:"wtp,attr"`
   Pta       string    `json:"pta,omitempty" xml:"pta,attr"`
   Ptd       string    `json:"ptd,omitempty" xml:"ptd,attr"`
+}
+
+func (a *AssocService) Equals( b *AssocService ) bool {
+  if a == nil {
+    return b == nil
+  }
+  if b == nil {
+    return false
+  }
+  return a.RID == b.RID &&
+         a.Wta == b.Wta &&
+         a.Wtd == b.Wtd &&
+         a.Wtp == b.Wtp &&
+         a.Pta == b.Pta &&
+         a.Ptd == b.Ptd
+}
+
+func (r *DarwinTimetable) addJourneyAssociation( a *Association, as AssocService ) error {
+  journey, exists := r.getJourney( as.RID )
+  if !exists {
+    return nil
+  }
+
+  for i, ja := range journey.Associations {
+    if ja.Equals( a ) {
+      journey.Associations[i] = a
+      return r.putJourney( journey )
+    }
+  }
+
+  journey.Associations = append ( journey.Associations, a )
+  return r.putJourney( journey )
 }

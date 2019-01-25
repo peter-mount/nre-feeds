@@ -17,8 +17,7 @@ func (t *DarwinTimetable) UnmarshalXML( decoder *xml.Decoder, start xml.StartEle
 
 func (t *DarwinTimetable) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start xml.StartElement ) error {
   journeyCount := 0
-
-  var assocs []*Association
+  assocCount := 0
 
   for _, attr := range start.Attr {
     switch attr.Name.Local {
@@ -53,11 +52,17 @@ func (t *DarwinTimetable) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start
       case "Association":
         var a *Association = &Association{}
 
-        if err = decoder.DecodeElement( a, &tok ); err != nil {
+        err = decoder.DecodeElement( a, &tok )
+        if err != nil {
           return err
         }
 
-        assocs = append( assocs, a )
+        err = t.addAssociation( a )
+        if err != nil {
+          return err
+        }
+
+        assocCount ++
 
       default:
         log.Println( "Unknown element", tok.Name.Local )
@@ -66,22 +71,7 @@ func (t *DarwinTimetable) unmarshalXML( tx *bolt.Tx, decoder *xml.Decoder, start
     case xml.EndElement:
 
       log.Println( "Journey's", journeyCount )
-
-      /*
-      for _, a := range assocs {
-        if j1, ok := t.Journeys[a.Main.RID]; ok {
-          if j2, ok := t.Journeys[a.Assoc.RID]; ok {
-            j1.Associations = append( j1.Associations, a )
-            j2.Associations = append( j2.Associations, a )
-            } else {
-              log.Println( "Assoc", a.Assoc.RID, "not found, main", a.Main.RID )
-            }
-            } else {
-              log.Println( "Main", a.Main.RID, "not found, Assoc", a.Assoc.RID )
-            }
-          }
-          */
-
+      log.Println( "Association's", assocCount )
 
       // Finally update the meta data
       t.importDate = time.Now()
