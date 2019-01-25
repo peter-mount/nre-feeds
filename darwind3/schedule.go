@@ -42,6 +42,8 @@ type Schedule struct {
   Origin           *Location              `json:"originLocation"`
   // The destination of this service
   Destintion       *Location              `json:"destinationLocation"`
+  // Associations to this schedule
+  Associations   []*Association           `json:"association"`
   // Usually this is the date we insert into the db but here we use the TS time
   // as returned from darwin
   Date              time.Time             `json:"date,omitempty" xml:"date,attr,omitempty"`

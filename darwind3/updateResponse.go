@@ -2,6 +2,7 @@ package darwind3
 
 import (
   "encoding/xml"
+  "log"
 )
 
 // Update Response
@@ -55,7 +56,17 @@ func (s *UR) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error 
           case "formationLoading":
             elem = &Loading{}
 
+          // association assed 2019-01-25
+          case "association":
+            elem = &Association{}
+
+          // Unsupported (so far) elements:
+          // scheduleFormations
+          // trainAlert
+          // trackingID
+          // alarm
           default:
+            log.Println( "Skipping", tok.Name.Local, tok.Name.Space )
             if err := decoder.Skip(); err != nil {
               return err
             }
