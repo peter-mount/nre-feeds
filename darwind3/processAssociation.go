@@ -1,13 +1,7 @@
 package darwind3
 
-import (
-  "log"
-)
-
 // Process inbound associations
 func (a *Association) Process( tx *Transaction ) error {
-  log.Println( "Process Association", a )
-
   a.Date = tx.pport.TS
 
   err := a.Main.processSched( tx, a )
