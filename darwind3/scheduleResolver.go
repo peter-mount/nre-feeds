@@ -1,7 +1,9 @@
 package darwind3
 
 import (
+  "github.com/peter-mount/nre-feeds/darwintimetable"
   "github.com/peter-mount/nre-feeds/darwintimetable/client"
+  "github.com/peter-mount/nre-feeds/util"
   "strconv"
 )
 
@@ -35,6 +37,7 @@ func (d *Transaction) ResolveSchedule( rid string ) *Schedule {
 
     s.CancelReason.Reason = journey.CancelReason
 
+    // Import locations
     for _, tl := range journey.Schedule {
       l := &Location{
         Type: tl.Type,
@@ -48,7 +51,6 @@ func (d *Transaction) ResolveSchedule( rid string ) *Schedule {
       l.Times.Wta = tl.Wta
       l.Times.Wtd = tl.Wtd
       l.Times.Wtp = tl.Wtp
-      l.Times.UpdateTime()
 
       l.Planned.ActivityType = tl.Act
       l.Planned.PlannedActivity = tl.PlanAct
@@ -64,8 +66,48 @@ func (d *Transaction) ResolveSchedule( rid string ) *Schedule {
       s.Locations = append( s.Locations, l )
     }
 
-    s.Sort()
-    return s
+    // Import associations
+    for _, ta := range journey.Associations {
+      a := &Association{
+        Tiploc: ta.Tiploc,
+        Category: ta.Category,
+        Cancelled: ta.Cancelled,
+        Deleted: ta.Deleted,
+        Date: ta.Date,
+      }
 
+      a.Main.copyFromTimetable( &ta.Main )
+      a.Assoc.copyFromTimetable( &ta.Assoc )
+
+      s.Associations = append( s.Associations, a )
+    }
+
+    s.Sort()
+
+    return s
+  }
+}
+
+func (a *AssocService) copyFromTimetable( b *darwintimetable.AssocService ) {
+  a.RID = b.RID
+
+  if b.Wta != "" {
+    a.Times.Wta = util.NewWorkingTime( b.Wta )
+  }
+
+  if b.Wtd != "" {
+    a.Times.Wtd = util.NewWorkingTime( b.Wtd )
+  }
+
+  if b.Wtp != "" {
+    a.Times.Wtp = util.NewWorkingTime( b.Wtp )
+  }
+
+  if b.Pta != "" {
+    a.Times.Pta = util.NewPublicTime( b.Pta )
+  }
+
+  if b.Ptd != "" {
+    a.Times.Ptd = util.NewPublicTime( b.Ptd )
   }
 }

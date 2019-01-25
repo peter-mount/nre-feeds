@@ -185,6 +185,10 @@ func (s *Schedule) UpdateTime() {
     }
   }
 
+  for _, a := range s.Associations {
+    a.Main.Times.UpdateTime()
+    a.Assoc.Times.UpdateTime()
+  }
 }
 
 // Bytes returns the schedule as an encoded byte slice
