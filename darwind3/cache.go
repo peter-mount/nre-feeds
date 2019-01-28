@@ -52,7 +52,7 @@ func (c *cache) initCache( cacheDir string ) error {
 func (d *DarwinD3) GetSchedule( rid string ) *Schedule {
   val, err := d.cache.scheduleCache.Value( rid )
   if err != nil {
-    sched := d.ResolveSchedule( rid )
+    sched := d.resolveSchedule( rid )
     if sched != nil {
       d.putSchedule( sched )
     }

@@ -10,11 +10,15 @@ import (
 // ResolveSchedule attempts to retrieve a schedule from the timetable.
 // If DarwinD3.Timetable is not set then this always returns nil
 func (d *Transaction) ResolveSchedule( rid string ) *Schedule {
-  if d.d3.Timetable == "" {
+  return d.d3.resolveSchedule( rid )
+}
+
+func (d3 *DarwinD3) resolveSchedule( rid string ) *Schedule {
+  if d3.Timetable == "" {
     return nil
   }
 
-  client := &client.DarwinTimetableClient{ Url: d.d3.Timetable }
+  client := &client.DarwinTimetableClient{ Url: d3.Timetable }
 
   if journey, err := client.GetJourney( rid ); err != nil {
     return nil
