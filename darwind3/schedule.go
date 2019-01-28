@@ -41,7 +41,7 @@ type Schedule struct {
   // The origin of this service
   Origin           *Location              `json:"originLocation"`
   // The destination of this service
-  Destintion       *Location              `json:"destinationLocation"`
+  Destination      *Location              `json:"destinationLocation"`
   // Associations to this schedule
   Associations   []*Association           `json:"association"`
   // Usually this is the date we insert into the db but here we use the TS time
@@ -155,7 +155,7 @@ func ScheduleFromBytes( b []byte ) *Schedule {
 
 func (s *Schedule) UpdateTime() {
   s.Origin = nil
-  s.Destintion = nil
+  s.Destination = nil
 
   for _, l := range s.Locations {
     l.UpdateTime()
@@ -174,13 +174,13 @@ func (s *Schedule) UpdateTime() {
         }
 
       case "DT":
-        if s.Destintion == nil || s.Destintion.Type == "OPDT" {
-          s.Destintion = l
+        if s.Destination == nil || s.Destination.Type == "OPDT" {
+          s.Destination = l
         }
 
       case "OPDT":
-        if s.Destintion == nil || s.Destintion.Type != "DT" {
-          s.Destintion = l
+        if s.Destination == nil || s.Destination.Type != "DT" {
+          s.Destination = l
         }
     }
   }
