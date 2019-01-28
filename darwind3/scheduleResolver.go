@@ -87,7 +87,6 @@ func (d3 *DarwinD3) resolveSchedule( rid string ) *Schedule {
     }
 
     s.Sort()
-
     return s
   }
 }

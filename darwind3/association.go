@@ -23,17 +23,23 @@ type Association struct {
   // i.e. the association no longer exists.
   Deleted   bool              `json:"deleted,omitempty"`
   // This is the TS time from Darwin when this Association was updated
-  Date              time.Time   `json:"date,omitempty"`
+  Date      time.Time         `json:"date,omitempty"`
 }
 
 // xs:complexType name="AssocService"
 type AssocService struct {
   // RTTI Train ID.
   // Note that since this is an RID, the service must already exist within Darwin.
-  RID       string      `json:"rid"`
+  RID           string              `json:"rid"`
   // One or more scheduled times to identify the instance of the location
   // in the train schedule where the association occurs.
-  Times             util.CircularTimes `json:"timetable"`
+  Times         util.CircularTimes  `json:"timetable"`
+  // Location for this entry
+  Location     *Location            `json:"location,omitempty"`
+  // The origin of this service
+  Origin       *Location            `json:"origin,omitempty"`
+  // The destination of this service
+  Destination  *Location            `json:"destination,omitempty"`
 }
 
 func (a *Association) Equals( b *Association ) bool {
@@ -70,6 +76,49 @@ func (a *Association) Clone() *Association {
     Date: a.Date,
   }
 }
+
+func (d3 *DarwinD3) updateAssociations( sched *Schedule ) {
+  for _, a := range sched.Associations {
+    for _, l := range sched.Locations {
+      if a.Tiploc == l.Tiploc {
+        np := a.Category == "NP"
+        if a.Main.RID == sched.RID && (a.Category == "VV" || np ){
+          a.Main.Location = l
+          d3.updateAssociation( a, &a.Assoc, np )
+        } else if a.Assoc.RID == sched.RID && ( a.Category == "JJ" || np ) {
+          a.Assoc.Location = l
+          d3.updateAssociation( a, &a.Main,np )
+        }
+      }
+    }
+  }
+}
+
+func (d3 *DarwinD3) updateAssociation( a *Association, as *AssocService, np bool ) {
+
+  // np=true then do not resolve in the get else we could go into an infinite loop
+  var s *Schedule
+  if np {
+    s = d3.getSchedule( as.RID )
+  } else {
+    s = d3.GetSchedule( as.RID )
+  }
+
+  if s != nil {
+    //s.UpdateTime()
+    as.Origin = s.Origin
+    as.Destination = s.Destination
+    for _, l := range s.Locations {
+      if l.Times.Equals( &as.Times ) {
+        as.Location = l
+        return
+      }
+    }
+  }
+
+  as.Location = nil
+}
+
 func (s *Association) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error {
   for _, attr := range start.Attr {
     switch attr.Name.Local {

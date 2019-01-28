@@ -43,6 +43,8 @@ func (p *Schedule) Process( tx *Transaction ) error {
       p.Locations = ary
     }
 
+    tx.d3.updateAssociations( p )
+
     return nil
   }); err != nil {
     return err

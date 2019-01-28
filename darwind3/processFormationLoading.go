@@ -30,6 +30,7 @@ func (l *Loading) Process( tx *Transaction ) error {
     for _, loc := range sched.Locations {
       if loc.Tiploc == l.Tiploc && l.Times.Equals( &loc.Times ) {
         loc.Loading = l
+        tx.d3.updateAssociations( sched )
         return nil
       }
     }

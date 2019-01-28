@@ -64,6 +64,8 @@ func (p *TS) Process( tx *Transaction ) error {
       }
     }
 
+    tx.d3.updateAssociations( sched )
+
     // Sort if required else just update the times
     if sortRequired {
       sched.Sort()
