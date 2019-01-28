@@ -51,6 +51,13 @@ func (c *cache) initCache( cacheDir string ) error {
 // Retrieve a schedule by it's rid
 func (d *DarwinD3) GetSchedule( rid string ) *Schedule {
   val, err := d.cache.scheduleCache.Value( rid )
+  if err != nil {
+    sched := d.ResolveSchedule( rid )
+    if sched != nil {
+      d.putSchedule( sched )
+    }
+    return sched
+  }
   if err == nil {
     return val.Data().(*Schedule)
   }
