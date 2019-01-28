@@ -90,10 +90,13 @@ func (a *Schedule) Clone() *Schedule {
       b.Locations = append( b.Locations, l.Clone() )
     }
 
+    for _, assoc := range a.Associations {
+      b.Associations = append( b.Associations, assoc.Clone() )
+    }
     return nil
   })
 
-  b.UpdateTime()
+  b.Sort()
   return b
 }
 

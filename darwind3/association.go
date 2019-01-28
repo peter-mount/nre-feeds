@@ -59,6 +59,17 @@ func (a *AssocService) Equals( b *AssocService ) bool {
   return a.RID == b.RID && a.Times.Equals( &b.Times )
 }
 
+func (a *Association) Clone() *Association {
+  return &Association {
+    Main: a.Main,
+    Assoc: a.Assoc,
+    Tiploc: a.Tiploc,
+    Category: a.Category,
+    Cancelled: a.Cancelled,
+    Deleted: a.Deleted,
+    Date: a.Date,
+  }
+}
 func (s *Association) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error {
   for _, attr := range start.Attr {
     switch attr.Name.Local {
