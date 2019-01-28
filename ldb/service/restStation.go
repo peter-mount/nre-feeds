@@ -87,6 +87,16 @@ func (d *LDBService) stationHandler( r *rest.Rest ) error {
       tiplocs[ s.Destination ] = nil
       tiplocs[ s.Location.Tiploc ] = nil
 
+      // The origin Location
+      if s.Origin != nil {
+        tiplocs[ s.Origin.Tiploc ] = nil
+      }
+
+      // The destination Location
+      if s.Dest != nil {
+        tiplocs[ s.Dest.Tiploc ] = nil
+      }
+
       // Add CallingPoints tiplocs to map & via request
       if s.Schedule() != nil {
         s.CallingPoints = s.Schedule().GetCallingPoints( s.LocationIndex() )
@@ -107,6 +117,11 @@ func (d *LDBService) stationHandler( r *rest.Rest ) error {
           tiplocs[ cp.Tiploc ] = nil
           viaRequest.Tiplocs = append( viaRequest.Tiplocs, cp.Tiploc )
         }
+      }
+
+      // The association tiplocs
+      for _, assoc := range s.Associations {
+        tiplocs[ assoc.Tiploc ] = nil
       }
 
       // Toc running this service

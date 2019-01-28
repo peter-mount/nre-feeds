@@ -93,6 +93,20 @@ func (d *LDBService) serviceHandler( r *rest.Rest ) error {
       }
     }
 
+    // Tiplocs in associations
+    for _, a := range service.Associations {
+      if a.Tiploc != "" {
+        tiplocs[ a.Tiploc ] = nil
+      }
+    }
+
+    // Origin/Destination - should already be there but just incase
+    if service.Origin != nil && service.Origin.Tiploc != "" {
+      tiplocs[ service.Origin.Tiploc ] = nil
+    }
+    if service.Destination != nil && service.Destination.Tiploc != "" {
+      tiplocs[ service.Destination.Tiploc ] = nil
+    }
 
     // Now resolve the tiplocs en-masse and resolve the toc's at the same time
     if locs, _ := refClient.GetTiplocsMapKeys( tiplocs ); locs != nil {

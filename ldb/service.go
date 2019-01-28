@@ -1,8 +1,6 @@
 package ldb
 
 import (
-  "bytes"
-  "encoding/json"
   "github.com/peter-mount/nre-feeds/darwind3"
   "github.com/peter-mount/nre-feeds/util"
   "time"
@@ -12,8 +10,13 @@ import (
 type Service struct {
   // The RID of this service
   RID               string                      `json:"rid"`
-  // The destination
+  // The destination - use this and not Dest.Tiploc as this can be overridden
+  // if Location.FalseDestination is set
   Destination       string                      `json:"destination"`
+  // Origin Location of this service
+  Origin           *darwind3.Location           `json:"origin"`
+  // Destination Location of this service
+  Dest             *darwind3.Location           `json:"dest"`
   // Service Start Date
   SSD               util.SSD                    `json:"ssd"`
   // The trainId (headcode)
@@ -36,6 +39,8 @@ type Service struct {
   CallingPoints  []*darwind3.CallingPoint       `json:"calling"`
   // The last report
   LastReport       *darwind3.CallingPoint       `json:"lastReport,omitempty"`
+  // The associations
+  Associations   []*darwind3.Association        `json:"association"`
   // The latest schedule entry used for this service
   schedule         *darwind3.Schedule           `json:"-"`
   // The index within the schedule of this location
@@ -90,15 +95,23 @@ func (s *Service) update( sched *darwind3.Schedule, idx int ) bool {
     s.CancelReason = sched.CancelReason
     s.LateReason = sched.LateReason
 
+    // The origin/destination Locations
+    s.Origin = sched.Origin
+    s.Dest = sched.Destination
+
     // Resolve the destination
     if s.Location.FalseDestination != "" {
       s.Destination = s.Location.FalseDestination
-    } else if len( sched.Locations ) > 0 {
-      // For now presume this is correct
-      s.Destination = sched.Locations[ len( sched.Locations )-1 ].Tiploc
-    } else {
-      s.Destination = ""
+    } else if sched.Destination != nil {
+      s.Destination = sched.Destination.Tiploc
     }
+    if s.Destination == "" && len( sched.Locations ) > 0 {
+      // Use last location if no destination
+      s.Destination = sched.Locations[ len( sched.Locations )-1 ].Tiploc
+    }
+
+    // Copy associations
+    s.Associations = sched.Associations
 
     // Copy the date/self of the underlying schedule
     s.Date = sched.Date
@@ -115,6 +128,8 @@ func (a *Service) Clone() *Service {
   return &Service{
     RID: a.RID,
     Destination: a.Destination,
+    Origin: a.Origin,
+    Dest: a.Dest,
     SSD: a.SSD,
     TrainId: a.TrainId,
     Toc: a.Toc,
@@ -123,68 +138,10 @@ func (a *Service) Clone() *Service {
     CancelReason: a.CancelReason,
     LateReason: a.LateReason,
     Location: a.Location.Clone(),
+    Associations: a.Associations,
     schedule: a.schedule,
     locationIndex: a.locationIndex,
     Date: a.Date,
     Self: a.Self,
   }
-}
-
-func (t *Service) append( b *bytes.Buffer, c bool, f string, v interface{} ) bool {
-  // Any null, "" or false ignore
-  if vb, err := json.Marshal( v );
-    err == nil &&
-    !( len(vb) == 2 && vb[0] == '"' && vb[1] == '"' ) &&
-    !( len(vb) == 4 && vb[0] == 'n' && vb[1] == 'u' && vb[2] == 'l' && vb[3] == 'l') &&
-    !( len(vb) == 5 && vb[0] == 'f' && vb[1] == 'a' && vb[2] == 'l' && vb[3] == 's' && vb[4] == 'e') {
-    if c {
-      b.WriteByte( ',' )
-    }
-
-    b.WriteByte( '"' )
-    b.WriteString( f )
-    b.WriteByte( '"' )
-    b.WriteByte( ':' )
-    b.Write( vb )
-    return true
-  }
-
-  return c
-}
-
-func (t *Service) MarshalJSON() ( []byte, error ) {
-  var b bytes.Buffer
-
-  b.WriteByte( '{' )
-  c := t.append( &b, false, "rid", t.RID )
-  c = t.append( &b, c, "destination", t.Destination )
-  c = t.append( &b, c, "ssd", &t.SSD )
-  c = t.append( &b, c, "trainId", t.TrainId )
-  c = t.append( &b, c, "toc", t.Toc )
-  c = t.append( &b, c, "passengerService", &t.PassengerService )
-  c = t.append( &b, c, "charter", &t.Charter )
-
-  if t.CancelReason.Reason > 0 {
-    c = t.append( &b, c, "cancelReason", &t.CancelReason )
-  }
-
-  if t.LateReason.Reason > 0 {
-    c = t.append( &b, c, "lateReason", &t.LateReason )
-  }
-
-  c = t.append( &b, c, "location", &t.Location )
-
-  if len( t.CallingPoints ) > 0 {
-    c = t.append( &b, c, "calling", t.CallingPoints )
-  }
-
-  if t.LastReport != nil {
-    c = t.append( &b, c, "lastReport", t.LastReport )
-  }
-
-  c = t.append( &b, c, "date", t.Date )
-  c = t.append( &b, c, "self", t.Self )
-
-  b.WriteByte( '}' )
-  return b.Bytes(), nil
 }
