@@ -93,6 +93,9 @@ func (d *DarwinEventManager) ListenToEvents( eventType int, f func( *DarwinEvent
         json.Unmarshal( msg.Body, evt )
 
         if evt.Type == eventType {
+          if evt.Schedule != nil {
+            evt.Schedule.Sort()
+          }
           f( evt )
         }
       }
@@ -104,9 +107,9 @@ func (d *DarwinEventManager) ListenToEvents( eventType int, f func( *DarwinEvent
 
 // PostEvent posts a DarwinEvent to all listeners listening for that specific type
 func (d *DarwinEventManager) PostEvent( e *DarwinEvent ) {
-  if e.Schedule != nil {
-    e.Schedule = e.Schedule.Clone()
-  }
+  //if e.Schedule != nil {
+  //  e.Schedule = e.Schedule.Clone()
+  //}
 
   if b, err := json.Marshal( e ); err == nil {
     d.mq.Publish( fmt.Sprintf( "%sd3.event.%d", d.eventKeyPrefix, e.Type ), b )
