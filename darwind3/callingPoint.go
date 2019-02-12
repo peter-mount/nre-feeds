@@ -46,14 +46,24 @@ func (l *Location) AsCallingPoint() *CallingPoint {
 }
 
 // GetCallingPoints returns a list of calling points from a specific location
-// in the schedule.
+// in the schedule. If the specific location has a FalseDestination set then
+// the calling point list will terminate there rather than at the
+// end of the schedule.
 func (s *Schedule) GetCallingPoints( idx int ) []*CallingPoint {
   var cp []*CallingPoint
 
   if idx >= 0 && (idx+1) < len( s.Locations ) {
+    // departureboards#4 If set then we need to stop at this tiploc rather than the entire schedule
+    falseDest := s.Locations[ idx ].FalseDestination
+
     for _, l := range s.Locations[ idx+1: ] {
       if l.IsCallingPoint() {
         cp = append( cp, l.AsCallingPoint() )
+      }
+
+      // departureboards#4 Stop at the falseDest (if one is defined)
+      if l.Tiploc == falseDest {
+        return cp
       }
     }
   }
