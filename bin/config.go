@@ -11,6 +11,13 @@ import (
   "fmt"
 )
 
+type QueueDef struct {
+  // The queue name to create
+  QueueName       string  `yaml:"queueName"`
+  // The routingKey to listen for inbound d3 messages
+  RoutingKey      string  `yaml:"routingKey"`
+}
+
 // Common configuration used to read config.yaml
 type Config struct {
   // URL prefixes for lookups to the reference microservices
@@ -42,20 +49,22 @@ type Config struct {
     Username      string    `yaml:"username"`
     Password      string    `yaml:"password"`
     DataDir       string    `yaml:"datadir"`
+    // Darwin V16 Incidents feed
+    Incidents     QueueDef  `yaml:"incidents"`
   }
 
   RabbitMQ      rabbitmq.RabbitMQ `yaml:"rabbitmq"`
 
   D3 struct {
     // Set to true to use the darwintt service to try to resulve unknown schedules
-    ResolveSched    bool    `yaml:"resolveSchedules"`
-    // The queue name to create
-    QueueName       string  `yaml:"queueName"`
-    // The routingKey to listen for inbound d3 messages
-    RoutingKey      string  `yaml:"routingKey"`
+    ResolveSched    bool      `yaml:"resolveSchedules"`
+    // Darwin V16 PusPort
+    PushPort        QueueDef  `yaml:"pushPort"`
+    // Darwin V16 Status feed
+    Status          QueueDef  `yaml:"status"`
     // Prefix to the routingKeys used by the Event subsystem
-    EventKeyPrefix  string  `yaml:"eventKeyPrefix"`
-  }                         `yaml:"d3"`
+    EventKeyPrefix  string    `yaml:"eventKeyPrefix"`
+  }                           `yaml:"d3"`
 
   Server struct {
     // Root context path, defaults to ""

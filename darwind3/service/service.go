@@ -67,7 +67,7 @@ func (a *DarwinD3Service) Start() error {
   a.config.RabbitMQ.ConnectionName = "darwin d3"
   a.config.RabbitMQ.Connect()
 
-  em := darwind3.NewDarwinEventManager( &a.config.RabbitMQ, a.config.D3. EventKeyPrefix )
+  em := darwind3.NewDarwinEventManager( &a.config.RabbitMQ, a.config.D3.EventKeyPrefix )
 
   a.config.DbPath( &a.config.Database.PushPort, "dwd3.db" )
   if err := a.darwind3.OpenDB( a.config.Database.PushPort, em ); err != nil {
@@ -79,7 +79,8 @@ func (a *DarwinD3Service) Start() error {
   go a.darwind3.ExpireStationMessages()
 
   if a.config.RabbitMQ.Url != "" {
-    a.darwind3.BindConsumer( &a.config.RabbitMQ, a.config.D3.QueueName, a.config.D3.RoutingKey )
+    // The V16 PushPort queue
+    a.darwind3.BindConsumer( &a.config.RabbitMQ, a.config.D3.PushPort.QueueName, a.config.D3.PushPort.RoutingKey )
   }
 
   return nil
