@@ -24,7 +24,11 @@ func NewStationMessages( cacheDir string ) *StationMessages {
   s.cacheDir = cacheDir
   s.cache = s.cacheDir + "/stationMessages.dat"
 
-  s.Load()
+  err := s.Load()
+  if err != nil {
+    log.Println( err )
+  }
+
   return s
 }
 
@@ -133,6 +137,8 @@ func (d *DarwinD3) ExpireStationMessages() {
 // Load reloads the station messages from disk
 func (sm *StationMessages) Load() error {
   return sm.Update( func() error {
+    log.Println( "Loading StationMessages" )
+
     err := os.MkdirAll( sm.cacheDir, 0777 )
     if err != nil {
       return err
@@ -143,9 +149,14 @@ func (sm *StationMessages) Load() error {
       return err
     }
 
-    err = json.Unmarshal( buf, sm )
+    var messages []*StationMessage
+    err = json.Unmarshal( buf, &messages )
     if err != nil {
       return err
+    }
+
+    for _, m := range messages {
+      sm.messages[ m.ID ] = m
     }
 
     log.Println( "Loaded", len( sm.messages ), "StationMessage's" )
@@ -161,7 +172,12 @@ func (sm *StationMessages) Persist() error {
       return err
     }
 
-    b, err := json.Marshal( sm )
+    var messages []*StationMessage
+    for _, m := range sm.messages {
+      messages = append( messages, m )
+    }
+
+    b, err := json.Marshal( &messages )
     if err != nil {
       return err
     }
