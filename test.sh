@@ -4,6 +4,7 @@
 #MODULE=darwinref
 #MODULE=darwintimetable
 MODULE=darwind3
+#MODULE=ldb
 #MODULE=darwinkb
 
 # db directory

@@ -41,27 +41,30 @@ func (s *Pport) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) err
         }
 
         switch tok := token.(type) {
-        case xml.StartElement:
-          var elem Processor
-          switch tok.Name.Local {
-          case "uR":
-            elem = &UR{}
+          case xml.StartElement:
+            var elem Processor
+            switch tok.Name.Local {
+              case "uR":
+                elem = &UR{}
 
-          default:
-            if err := decoder.Skip(); err != nil {
-              return err
+              case "TimeTableId":
+                elem = &TimeTableId{};
+
+              default:
+                if err := decoder.Skip(); err != nil {
+                  return err
+                }
             }
-          }
 
-          if elem != nil {
-            if err := decoder.DecodeElement( elem, &tok ); err != nil {
-              return err
+            if elem != nil {
+              if err := decoder.DecodeElement( elem, &tok ); err != nil {
+                return err
+              }
+              s.Actions = append( s.Actions, elem )
             }
-            s.Actions = append( s.Actions, elem )
-          }
 
-        case xml.EndElement:
-          return nil
+          case xml.EndElement:
+            return nil
         }
       }
 

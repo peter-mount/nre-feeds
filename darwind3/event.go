@@ -18,22 +18,26 @@ const (
   Event_StationMessage
   // A station's departure boards have been updated (LDB only)
   Event_BoardUpdate
+  // TimeTable update (either timetable or reference)
+  Event_TimeTableUpdate
 )
 
 // An event notifying of something happening within DarwinD3
 type DarwinEvent struct {
   // The type of the event
-  Type        int
+  Type                      int
   // The RID of the train that caused this event
-  RID         string
+  RID                       string
   // The affected Schedule or nil if none
-  Schedule   *Schedule
+  Schedule                 *Schedule
   // The CRS code of the station in this event (LDB only)
-  Crs         string
+  Crs                       string
   // The StationMessage that's been updated
   NewStationMessage        *StationMessage
   // The existing message before the update (or nil)
   ExistingStationMessage   *StationMessage
+  // TimeTable update
+  TimeTableId              *TimeTableId
 }
 
 // The core of the eventing system
