@@ -56,14 +56,17 @@ func (s *UR) UnmarshalXML( decoder *xml.Decoder, start xml.StartElement ) error 
           case "formationLoading":
             elem = &Loading{}
 
-          // association assed 2019-01-25
+          // association added 2019-01-25
           case "association":
             elem = &Association{}
+
+            // trackingID
+          case "trackingID":
+            elem = &TrackingID{}
 
           // Unsupported (so far) elements:
           // scheduleFormations
           // trainAlert
-          // trackingID
           // alarm
           default:
             log.Println( "Skipping", tok.Name.Local, tok.Name.Space )

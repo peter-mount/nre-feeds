@@ -20,6 +20,8 @@ const (
   Event_BoardUpdate
   // TimeTable update (either timetable or reference)
   Event_TimeTableUpdate
+  // TrackingID update
+  Event_TrackingID
 )
 
 // An event notifying of something happening within DarwinD3
@@ -38,6 +40,8 @@ type DarwinEvent struct {
   ExistingStationMessage   *StationMessage
   // TimeTable update
   TimeTableId              *TimeTableId
+  // TrackingID update
+  TrackingID               *TrackingID
 }
 
 // The core of the eventing system
