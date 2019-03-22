@@ -4,6 +4,9 @@
 
 Package that handles FTP updates from the NRE FTP server
 
+Note: This is for the old v12 version which used ftp for the reference data.
+v16 uses an S3 bucket instead so this code is effectively deprecated.
+
 ## Usage
 
 #### func  FtpLs

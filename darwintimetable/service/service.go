@@ -6,8 +6,6 @@ import (
   "github.com/peter-mount/golib/rest"
   "github.com/peter-mount/nre-feeds/bin"
   "github.com/peter-mount/nre-feeds/darwintimetable"
-  "github.com/peter-mount/nre-feeds/darwinupdate"
-  "log"
 )
 
 type DarwinTimetableService struct {
@@ -16,7 +14,6 @@ type DarwinTimetableService struct {
   config       *bin.Config
   cron         *cron.CronService
   restService  *rest.Server
-  updater      *darwinupdate.DarwinUpdate
 }
 
 func (a *DarwinTimetableService) Name() string {
@@ -36,19 +33,12 @@ func (a *DarwinTimetableService) Init( k *kernel.Kernel ) error {
   }
   a.cron = (service).(*cron.CronService)
 
-  service, err = k.AddService( &darwinupdate.DarwinUpdate{} )
-  if err != nil {
-    return err
-  }
-  a.updater = (service).(*darwinupdate.DarwinUpdate)
-
   service, err = k.AddService( &rest.Server{} )
   if err != nil {
     return err
   }
   a.restService = (service).(*rest.Server)
 
-  // ReferenceUpdate
   return nil
 }
 
@@ -63,6 +53,7 @@ func (a *DarwinTimetableService) PostInit() error {
     a.timetable.PruneSchedules()
   })
 
+  /*
   if a.config.Ftp.Enabled {
     // Scheduled updates
     if a.config.Ftp.Schedule != "" {
@@ -79,6 +70,7 @@ func (a *DarwinTimetableService) PostInit() error {
       a.updater.TimetableUpdate( &a.timetable )
     }
   }
+  */
 
   // Rest services
   a.restService.Handle( "/journey/{rid}", a.JourneyHandler ).Methods( "GET" )
