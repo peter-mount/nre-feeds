@@ -5,7 +5,6 @@ import (
   "github.com/peter-mount/nre-feeds/bin"
   "github.com/peter-mount/nre-feeds/darwind3"
   "github.com/peter-mount/nre-feeds/darwinref/service"
-  "log"
 )
 
 type ReferenceUpdateService struct {
@@ -34,14 +33,14 @@ func (a *ReferenceUpdateService) Init( k *kernel.Kernel ) error {
 }
 
 func (a *ReferenceUpdateService) Start() error {
-  a.config.RabbitMQ.ConnectionName = "darwin ref"
-  a.config.RabbitMQ.Connect()
+  // Only listen if S3 is enabled
+  if a.config.S3.Enabled {
+    a.config.RabbitMQ.ConnectionName = "darwin ref"
+    a.config.RabbitMQ.Connect()
 
-  em := darwind3.NewDarwinEventManager( &a.config.RabbitMQ, a.config.D3.EventKeyPrefix )
-  em.ListenToEvents( darwind3.Event_TimeTableUpdate, a.referenceUpdateListener )
-
-  // debug only
-  log.Println( "TUS started" )
+    em := darwind3.NewDarwinEventManager( &a.config.RabbitMQ, a.config.D3.EventKeyPrefix )
+    em.ListenToEvents( darwind3.Event_TimeTableUpdate, a.referenceUpdateListener )
+  }
 
   return nil
 }

@@ -5,7 +5,6 @@ import (
   "github.com/peter-mount/nre-feeds/bin"
   "github.com/peter-mount/nre-feeds/darwind3"
   "github.com/peter-mount/nre-feeds/darwintimetable/service"
-  "log"
 )
 
 type TimetableUpdateService struct {
@@ -34,14 +33,14 @@ func (a *TimetableUpdateService) Init( k *kernel.Kernel ) error {
 }
 
 func (a *TimetableUpdateService) Start() error {
-  a.config.RabbitMQ.ConnectionName = "darwin tt"
-  a.config.RabbitMQ.Connect()
+  // Only listen if S3 is enabled
+  if a.config.S3.Enabled {
+    a.config.RabbitMQ.ConnectionName = "darwin tt"
+    a.config.RabbitMQ.Connect()
 
-  em := darwind3.NewDarwinEventManager( &a.config.RabbitMQ, a.config.D3.EventKeyPrefix )
-  em.ListenToEvents( darwind3.Event_TimeTableUpdate, a.timetableUpdateListener )
-
-  // debug only
-  log.Println( "TUS started" )
+    em := darwind3.NewDarwinEventManager( &a.config.RabbitMQ, a.config.D3.EventKeyPrefix )
+    em.ListenToEvents( darwind3.Event_TimeTableUpdate, a.timetableUpdateListener )
+  }
 
   return nil
 }

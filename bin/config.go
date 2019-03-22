@@ -39,7 +39,10 @@ type Config struct {
   }                         `yaml:"database"`
 
   // S3 bucket used by the V16 feed
-  S3    s3.S3Credentials    `yaml:"s3"`
+  S3      s3.S3Credentials  `yaml:"s3"`
+
+  // Used for archiving data
+  Upload  s3.S3Credentials  `yaml:"upload"`
 
   // FTP used by the V12 feed
   Ftp struct {

@@ -1,6 +1,8 @@
 package darwind3
 
 import (
+  "fmt"
+  "strconv"
   "time"
 )
 
@@ -38,4 +40,18 @@ func (p *TimeTableId) Process( tx *Transaction ) error {
   })
 
   return nil
+}
+
+func (p *TimeTableId) GetPath() (string, error) {
+  year, err := strconv.Atoi( p.TimeTableId[0:4] )
+  if err != nil {
+    return "", err
+  }
+
+  month, err := strconv.Atoi( p.TimeTableId[4:6] )
+  if err != nil {
+    return "", err
+  }
+
+  return fmt.Sprintf( "%4d/%d/", year, month ), nil
 }

@@ -1,6 +1,7 @@
 package s3
 
 type S3Credentials struct {
+  Enabled       bool      `yaml:"enabled"`
   // The bucket name
   Bucket        string    `yaml:"bucket"`
   // Prefix with trailing / to prepend to all file names within the bucket

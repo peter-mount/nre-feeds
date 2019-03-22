@@ -22,6 +22,11 @@ func (d *TimetableUpdateService) updateTimetable( tid *darwind3.TimeTableId ) er
     return err
   }
 
+  err = d.uploadFile( tid )
+  if err != nil {
+    return err
+  }
+
   err = d.importTimetable( tid.TimeTableId, fname )
   if err != nil {
     return err
@@ -70,5 +75,26 @@ func (d *TimetableUpdateService) importTimetable( id, fname string ) error {
     return err
   }
 
+  return nil
+}
+
+func (d *TimetableUpdateService) uploadFile( tid *darwind3.TimeTableId ) error {
+  if d.config.Upload.Enabled {
+    path, err := tid.GetPath()
+    if err != nil {
+      return err
+    }
+
+    file, err := os.Open( tempFile )
+    if err != nil {
+      return err
+    }
+    defer file.Close()
+
+    err = d.config.Upload.UploadFile( file, path + tid.TTFile )
+    if err != nil {
+      return err
+    }
+  }
   return nil
 }
