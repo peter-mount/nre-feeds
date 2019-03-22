@@ -11,23 +11,23 @@ import (
 // The possible types of DarwinEvent
 const (
   // A schedule was deactivated
-  Event_Deactivated = iota
+  Event_Deactivated = "deactivated"
   // A schedule was updated
-  Event_ScheduleUpdated
+  Event_ScheduleUpdated = "scheduleUpdated"
   // A new StationMessage
-  Event_StationMessage
+  Event_StationMessage = "stationMessage"
   // A station's departure boards have been updated (LDB only)
-  Event_BoardUpdate
+  Event_BoardUpdate = "boardUpdate"
   // TimeTable update (either timetable or reference)
-  Event_TimeTableUpdate
+  Event_TimeTableUpdate = "timeTableUpdate"
   // TrackingID update
-  Event_TrackingID
+  Event_TrackingID = "trackingID"
 )
 
 // An event notifying of something happening within DarwinD3
 type DarwinEvent struct {
   // The type of the event
-  Type                      int
+  Type                      string
   // The RID of the train that caused this event
   RID                       string
   // The affected Schedule or nil if none
@@ -48,7 +48,7 @@ type DarwinEvent struct {
 type DarwinEventManager struct {
   mq             *rabbitmq.RabbitMQ
   prefix          string
-  sequence        int
+  //sequence        int
   eventKeyPrefix  string
 }
 
@@ -74,12 +74,14 @@ func NewDarwinEventManager( mq *rabbitmq.RabbitMQ, eventKeyPrefix string ) *Darw
 
 // ListenToEvents will run a function which will reveive DarwinEvent's for the
 // specified type until it exists.
-func (d *DarwinEventManager) ListenToEvents( eventType int, f func( *DarwinEvent ) ) error {
-  seq := d.sequence
-  d.sequence++
+func (d *DarwinEventManager) ListenToEvents( eventType string, f func( *DarwinEvent ) ) error {
+  //seq := d.sequence
+  //d.sequence++
 
-  queueName := fmt.Sprintf( "%s.%sd3.event.%d.%d", d.prefix, d.eventKeyPrefix, eventType, seq)
-  routingKey := fmt.Sprintf( "%sd3.event.%d", d.eventKeyPrefix, eventType )
+  //queueName := fmt.Sprintf( "%s.%sd3.event.%d.%d", d.prefix, d.eventKeyPrefix, eventType, seq)
+  //routingKey := fmt.Sprintf( "%sd3.event.%d", d.eventKeyPrefix, eventType )
+  queueName := fmt.Sprintf( "%s.%sd3.event.%s", d.prefix, d.eventKeyPrefix, eventType )
+  routingKey := fmt.Sprintf( "%sd3.event.%s", d.eventKeyPrefix, eventType )
 
   if channel, err := d.mq.NewChannel(); err != nil {
     log.Println( err )
@@ -120,6 +122,7 @@ func (d *DarwinEventManager) PostEvent( e *DarwinEvent ) {
   //}
 
   if b, err := json.Marshal( e ); err == nil {
-    d.mq.Publish( fmt.Sprintf( "%sd3.event.%d", d.eventKeyPrefix, e.Type ), b )
+    //d.mq.Publish( fmt.Sprintf( "%sd3.event.%d", d.eventKeyPrefix, e.Type ), b )
+    d.mq.Publish( fmt.Sprintf( "%sd3.event.%s", d.eventKeyPrefix, e.Type ), b )
   }
 }
