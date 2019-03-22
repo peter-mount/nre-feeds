@@ -25,6 +25,12 @@ else
   TAG=${IMAGE}:${MODULE}-${ARCH}-${VERSION}
 fi
 
+# Prefix command with DOMAIN=example.com to send to a custom docker repo
+if [ -n "$DOMAIN" ]
+then
+  TAG="$DOMAIN/$TAG"
+fi
+
 . functions.sh
 
 CMD="docker build --force-rm=true"
@@ -33,7 +39,7 @@ CMD="$CMD -t ${TAG}"
 # We need a temp dockerfile for each module to customise entrypoint
 if [ "$MODULE" != "Build" ]
 then
-  DOCKERFILE=Dockerfile.${MODULE}.${ARCH}
+  DOCKERFILE=Dockerfile.${MODULE}
   (
     echo "# GENERATED $DOCKERFILE"
     sed "s/@@entrypoint@@/${MODULE}/g" Dockerfile
