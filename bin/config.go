@@ -5,6 +5,7 @@ import (
   "flag"
   "github.com/peter-mount/golib/kernel"
   "github.com/peter-mount/golib/rabbitmq"
+  "github.com/peter-mount/nre-feeds/util/s3"
   "gopkg.in/yaml.v2"
   "io/ioutil"
   "path/filepath"
@@ -38,15 +39,7 @@ type Config struct {
   }                         `yaml:"database"`
 
   // S3 bucket used by the V16 feed
-  S3 struct {
-    // This is the part after s3:// url in the darwin portal
-    Bucket        string    `yaml:"bucket"`
-    // This is the bucket field in the darwin portal
-    Path          string    `yaml:"path"`
-    AccessKey     string    `yaml:"accessKey"`
-    SecretKey     string    `yaml:"secretKey"`
-    Region        string    `yaml:"region"`
-  }                         `yaml:"s3"`
+  S3    s3.S3Credentials    `yaml:"s3"`
 
   // FTP used by the V12 feed
   Ftp struct {
