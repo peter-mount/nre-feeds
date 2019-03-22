@@ -1,14 +1,11 @@
 package update
 
 import (
-  "github.com/aws/aws-sdk-go/aws"
-  "github.com/aws/aws-sdk-go/aws/credentials"
-  "github.com/aws/aws-sdk-go/aws/session"
-  "github.com/aws/aws-sdk-go/service/s3"
-  "github.com/aws/aws-sdk-go/service/s3/s3manager"
+  "compress/gzip"
+  "encoding/xml"
   "github.com/peter-mount/nre-feeds/darwind3"
-  "os"
   "log"
+  "os"
 )
 
 const (
@@ -17,8 +14,15 @@ const (
 
 // timetableUpdateListener listens for real time updates for when new reference
 // data is made available.
-func (d *TimetableUpdateService) updateTimetable( t *darwind3.TimeTableId ) error {
-  err := d.retrieveFile( t.TTFile )
+func (d *TimetableUpdateService) updateTimetable( tid *darwind3.TimeTableId ) error {
+  fname := tid.TTFile
+
+  err := d.retrieveTimetable( fname )
+  if err != nil {
+    return err
+  }
+
+  err = d.importTimetable( tid.TimeTableId, fname )
   if err != nil {
     return err
   }
@@ -26,40 +30,45 @@ func (d *TimetableUpdateService) updateTimetable( t *darwind3.TimeTableId ) erro
   return nil
 }
 
-func (d *TimetableUpdateService) retrieveFile( fname string ) error {
-  file, err := os.Create( fname )
-   if err != nil {
-     return err
-   }
-
+func (d *TimetableUpdateService) retrieveTimetable( fname string ) error {
+  file, err := os.Create( tempFile )
+  if err != nil {
+    return err
+  }
   defer file.Close()
-  log.Printf("Retrieving %s", fname )
-  log.Println( d.config.S3.Region )
-  log.Println( d.config.S3.Bucket )
 
-  sess, _ := session.NewSession(
-    &aws.Config{
-      Region: aws.String(d.config.S3.Region),
-      Credentials: credentials.NewStaticCredentials(
-        d.config.S3.AccessKey,
-        d.config.S3.SecretKey,
-        "",
-      ),
-    })
+  return d.config.S3.RetrieveFile( fname, file )
+}
 
-  downloader := s3manager.NewDownloader(sess)
+func (d *TimetableUpdateService) importTimetable( id, fname string ) error {
+  file, err := os.Open( tempFile )
+  if err != nil {
+    return err
+  }
+  defer file.Close()
 
-  numBytes, err := downloader.Download(
-    file,
-    &s3.GetObjectInput{
-      Bucket: aws.String(d.config.S3.Bucket),
-      Key:    aws.String( d.config.S3.Path + "/" + fname ),
-    })
+  gr, err := gzip.NewReader( file )
   if err != nil {
     return err
   }
 
-  log.Println("Downloaded", file.Name(), numBytes, "bytes")
+  // Run a prune first
+  _, err = d.timetable.GetTimetable().PruneSchedules()
+  if err != nil {
+    return err
+  }
+
+  log.Println( "Importing", id )
+  err = xml.NewDecoder( gr ).Decode( d.timetable.GetTimetable() )
+  if err != nil {
+    return err
+  }
+
+  // Run a prune afterwards
+  _, err = d.timetable.GetTimetable().PruneSchedules()
+  if err != nil {
+    return err
+  }
 
   return nil
 }

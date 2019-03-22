@@ -16,6 +16,10 @@ type DarwinTimetableService struct {
   restService  *rest.Server
 }
 
+func (a *DarwinTimetableService) GetTimetable() *darwintimetable.DarwinTimetable {
+  return &a.timetable
+}
+
 func (a *DarwinTimetableService) Name() string {
   return "DarwinRefService"
 }
