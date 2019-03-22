@@ -18,20 +18,6 @@ WORKDIR /work
 COPY go.mod .
 RUN go mod download
 
-#RUN go get -v \
-#      github.com/etcd-io/bbolt \
-#      github.com/jlaffaye/ftp \
-#      github.com/muesli/cache2go \
-#      github.com/peter-mount/golib/codec \
-#      github.com/peter-mount/golib/rabbitmq \
-#      github.com/peter-mount/golib/kernel \
-#      github.com/peter-mount/golib/rest \
-#      github.com/peter-mount/golib/statistics \
-#      github.com/peter-mount/golib/util \
-#      github.com/peter-mount/goxml2json \
-#      github.com/peter-mount/sortfold \
-#      gopkg.in/yaml.v2
-
 # ============================================================
 # source container contains the source as it exists within the
 # repository.
@@ -43,19 +29,12 @@ ADD . .
 # Run all tests in a new container so any output won't affect
 # the final build.
 FROM source as test
-ARG skipTest
-RUN if [ -z "$skipTest" ] ;then \
-      for bin in \
-        util \
-        darwinref \
-        darwind3 \
-        ldb \
-        issues ;\
-      do\
-        echo "Testing ${bin}" ;\
-        CGO_ENABLED=0 go test -v ./${bin} ;\
-      done ;\
-    fi
+RUN CGO_ENABLED=0 go test -v \
+      ./util \
+      ./darwinref \
+      ./darwind3 \
+      ./ldb \
+      ./issues
 
 # ============================================================
 # Compile the source.
