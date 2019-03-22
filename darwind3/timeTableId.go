@@ -21,6 +21,17 @@ func (p *TimeTableId) Process( tx *Transaction ) error {
 
   p.Date = tx.pport.TS
 
+  // Remove " " as they have to send it that way as the attributes are mandatory
+  // in the v16 schemas
+  if p.TTFile == " " {
+    p.TTFile = ""
+  }
+
+  if p.TTRefFile == " " {
+    p.TTRefFile = ""
+  }
+
+  // Send the event
   tx.d3.EventManager.PostEvent( &DarwinEvent{
     Type: Event_TimeTableUpdate,
     TimeTableId: p,
