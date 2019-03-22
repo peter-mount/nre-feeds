@@ -6,8 +6,6 @@ import (
   "github.com/peter-mount/golib/rest"
   "github.com/peter-mount/nre-feeds/bin"
   "github.com/peter-mount/nre-feeds/darwinref"
-  "github.com/peter-mount/nre-feeds/darwinupdate"
-  "log"
 )
 
 type DarwinRefService struct {
@@ -16,7 +14,10 @@ type DarwinRefService struct {
   config       *bin.Config
   cron         *cron.CronService
   restService  *rest.Server
-  updater      *darwinupdate.DarwinUpdate
+}
+
+func (a *DarwinRefService) GetDarwinReference() *darwinref.DarwinReference {
+  return &a.reference
 }
 
 func (a *DarwinRefService) Name() string {
@@ -36,12 +37,6 @@ func (a *DarwinRefService) Init( k *kernel.Kernel ) error {
   }
   a.cron = (service).(*cron.CronService)
 
-  service, err = k.AddService( &darwinupdate.DarwinUpdate{} )
-  if err != nil {
-    return err
-  }
-  a.updater = (service).(*darwinupdate.DarwinUpdate)
-
   service, err = k.AddService( &rest.Server{} )
   if err != nil {
     return err
@@ -56,23 +51,6 @@ func (a *DarwinRefService) PostInit() error {
   a.config.DbPath( &a.config.Database.Reference, "dwref.db" )
   if err := a.reference.OpenDB( a.config.Database.Reference ); err != nil {
     return err
-  }
-
-  if a.config.Ftp.Enabled {
-    // Scheduled updates
-    if a.config.Ftp.Schedule != "" {
-      a.cron.AddFunc( a.config.Ftp.Schedule, func () {
-        if err := a.updater.ReferenceUpdate( &a.reference ); err != nil {
-          log.Println( "Failed import:", err )
-        }
-      })
-      log.Println( "Auto Update using:", a.config.Ftp.Schedule )
-    }
-
-    // Initial import required?
-    if a.updater.ImportRequiredTimetable( &a.reference ) {
-      a.updater.ReferenceUpdate( &a.reference )
-    }
   }
 
   // Rest services
