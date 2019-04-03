@@ -50,6 +50,9 @@ func (s *Pport) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error
 				case "TimeTableId":
 					elem = &TimeTableId{}
 
+				case "sR":
+					elem = &SR{}
+
 				default:
 					if err := decoder.Skip(); err != nil {
 						return err
