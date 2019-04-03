@@ -23,6 +23,12 @@ func (fs *FeedStatus) loadSnapshot(ts time.Time, m *sync.Mutex) error {
 		if err != nil {
 			return err
 		}
+
+		err = fs.processLogs(con)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
 }
@@ -43,7 +49,7 @@ func (fs *FeedStatus) processSnapshot(con *ftp.ServerConn) error {
 	}
 
 	if entry == nil {
-		return errors.New("Not found a snapshot")
+		return errors.New("not found a snapshot")
 	}
 
 	n := "snapshot/" + entry.Name
@@ -52,7 +58,12 @@ func (fs *FeedStatus) processSnapshot(con *ftp.ServerConn) error {
 	if err != nil {
 		return err
 	}
-	log.Println("Dates", fs.snapshotTime.Format(util.HumanDateTime), entry.Time.Format(util.HumanDateTime))
+	if fs.snapshotTime.IsZero() {
+		log.Println("Found snapshot", entry.Time.Format(util.HumanDateTime))
+	} else {
+		log.Println("Found snapshot", entry.Time.Format(util.HumanDateTime),
+			"our last", fs.snapshotTime.Format(util.HumanDateTime))
+	}
 
 	if !entry.Time.After(fs.snapshotTime) {
 		log.Println("Not retrieving", n, "as not newer than last one")
@@ -67,8 +78,6 @@ func (fs *FeedStatus) processSnapshot(con *ftp.ServerConn) error {
 	defer r.Close()
 
 	// Disable remote timetable resolution for the duration then run on one single tx
-	oldTT := fs.d3.Timetable
-	fs.d3.Timetable = ""
 	err = fs.d3.BulkUpdate(func(tx *bolt.Tx) error {
 		log.Println("Importing snapshot")
 
@@ -107,7 +116,6 @@ func (fs *FeedStatus) processSnapshot(con *ftp.ServerConn) error {
 		log.Println("Finished importing", lc, "messages")
 		return fs.d3.PutMetaTx(tx, "snapshot", entry.Time)
 	})
-	fs.d3.Timetable = oldTT
 	if err != nil {
 		return err
 	}
@@ -115,4 +123,70 @@ func (fs *FeedStatus) processSnapshot(con *ftp.ServerConn) error {
 	fs.snapshotTime = entry.Time
 
 	return nil
+}
+
+func (fs *FeedStatus) processLogs(con *ftp.ServerConn) error {
+	entries, err := con.List("pushport")
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		err = fs.processLog(con, entry)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (fs *FeedStatus) processLog(con *ftp.ServerConn, entry *ftp.Entry) error {
+	n := "pushport/" + entry.Name
+
+	log.Println("Retrieving", n)
+	r, err := con.Retr(n)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	return fs.d3.BulkUpdate(func(tx *bolt.Tx) error {
+		log.Println("Importing", n)
+
+		gr, err := gzip.NewReader(r)
+		if err != nil {
+			return err
+		}
+
+		lc := 0
+		scanner := bufio.NewScanner(gr)
+		for scanner.Scan() {
+			ln := scanner.Bytes()
+			err = scanner.Err()
+			if err != nil {
+				return err
+			}
+
+			p := &Pport{}
+			r := bytes.NewReader(ln)
+			err := xml.NewDecoder(r).Decode(p)
+			if err != nil {
+				return err
+			}
+
+			err = p.Process(fs.d3)
+			if err != nil {
+				return err
+			}
+
+			lc++
+			if (lc % 1000) == 0 {
+				log.Println("Imported", lc)
+			}
+		}
+
+		log.Println("Finished importing", lc, "messages")
+		return nil
+	})
 }

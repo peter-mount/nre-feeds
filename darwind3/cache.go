@@ -90,15 +90,25 @@ func (r *DarwinD3) Update(f func(*bolt.Tx) error) error {
 }
 
 func (r *DarwinD3) BulkUpdate(f func(*bolt.Tx) error) error {
-	if r.cache.tx != nil {
-		return f(r.cache.tx)
-	}
-	return r.Update(func(tx *bolt.Tx) error {
+	wrapper := func(tx *bolt.Tx) error {
+		oldTx := r.cache.tx
 		r.cache.tx = tx
+
+		oldTT := r.Timetable
+		r.Timetable = ""
+
 		err := f(tx)
-		r.cache.tx = nil
+
+		r.Timetable = oldTT
+		r.cache.tx = oldTx
+
 		return err
-	})
+	}
+
+	if r.cache.tx != nil {
+		return wrapper(r.cache.tx)
+	}
+	return r.Update(wrapper)
 }
 
 // Retrieve a schedule by it's rid
