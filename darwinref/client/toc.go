@@ -1,42 +1,40 @@
 package client
 
 import (
-  "github.com/peter-mount/nre-feeds/darwinref"
+	"github.com/peter-mount/nre-feeds/darwinref"
 )
 
 // GetToc retrieve a Toc by its code
-func (c *DarwinRefClient) GetToc( toc string ) ( *darwinref.Toc, error ) {
-  res := &darwinref.Toc{};
-
-  if found, err := c.get( "/toc/" + toc, &res ); err != nil {
-    return nil, err
-  } else if found {
-    return res, nil
-  } else {
-    return nil, nil
-  }
+func (c *DarwinRefClient) GetToc(toc string) (*darwinref.Toc, error) {
+	res := &darwinref.Toc{}
+	if found, err := c.get("/toc/"+toc, &res); err != nil {
+		return nil, err
+	} else if found {
+		return res, nil
+	} else {
+		return nil, nil
+	}
 }
 
 // AddToc adds a Toc to a TocMap
-func (c *DarwinRefClient) AddToc( m *darwinref.TocMap, toc string ) {
-  if toc != "" {
-    if _, exists := m.Get( toc ); !exists {
-      if t, _ := c.GetToc( toc ); t != nil {
-        m.Add( t )
-      }
-    }
-  }
+func (c *DarwinRefClient) AddToc(m *darwinref.TocMap, toc string) {
+	if toc != "" {
+		if _, exists := m.Get(toc); !exists {
+			if t, _ := c.GetToc(toc); t != nil {
+				m.Add(t)
+			}
+		}
+	}
 }
 
 // GetTocs returns all current Train Operating Companies
-func (c *DarwinRefClient) GetTocs() ( *darwinref.TocsResponse, error ) {
-  res := &darwinref.TocsResponse{};
-
-  if found, err := c.get( "/toc", &res ); err != nil {
-    return nil, err
-  } else if found {
-    return res, nil
-  } else {
-    return nil, nil
-  }
+func (c *DarwinRefClient) GetTocs() (*darwinref.TocsResponse, error) {
+	res := &darwinref.TocsResponse{}
+	if found, err := c.get("/toc", &res); err != nil {
+		return nil, err
+	} else if found {
+		return res, nil
+	} else {
+		return nil, nil
+	}
 }

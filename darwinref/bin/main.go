@@ -1,18 +1,18 @@
 package main
 
 import (
-  "github.com/peter-mount/golib/kernel"
-  "github.com/peter-mount/nre-feeds/darwinref/service"
-  "github.com/peter-mount/nre-feeds/darwinref/update"
-  "log"
+	"github.com/peter-mount/golib/kernel"
+	"github.com/peter-mount/nre-feeds/darwinref/service"
+	"github.com/peter-mount/nre-feeds/darwinref/update"
+	"log"
 )
 
 func main() {
-  err := kernel.Launch(
-    &service.DarwinRefService{},
-    &update.ReferenceUpdateService{},
-  )
-  if err != nil {
-    log.Fatal( err )
-  }
+	err := kernel.Launch(
+		&service.DarwinRefService{},
+		&update.ReferenceUpdateService{},
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

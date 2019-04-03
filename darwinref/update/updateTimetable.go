@@ -1,88 +1,88 @@
 package update
 
 import (
-  "compress/gzip"
-  "encoding/xml"
-  "github.com/peter-mount/nre-feeds/darwind3"
-  "log"
-  "os"
+	"compress/gzip"
+	"encoding/xml"
+	"github.com/peter-mount/nre-feeds/darwind3"
+	"log"
+	"os"
 )
 
 const (
-  tempFile = "/tmp/inbound.xml.gz"
+	tempFile = "/tmp/inbound.xml.gz"
 )
 
 // timetableUpdateListener listens for real time updates for when new reference
 // data is made available.
-func (d *ReferenceUpdateService) updateTimetable( tid *darwind3.TimeTableId ) error {
-  fname := tid.TTRefFile
+func (d *ReferenceUpdateService) updateTimetable(tid *darwind3.TimeTableId) error {
+	fname := tid.TTRefFile
 
-  err := d.retrieveReference( fname )
-  if err != nil {
-    return err
-  }
+	err := d.retrieveReference(fname)
+	if err != nil {
+		return err
+	}
 
-  err = d.uploadFile( tid )
-  if err != nil {
-    return err
-  }
+	err = d.uploadFile(tid)
+	if err != nil {
+		return err
+	}
 
-  err = d.importReference( tid.TimeTableId, fname )
-  if err != nil {
-    return err
-  }
+	err = d.importReference(tid.TimeTableId, fname)
+	if err != nil {
+		return err
+	}
 
-  return nil
+	return nil
 }
 
-func (d *ReferenceUpdateService) retrieveReference( fname string ) error {
-  file, err := os.Create( tempFile )
-  if err != nil {
-    return err
-  }
-  defer file.Close()
+func (d *ReferenceUpdateService) retrieveReference(fname string) error {
+	file, err := os.Create(tempFile)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
 
-  return d.config.S3.RetrieveFile( fname, file )
+	return d.config.S3.RetrieveFile(fname, file)
 }
 
-func (d *ReferenceUpdateService) importReference( id, fname string ) error {
-  file, err := os.Open( tempFile )
-  if err != nil {
-    return err
-  }
-  defer file.Close()
+func (d *ReferenceUpdateService) importReference(id, fname string) error {
+	file, err := os.Open(tempFile)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
 
-  gr, err := gzip.NewReader( file )
-  if err != nil {
-    return err
-  }
+	gr, err := gzip.NewReader(file)
+	if err != nil {
+		return err
+	}
 
-  log.Println( "Importing", id )
-  err = xml.NewDecoder( gr ).Decode( d.ref.GetDarwinReference() )
-  if err != nil {
-    return err
-  }
+	log.Println("Importing", id)
+	err = xml.NewDecoder(gr).Decode(d.ref.GetDarwinReference())
+	if err != nil {
+		return err
+	}
 
-  return nil
+	return nil
 }
 
-func (d *ReferenceUpdateService) uploadFile( tid *darwind3.TimeTableId ) error {
-  if d.config.Upload.Enabled {
-    path, err := tid.GetPath()
-    if err != nil {
-      return err
-    }
+func (d *ReferenceUpdateService) uploadFile(tid *darwind3.TimeTableId) error {
+	if d.config.Upload.Enabled {
+		path, err := tid.GetPath()
+		if err != nil {
+			return err
+		}
 
-    file, err := os.Open( tempFile )
-    if err != nil {
-      return err
-    }
-    defer file.Close()
+		file, err := os.Open(tempFile)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
 
-    err = d.config.Upload.UploadFile( file, path + tid.TTRefFile )
-    if err != nil {
-      return err
-    }
-  }
-  return nil
+		err = d.config.Upload.UploadFile(file, path+tid.TTRefFile)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

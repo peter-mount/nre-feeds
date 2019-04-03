@@ -14,27 +14,27 @@ host: "ref.a.a51.li"
 #host: "railref.area51.onl"
 #basePath: "/v1"
 tags:
-- name: "darwinref"
-  description: "Reference data from National Rail Enquiries"
+  - name: "darwinref"
+    description: "Reference data from National Rail Enquiries"
 schemes:
-- "https"
+  - "https"
 paths:
   /crs/{crs}:
     get:
       tags:
-      - "darwinref"
+        - "darwinref"
       summary: "Lookup a location by it's CRS/3Alpha code"
       description: "This returns the TIPLOC as defined by NRE"
       operationId: "getNRTCRS"
       produces:
-      - "application/json"
-      - "application/xml"
+        - "application/json"
+        - "application/xml"
       parameters:
-      - name: "crs"
-        in: "path"
-        description: "CRS of location to return"
-        required: true
-        type: "string"
+        - name: "crs"
+          in: "path"
+          description: "CRS of location to return"
+          required: true
+          type: "string"
       responses:
         200:
           description: "Array of matching Location's"
@@ -47,12 +47,12 @@ paths:
   /reason/cancelled:
     get:
       tags:
-      - "darwinref"
+        - "darwinref"
       summary: "Return all cancellation reasons"
       operationId: "getNREAllCancelled"
       produces:
-      - "application/json"
-      - "application/xml"
+        - "application/json"
+        - "application/xml"
       responses:
         200:
           description: "An array of cancellation reasons"
@@ -63,19 +63,19 @@ paths:
   /reason/cancelled/{code}:
     get:
       tags:
-      - "darwinref"
+        - "darwinref"
       summary: "Return a cancellation reason"
       description: "Returns a cancellation reason for the code used in the feeds"
       operationId: "getNRECancelled"
       produces:
-      - "application/json"
-      - "application/xml"
+        - "application/json"
+        - "application/xml"
       parameters:
-      - name: "code"
-        in: "path"
-        description: "The code used in the feeds"
-        required: true
-        type: "integer"
+        - name: "code"
+          in: "path"
+          description: "The code used in the feeds"
+          required: true
+          type: "integer"
       responses:
         200:
           description: "A cancellation reason"
@@ -86,12 +86,12 @@ paths:
   /reason/late:
     get:
       tags:
-      - "darwinref"
+        - "darwinref"
       summary: "Return all late reasons"
       operationId: "getNREAllLate"
       produces:
-      - "application/json"
-      - "application/xml"
+        - "application/json"
+        - "application/xml"
       responses:
         200:
           description: "An array of late reasons"
@@ -102,19 +102,19 @@ paths:
   /reason/late/{code}:
     get:
       tags:
-      - "darwinref"
+        - "darwinref"
       summary: "Return a late reason"
       description: "Returns a late/delay reason for the code used in the feeds"
       operationId: "getNRELate"
       produces:
-      - "application/json"
-      - "application/xml"
+        - "application/json"
+        - "application/xml"
       parameters:
-      - name: "code"
-        in: "path"
-        description: "The code used in the feeds"
-        required: true
-        type: "integer"
+        - name: "code"
+          in: "path"
+          description: "The code used in the feeds"
+          required: true
+          type: "integer"
       responses:
         200:
           description: "A late/delay reason"
@@ -125,19 +125,19 @@ paths:
   /tiploc/{tiploc}:
     get:
       tags:
-      - "darwinref"
+        - "darwinref"
       summary: "Lookup a location by it's TIPLOC"
       description: "This returns the TIPLOC as defined by NRE"
       operationId: "getNRETiploc"
       produces:
-      - "application/json"
-      - "application/xml"
+        - "application/json"
+        - "application/xml"
       parameters:
-      - name: "tiploc"
-        in: "path"
-        description: "Tiploc of location to return"
-        required: true
-        type: "string"
+        - name: "tiploc"
+          in: "path"
+          description: "Tiploc of location to return"
+          required: true
+          type: "string"
       responses:
         200:
           description: "The matching Location"
@@ -148,19 +148,19 @@ paths:
   /toc/{toc}:
     get:
       tags:
-      - "darwinref"
+        - "darwinref"
       summary: "Lookup details about a Train Operator"
       description: "This returns the Toc as defined by NRE"
       operationId: "getNREToc"
       produces:
-      - "application/json"
-      - "application/xml"
+        - "application/json"
+        - "application/xml"
       parameters:
-      - name: "toc"
-        in: "path"
-        description: "Train Operator Code to return"
-        required: true
-        type: "string"
+        - name: "toc"
+          in: "path"
+          description: "Train Operator Code to return"
+          required: true
+          type: "string"
       responses:
         200:
           description: "The matching Toc"
@@ -171,29 +171,29 @@ paths:
   /via/{at}/{dest}/{loc1}:
     get:
       tags:
-      - "darwinref"
+        - "darwinref"
       summary: "Lookup a via text message"
       description: "This returns the via message to show for a service at a specific station. This endpoint is usually used to refer to a specific Via text message & not used for lookups."
       operationId: "getNREVia1"
       produces:
-      - "application/json"
-      - "application/xml"
+        - "application/json"
+        - "application/xml"
       parameters:
-      - name: "at"
-        in: "path"
-        description: "The CRS/3Alpha code of the station where a via message is to be shown"
-        required: true
-        type: "string"
-      - name: "dest"
-        in: "path"
-        description: "The destination Tiploc for the service"
-        required: true
-        type: "string"
-      - name: "loc1"
-        in: "path"
-        description: "An intermediate calling point Tiploc"
-        required: true
-        type: "string"
+        - name: "at"
+          in: "path"
+          description: "The CRS/3Alpha code of the station where a via message is to be shown"
+          required: true
+          type: "string"
+        - name: "dest"
+          in: "path"
+          description: "The destination Tiploc for the service"
+          required: true
+          type: "string"
+        - name: "loc1"
+          in: "path"
+          description: "An intermediate calling point Tiploc"
+          required: true
+          type: "string"
       responses:
         200:
           description: "The matching via text to show"
@@ -204,34 +204,34 @@ paths:
   /via/{at}/{dest}/{loc1}/{loc2}:
     get:
       tags:
-      - "darwinref"
+        - "darwinref"
       summary: "Lookup a via text message"
       description: "This returns the via message to show for a service at a specific station. This endpoint is usually used to refer to a specific Via text message & not used for lookups."
       operationId: "getNREVia2"
       produces:
-      - "application/json"
-      - "application/xml"
+        - "application/json"
+        - "application/xml"
       parameters:
-      - name: "at"
-        in: "path"
-        description: "The CRS/3Alpha code of the station where a via message is to be shown"
-        required: true
-        type: "string"
-      - name: "dest"
-        in: "path"
-        description: "The destination Tiploc for the service"
-        required: true
-        type: "string"
-      - name: "loc1"
-        in: "path"
-        description: "A first intermediate calling point Tiploc"
-        required: true
-        type: "string"
-      - name: "loc2"
-        in: "path"
-        description: "A second intermediate calling point Tiploc"
-        required: true
-        type: "string"
+        - name: "at"
+          in: "path"
+          description: "The CRS/3Alpha code of the station where a via message is to be shown"
+          required: true
+          type: "string"
+        - name: "dest"
+          in: "path"
+          description: "The destination Tiploc for the service"
+          required: true
+          type: "string"
+        - name: "loc1"
+          in: "path"
+          description: "A first intermediate calling point Tiploc"
+          required: true
+          type: "string"
+        - name: "loc2"
+          in: "path"
+          description: "A second intermediate calling point Tiploc"
+          required: true
+          type: "string"
       responses:
         200:
           description: "The matching via text to show"
@@ -241,16 +241,16 @@ paths:
           description: "No matching via text message"
 
 definitions:
-#  CISSource:
-#    type: "object"
-#    description: "CIS Source"
-#    properties:
-#      code:
-#        type: "string"
-#        description: "Code used within the D3 feeds"
-#      name:
-#        type: "string"
-#        description: "Name of this source"
+  #  CISSource:
+  #    type: "object"
+  #    description: "CIS Source"
+  #    properties:
+  #      code:
+  #        type: "string"
+  #        description: "Code used within the D3 feeds"
+  #      name:
+  #        type: "string"
+  #        description: "Name of this source"
   LocationRef:
     type: "object"
     description: "Details about a location on the railway as defined by National Rail Enquiries"

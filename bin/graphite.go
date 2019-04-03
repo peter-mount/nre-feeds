@@ -1,90 +1,90 @@
 package bin
 
 import (
-  "fmt"
-  "github.com/peter-mount/golib/kernel"
-  "github.com/peter-mount/golib/statistics"
-  "github.com/streadway/amqp"
+	"fmt"
+	"github.com/peter-mount/golib/kernel"
+	"github.com/peter-mount/golib/statistics"
+	"github.com/streadway/amqp"
 )
 
 type Graphite struct {
-  statistics    statistics.Statistics
-  channel      *amqp.Channel
-  config       *Config
+	statistics statistics.Statistics
+	channel    *amqp.Channel
+	config     *Config
 }
 
 func (g *Graphite) Name() string {
-  return "Graphite"
+	return "Graphite"
 }
 
-func (a *Graphite) Init( k *kernel.Kernel ) error {
-  service, err := k.AddService( &Config{} )
-  if err != nil {
-    return err
-  }
-  a.config = (service).(*Config)
+func (a *Graphite) Init(k *kernel.Kernel) error {
+	service, err := k.AddService(&Config{})
+	if err != nil {
+		return err
+	}
+	a.config = (service).(*Config)
 
-  return nil
+	return nil
 }
 
 func (g *Graphite) Start() error {
-  // Custom statistics engine, capture every 10s so we submit to Graphite at
-  // intervals it's expecting
-  g.statistics.Log = false
-  g.statistics.Schedule = "0/10 * * * * *"
-  g.statistics.Configure()
+	// Custom statistics engine, capture every 10s so we submit to Graphite at
+	// intervals it's expecting
+	g.statistics.Log = false
+	g.statistics.Schedule = "0/10 * * * * *"
+	g.statistics.Configure()
 
-  if g.config.Graphite.Enabled  {
+	if g.config.Graphite.Enabled {
 
-    // Default exchange is "graphite"
-    if g.config.Graphite.Exchange == "" {
-      g.config.Graphite.Exchange = "graphite"
-    }
+		// Default exchange is "graphite"
+		if g.config.Graphite.Exchange == "" {
+			g.config.Graphite.Exchange = "graphite"
+		}
 
-    err := g.config.RabbitMQ.Connect()
-    if err != nil {
-      return err
-    }
+		err := g.config.RabbitMQ.Connect()
+		if err != nil {
+			return err
+		}
 
-    g.channel, err = g.config.RabbitMQ.NewChannel()
-    if err != nil {
-      return err
-    }
+		g.channel, err = g.config.RabbitMQ.NewChannel()
+		if err != nil {
+			return err
+		}
 
-    // We are a statistics Recorder
-    g.statistics.Recorder = g
-  }
+		// We are a statistics Recorder
+		g.statistics.Recorder = g
+	}
 
-  return nil
+	return nil
 }
 
 // PublishStatistic Handles publishing statistics to Graphite over RabbitMQ
-func (g *Graphite) PublishStatistic( name string, s *statistics.Statistic ) {
-  // Value will be the latency
-  g.publish( name + ".value", s.Value, s.Timestamp )
-  // Count the number of messages
-  g.publish( name + ".count", s.Count, s.Timestamp )
+func (g *Graphite) PublishStatistic(name string, s *statistics.Statistic) {
+	// Value will be the latency
+	g.publish(name+".value", s.Value, s.Timestamp)
+	// Count the number of messages
+	g.publish(name+".count", s.Count, s.Timestamp)
 
-  // Min/Max latency values - don't send if max<min - i.e. no data!
-  if s.Max >= s.Min {
-    g.publish( name + ".min", s.Min, s.Timestamp )
-    g.publish( name + ".max", s.Max, s.Timestamp )
-  }
+	// Min/Max latency values - don't send if max<min - i.e. no data!
+	if s.Max >= s.Min {
+		g.publish(name+".min", s.Min, s.Timestamp)
+		g.publish(name+".max", s.Max, s.Timestamp)
+	}
 }
 
-func (g *Graphite) publish( name string, val int64, ts int64 ) {
-  statName := name
-  if g.config.Graphite.Prefix != "" {
-    statName = g.config.Graphite.Prefix + "." + name
-  }
-  msg := fmt.Sprintf( "%s %d %d", statName, val, ts)
+func (g *Graphite) publish(name string, val int64, ts int64) {
+	statName := name
+	if g.config.Graphite.Prefix != "" {
+		statName = g.config.Graphite.Prefix + "." + name
+	}
+	msg := fmt.Sprintf("%s %d %d", statName, val, ts)
 
-  g.channel.Publish(
-    g.config.Graphite.Exchange,
-    statName,
-    false,
-    false,
-    amqp.Publishing{
-      Body: []byte(msg),
-  })
+	g.channel.Publish(
+		g.config.Graphite.Exchange,
+		statName,
+		false,
+		false,
+		amqp.Publishing{
+			Body: []byte(msg),
+		})
 }

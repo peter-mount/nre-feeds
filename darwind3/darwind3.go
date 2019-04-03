@@ -2,20 +2,20 @@
 package darwind3
 
 type DarwinD3 struct {
-  // Optional link to remote DarwinTimetable for resolving schedules.
-  Timetable            string
-  // Eventing
-  EventManager         *DarwinEventManager
-  // Schedule cache
-  cache                 cache
-  // Station message cache
-  Messages             *StationMessages
+	// Optional link to remote DarwinTimetable for resolving schedules.
+	Timetable string
+	// Eventing
+	EventManager *DarwinEventManager
+	// Schedule cache
+	cache cache
+	// Station message cache
+	Messages *StationMessages
 }
 
 // OpenDB opens a DarwinReference database.
-func (r *DarwinD3) OpenDB( dbFile string, em *DarwinEventManager ) error {
-  r.EventManager = em
-  r.Messages = NewStationMessages( dbFile )
+func (r *DarwinD3) OpenDB(dbFile string, em *DarwinEventManager) error {
+	r.EventManager = em
+	r.Messages = NewStationMessages(dbFile)
 
-  return r.cache.initCache( dbFile )
+	return r.cache.initCache(dbFile)
 }
