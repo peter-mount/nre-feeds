@@ -66,7 +66,7 @@ func (a *DarwinTimetableService) PostInit() error {
 	           log.Println( "Failed import:", err )
 	         }
 	       })
-	       log.Println( "Auto Update using:", a.config.Ftp.Schedule )
+	       log.Println( "Auto SnapshotUpdate using:", a.config.Ftp.Schedule )
 	     }
 
 	     // Initial import required?

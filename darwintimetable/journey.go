@@ -97,7 +97,7 @@ func (r *DarwinTimetable) GetJourneyBucket(bucket *bolt.Bucket, rid string) (*Jo
 }
 
 func (r *DarwinTimetable) addJourney(journey *Journey) (error, bool) {
-	// Update only if it does not exist or is different
+	// SnapshotUpdate only if it does not exist or is different
 	if old, exists := r.getJourney(journey.RID); !exists || !journey.Equals(old) {
 		journey.Date = time.Now()
 

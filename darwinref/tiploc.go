@@ -38,7 +38,7 @@ func (r *DarwinReference) GetTiplocBucket(bucket *bolt.Bucket, tpl string) (*Loc
 }
 
 func (r *DarwinReference) addTiploc(loc *Location) (error, bool) {
-	// Update only if it does not exist or is different
+	// SnapshotUpdate only if it does not exist or is different
 	if old, exists := r.getTiploc(loc.Tiploc); !exists || !loc.Equals(old) {
 		b, err := json.Marshal(loc)
 		if err != nil {

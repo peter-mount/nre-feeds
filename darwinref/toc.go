@@ -69,7 +69,7 @@ func (r *DarwinReference) GetTocBucket(bucket *bolt.Bucket, tpl string) (*Toc, b
 }
 
 func (r *DarwinReference) addToc(toc *Toc) (error, bool) {
-	// Update only if it does not exist or is different
+	// SnapshotUpdate only if it does not exist or is different
 	if old, exists := r.getToc(toc.Toc); !exists || !toc.Equals(old) {
 		toc.Date = time.Now()
 

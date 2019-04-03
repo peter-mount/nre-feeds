@@ -34,7 +34,7 @@ func (p *TS) Process(tx *Transaction) error {
 	}
 
 	sched.Update(func() error {
-		// Update the LateReason
+		// SnapshotUpdate the LateReason
 		sched.LateReason = p.LateReason
 
 		// Run through schedule locations, any that match the new ones update the forecast

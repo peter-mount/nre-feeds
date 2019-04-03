@@ -9,8 +9,7 @@ import (
 )
 
 type DarwinD3Service struct {
-	darwind3 darwind3.DarwinD3
-
+	darwind3    darwind3.DarwinD3
 	config      *bin.Config
 	cron        *cron.CronService
 	restService *rest.Server
@@ -44,6 +43,7 @@ func (a *DarwinD3Service) Init(k *kernel.Kernel) error {
 }
 
 func (a *DarwinD3Service) PostInit() error {
+	a.darwind3.Config = a.config
 
 	if a.config.D3.ResolveSched {
 		// Allow D3 to resolve schedules from the timetable

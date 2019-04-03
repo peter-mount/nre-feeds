@@ -3,7 +3,6 @@ package bin
 
 import (
 	"flag"
-	"fmt"
 	"github.com/peter-mount/golib/kernel"
 	"github.com/peter-mount/golib/rabbitmq"
 	"github.com/peter-mount/nre-feeds/util/s3"
@@ -72,6 +71,13 @@ type Config struct {
 		Status QueueDef `yaml:"status"`
 		// Prefix to the routingKeys used by the Event subsystem
 		EventKeyPrefix string `yaml:"eventKeyPrefix"`
+		// FTP used for snapshots
+		Ftp struct {
+			Enabled  bool   `yaml:"enabled"`
+			Server   string `yaml:"server"`
+			User     string `yaml:"user"`
+			Password string `yaml:"password"`
+		} `yaml:"ftp"`
 	} `yaml:"d3"`
 
 	Server struct {
@@ -110,7 +116,8 @@ func (a *Config) Init(k *kernel.Kernel) error {
 func (a *Config) PostInit() error {
 	// Verify then load the config file
 	if *a.configFile == "" {
-		return fmt.Errorf("No default config defined, provide with -c")
+		*a.configFile = "config.yaml"
+		//return fmt.Errorf("No default config defined, provide with -c")
 	}
 
 	if filename, err := filepath.Abs(*a.configFile); err != nil {

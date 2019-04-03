@@ -5,7 +5,7 @@ import (
 	"github.com/peter-mount/nre-feeds/util"
 )
 
-// Train Status. Update to the "real time" forecast data for a service.
+// Train Status. SnapshotUpdate to the "real time" forecast data for a service.
 type TS struct {
 	XMLName xml.Name `json:"-" xml:"TS"`
 	// RTTI unique Train Identifier

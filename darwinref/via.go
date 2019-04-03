@@ -77,7 +77,7 @@ func (r *DarwinReference) GetViaBucket(bucket *bolt.Bucket, at string, dest stri
 }
 
 func (r *DarwinReference) addVia(via *Via) (error, bool) {
-	// Update only if it does not exist or is different
+	// SnapshotUpdate only if it does not exist or is different
 	if old, exists := r.getVia(via.At, via.Dest, via.Loc1, via.Loc2); !exists || !via.Equals(old) {
 		via.Date = time.Now()
 

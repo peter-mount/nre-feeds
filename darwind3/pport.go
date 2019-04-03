@@ -9,11 +9,12 @@ import (
 
 // The Pport element
 type Pport struct {
-	XMLName xml.Name  `json:"-" xml:"Pport"`
-	TS      time.Time `json:"ts" xml:"ts,attr"`
-	Version string    `json:"version" xml:"version,attr"`
-	Actions []Processor
-	//KBActions []KBProcessor
+	XMLName        xml.Name    `json:"-" xml:"Pport"`
+	TS             time.Time   `json:"ts" xml:"ts,attr"`
+	Version        string      `json:"version" xml:"version,attr"`
+	FeedHeaders    FeedHeaders `json:"-"`
+	Actions        []Processor
+	SnapshotUpdate bool `json:"-"`
 }
 
 func (s *Pport) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error {
@@ -49,9 +50,11 @@ func (s *Pport) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error
 
 				case "TimeTableId":
 					elem = &TimeTableId{}
+					s.SnapshotUpdate = true
 
 				case "sR":
 					elem = &SR{}
+					s.SnapshotUpdate = true
 
 				default:
 					if err := decoder.Skip(); err != nil {
@@ -70,16 +73,6 @@ func (s *Pport) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error
 				return nil
 			}
 		}
-
-	/* Removed for now
-	   case "uk.co.nationalrail.xml.incident.PtIncidentStructure":
-	     elem := &darwinkb.KBIncident{}
-	     if err := decoder.DecodeElement( elem, &start ); err != nil {
-	       return err
-	     }
-	     s.KBActions = append( s.KBActions, elem )
-	     return nil
-	*/
 
 	default:
 		return nil
@@ -102,16 +95,6 @@ func (p *Pport) Process(d3 *DarwinD3) error {
 			}
 		}
 	}
-
-	/* Removed for now
-	if len( p.KBActions ) > 0 {
-	  for _, s := range p.KBActions {
-	    if err := s.Process(); err != nil {
-	      return err
-	    }
-	  }
-	}
-	*/
 
 	return nil
 }

@@ -10,30 +10,38 @@ import (
 
 // BindConsumer binds a consumer to a RabbitMQ queue to receive D3 messages
 func (d *DarwinD3) BindConsumer(r *rabbitmq.RabbitMQ, queueName, routingKey string) error {
-	if channel, err := r.NewChannel(); err != nil {
+	channel, err := r.NewChannel()
+	if err != nil {
 		return err
-	} else {
-		r.QueueDeclare(channel, queueName, true, false, false, false, nil)
-		r.QueueBind(channel, queueName, routingKey, "amq.topic", false, nil)
-		ch, _ := r.Consume(channel, queueName, "ldb consumer", false, true, false, false, nil)
-
-		go func() {
-			for {
-				msg := <-ch
-				d.consume(msg)
-			}
-		}()
-
-		return nil
 	}
+
+	// Force prefetchCount to 1 so we don't get everything in one go
+	channel.Qos(1, 0, false)
+
+	r.QueueDeclare(channel, queueName, true, false, false, false, nil)
+	r.QueueBind(channel, queueName, routingKey, "amq.topic", false, nil)
+	ch, _ := r.Consume(channel, queueName, "ldb consumer", false, true, false, false, nil)
+
+	go func() {
+		for {
+			msg := <-ch
+			d.consume(msg)
+		}
+	}()
+
+	return nil
 }
 
 func (d *DarwinD3) consume(msg amqp.Delivery) {
 	defer msg.Ack(false)
 
-	reader := bytes.NewReader(msg.Body)
 	p := &Pport{}
+
+	p.FeedHeaders.populate(msg)
+
+	reader := bytes.NewReader(msg.Body)
 	if err := xml.NewDecoder(reader).Decode(p); err == nil {
+		d.FeedStatus.process(p)
 		p.Process(d)
 		statistics.Incr("d3.in")
 	}

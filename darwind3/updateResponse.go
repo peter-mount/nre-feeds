@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-// Update Response
+// SnapshotUpdate Response
 type UR struct {
 	XMLName       xml.Name `json:"-" xml:"uR"`
 	UpdateOrigin  string   `xml:"updateOrigin,attr,omitempty"`

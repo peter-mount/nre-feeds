@@ -119,12 +119,12 @@ func (r *DarwinTimetable) View(f func(*bolt.Tx) error) error {
 	return r.db.View(f)
 }
 
-// Update performs a read write opertation on the database
+// SnapshotUpdate performs a read write opertation on the database
 func (r *DarwinTimetable) Update(f func(*bolt.Tx) error) error {
 	return r.db.Update(f)
 }
 
-// internalUpdate is like Update but also sets our internal bucket references.
+// internalUpdate is like SnapshotUpdate but also sets our internal bucket references.
 // This is usually used for importing data
 func (r *DarwinTimetable) internalUpdate(f func(*bolt.Tx) error) error {
 	return r.db.Update(func(tx *bolt.Tx) error {

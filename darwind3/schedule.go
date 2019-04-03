@@ -52,7 +52,7 @@ type Schedule struct {
 	mutex sync.RWMutex
 }
 
-// Update runs a function within a Write lock within the schedule
+// SnapshotUpdate runs a function within a Write lock within the schedule
 func (s *Schedule) Update(f func() error) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
