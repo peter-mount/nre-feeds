@@ -23,7 +23,7 @@ func (p *TS) Process(tx *Transaction) error {
 	}
 
 	// If the TS is older than what's in the schedule then then do nothing as it's
-	// presumably old data thats sent out of sync
+	// presumably old data that's sent out of sync or it's from a snapshot
 	if tx.pport.TS.Before(sched.Date) {
 		return nil
 	}
@@ -33,7 +33,7 @@ func (p *TS) Process(tx *Transaction) error {
 		a.Forecast.Date = tx.pport.TS
 	}
 
-	sched.Update(func() error {
+	_ = sched.Update(func() error {
 		// SnapshotUpdate the LateReason
 		sched.LateReason = p.LateReason
 
@@ -77,11 +77,12 @@ func (p *TS) Process(tx *Transaction) error {
 	})
 
 	sched.Date = tx.pport.TS
-	tx.d3.putSchedule(sched)
-	tx.d3.EventManager.PostEvent(&DarwinEvent{
-		Type:     Event_ScheduleUpdated,
-		RID:      sched.RID,
-		Schedule: sched,
-	})
+	if tx.d3.PutSchedule(sched) {
+		tx.d3.EventManager.PostEvent(&DarwinEvent{
+			Type:     Event_ScheduleUpdated,
+			RID:      sched.RID,
+			Schedule: sched,
+		})
+	}
 	return nil
 }

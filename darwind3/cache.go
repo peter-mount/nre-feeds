@@ -1,9 +1,8 @@
 package darwind3
 
 import (
-	"github.com/muesli/cache2go"
-	"io/ioutil"
-	"os"
+	"encoding/json"
+	bolt "github.com/etcd-io/bbolt"
 	"time"
 )
 
@@ -14,81 +13,179 @@ const (
 
 // Memory cache of schedules with disk persistance
 type cache struct {
-	// Schedule cache
-	scheduleCache *cache2go.CacheTable
-	// Location of disk cache
-	cacheDir string
+	db *bolt.DB
+	tx *bolt.Tx
 }
 
 func (c *cache) initCache(cacheDir string) error {
-	c.cacheDir = cacheDir
-
-	if err := os.MkdirAll(cacheDir, 0777); err != nil {
+	db, err := bolt.Open(cacheDir+"/schedules.dat", 0666, &bolt.Options{
+		Timeout: 5 * time.Second,
+	})
+	if err != nil {
 		return err
 	}
 
-	c.scheduleCache = cache2go.Cache("schedules")
-
-	// If not in the cache then look to the disk
-	c.scheduleCache.SetDataLoader(func(key interface{}, args ...interface{}) *cache2go.CacheItem {
-		path, fn := c.getPath(key.(string))
-		if b, err := ioutil.ReadFile(path + "/" + fn); err != nil {
-			return nil
-		} else {
-
-			sched := ScheduleFromBytes(b)
-			if sched == nil || sched.RID == "" {
-				return nil
-			}
-
-			return cache2go.NewCacheItem(key, expiryTime, sched)
+	err = db.Update(func(tx *bolt.Tx) error {
+		err := c.createBucket(tx, "schedule")
+		if err != nil {
+			return err
 		}
+		err = c.createBucket(tx, "meta")
+		return err
 	})
+	if err != nil {
+		return err
+	}
 
+	c.db = db
 	return nil
+}
+
+func (c *cache) createBucket(tx *bolt.Tx, n string) error {
+	key := []byte(n)
+	b := tx.Bucket(key)
+	if b == nil {
+		_, err := tx.CreateBucket(key)
+		return err
+	}
+	return nil
+}
+
+func (r *DarwinD3) GetMeta(n string, o interface{}) error {
+	return r.View(func(tx *bolt.Tx) error {
+		return r.GetMetaTx(tx, n, o)
+	})
+}
+
+func (r *DarwinD3) GetMetaTx(tx *bolt.Tx, n string, o interface{}) error {
+	b := tx.Bucket([]byte("meta")).Get([]byte(n))
+	if b == nil {
+		return nil
+	}
+	return json.Unmarshal(b, o)
+}
+
+func (r *DarwinD3) PutMeta(n string, o interface{}) error {
+	return r.Update(func(tx *bolt.Tx) error {
+		return r.PutMetaTx(tx, n, o)
+	})
+}
+
+func (r *DarwinD3) PutMetaTx(tx *bolt.Tx, n string, o interface{}) error {
+	b, err := json.Marshal(o)
+	if err != nil {
+		return err
+	}
+	return tx.Bucket([]byte("meta")).Put([]byte(n), b)
+}
+
+// View performs a readonly operation on the database
+func (r *DarwinD3) View(f func(*bolt.Tx) error) error {
+	return r.cache.db.View(f)
+}
+
+// SnapshotUpdate performs a read write opertation on the database
+func (r *DarwinD3) Update(f func(*bolt.Tx) error) error {
+	return r.cache.db.Update(f)
+}
+
+func (r *DarwinD3) BulkUpdate(f func(*bolt.Tx) error) error {
+	if r.cache.tx != nil {
+		return f(r.cache.tx)
+	}
+	return r.Update(func(tx *bolt.Tx) error {
+		r.cache.tx = tx
+		err := f(tx)
+		r.cache.tx = nil
+		return err
+	})
 }
 
 // Retrieve a schedule by it's rid
 func (d *DarwinD3) GetSchedule(rid string) *Schedule {
-	sched := d.getSchedule(rid)
+	var sched *Schedule
+
+	_ = d.View(func(tx *bolt.Tx) error {
+		sched = d.cache.getSchedule(tx, rid)
+		return nil
+	})
+
 	if sched == nil {
 		sched = d.resolveSchedule(rid)
 		if sched != nil {
-			d.putSchedule(sched)
+			_ = d.Update(func(tx *bolt.Tx) error {
+				d.cache.putSchedule(tx, sched)
+				return nil
+			})
 		}
 	}
+
 	return sched
 }
 
-func (d *DarwinD3) getSchedule(rid string) *Schedule {
-	val, err := d.cache.scheduleCache.Value(rid)
-	if err == nil {
-		return val.Data().(*Schedule)
+func (d *DarwinD3) GetScheduleNoResolve(rid string) *Schedule {
+	var sched *Schedule
+
+	_ = d.View(func(tx *bolt.Tx) error {
+		sched = d.cache.getSchedule(tx, rid)
+		return nil
+	})
+
+	return sched
+}
+
+func (d *cache) getSchedule(tx *bolt.Tx, rid string) *Schedule {
+	sb := tx.Bucket([]byte("schedule"))
+	b := sb.Get([]byte(rid))
+	if b == nil {
+		return nil
 	}
-	return nil
+
+	sched := ScheduleFromBytes(b)
+	if sched == nil || sched.RID == "" {
+		return nil
+	}
+
+	return sched
 }
 
 // Store a schedule by it's rid
-func (d *DarwinD3) putSchedule(sched *Schedule) {
-	d.cache.scheduleCache.Add(sched.RID, expiryTime, sched)
-	d.cache.persistSchedule(sched)
+func (d *DarwinD3) PutSchedule(sched *Schedule) bool {
+	ret := false
+
+	if d.cache.tx == nil {
+		_ = d.Update(func(tx *bolt.Tx) error {
+			ret = d.cache.putSchedule(tx, sched)
+			return nil
+		})
+	} else {
+		ret = d.cache.putSchedule(d.cache.tx, sched)
+	}
+	return ret
 }
 
-func (c *cache) persistSchedule(sched *Schedule) {
-	if b, err := sched.Bytes(); err == nil {
-		dir, fn := c.getPath(sched.RID)
-		os.MkdirAll(dir, 0777)
-		ioutil.WriteFile(dir+"/"+fn, b, 0655)
+func (d *cache) putSchedule(tx *bolt.Tx, sched *Schedule) bool {
+	key := []byte(sched.RID)
+	sb := tx.Bucket([]byte("schedule"))
+	b := sb.Get(key)
+	if b != nil {
+		os := ScheduleFromBytes(b)
+		if os != nil && os.RID == sched.RID && !sched.Date.After(os.Date) {
+			return false
+		}
 	}
+
+	b, _ = sched.Bytes()
+	err := sb.Put(key, b)
+	if err != nil {
+		return false
+	}
+	return true
 }
 
 // Delete a schedule
-func (d *DarwinD3) deleteSchedule(rid string) {
-	d.cache.scheduleCache.Delete(rid)
-	path, fn := d.cache.getPath(rid)
-	os.Remove(path + "/" + fn)
-}
-
-func (c *cache) getPath(rid string) (string, string) {
-	return c.cacheDir + "/" + rid[0:6] + "/" + rid[6:8] + "/" + rid[8:10] + "/" + rid[10:12], rid[12:]
+func (d *DarwinD3) DeleteSchedule(rid string) {
+	_ = d.Update(func(tx *bolt.Tx) error {
+		return tx.Bucket([]byte("schedule")).Delete([]byte(rid))
+	})
 }

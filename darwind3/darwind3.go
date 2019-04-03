@@ -1,7 +1,9 @@
 // darwind3 handles the real time push port feed
 package darwind3
 
-import "github.com/peter-mount/nre-feeds/bin"
+import (
+	"github.com/peter-mount/nre-feeds/bin"
+)
 
 type DarwinD3 struct {
 	Timetable    string

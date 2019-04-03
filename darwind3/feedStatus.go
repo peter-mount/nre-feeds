@@ -19,6 +19,7 @@ type FeedStatus struct {
 	TS             time.Time
 	mutex          sync.Mutex
 	d3             *DarwinD3
+	snapshotTime   time.Time
 }
 
 func (fs *FeedStatus) process(p *Pport) {

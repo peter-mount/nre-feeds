@@ -25,7 +25,7 @@ func (l *Loading) Process(tx *Transaction) error {
 	// Set the Date field to the TS time
 	l.Date = tx.pport.TS
 
-	sched.Update(func() error {
+	_ = sched.Update(func() error {
 
 		for _, loc := range sched.Locations {
 			if loc.Tiploc == l.Tiploc && l.Times.Equals(&loc.Times) {
@@ -40,11 +40,12 @@ func (l *Loading) Process(tx *Transaction) error {
 	})
 
 	sched.Date = tx.pport.TS
-	tx.d3.putSchedule(sched)
-	tx.d3.EventManager.PostEvent(&DarwinEvent{
-		Type:     Event_ScheduleUpdated,
-		RID:      sched.RID,
-		Schedule: sched,
-	})
+	if tx.d3.PutSchedule(sched) {
+		tx.d3.EventManager.PostEvent(&DarwinEvent{
+			Type:     Event_ScheduleUpdated,
+			RID:      sched.RID,
+			Schedule: sched,
+		})
+	}
 	return nil
 }

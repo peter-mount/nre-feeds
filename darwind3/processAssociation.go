@@ -44,11 +44,12 @@ func (as *AssocService) processSched(tx *Transaction, a *Association) error {
 	}
 
 	sched.Date = tx.pport.TS
-	tx.d3.putSchedule(sched)
-	tx.d3.EventManager.PostEvent(&DarwinEvent{
-		Type:     Event_ScheduleUpdated,
-		RID:      sched.RID,
-		Schedule: sched,
-	})
+	if tx.d3.PutSchedule(sched) {
+		tx.d3.EventManager.PostEvent(&DarwinEvent{
+			Type:     Event_ScheduleUpdated,
+			RID:      sched.RID,
+			Schedule: sched,
+		})
+	}
 	return nil
 }

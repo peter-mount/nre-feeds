@@ -13,8 +13,8 @@ type Pport struct {
 	TS             time.Time   `json:"ts" xml:"ts,attr"`
 	Version        string      `json:"version" xml:"version,attr"`
 	FeedHeaders    FeedHeaders `json:"-"`
+	SnapshotUpdate bool        `json:"-"`
 	Actions        []Processor
-	SnapshotUpdate bool `json:"-"`
 }
 
 func (s *Pport) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error {

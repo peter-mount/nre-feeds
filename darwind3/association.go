@@ -99,7 +99,7 @@ func (d3 *DarwinD3) updateAssociation(a *Association, as *AssocService, np bool)
 	// np=true then do not resolve in the get else we could go into an infinite loop
 	var s *Schedule
 	if np {
-		s = d3.getSchedule(as.RID)
+		s = d3.GetScheduleNoResolve(as.RID)
 	} else {
 		s = d3.GetSchedule(as.RID)
 	}

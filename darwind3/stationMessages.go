@@ -56,7 +56,7 @@ func (sm *StationMessages) ForEach(f func(*StationMessage) error) error {
 func (sm *StationMessages) Get(id int) *StationMessage {
 	var s *StationMessage
 
-	sm.Update(func() error {
+	_ = sm.Update(func() error {
 		s = sm.messages[id]
 		return nil
 	})
@@ -66,7 +66,7 @@ func (sm *StationMessages) Get(id int) *StationMessage {
 
 // Put stores a StationMessage or deletes it if it has no applicable stations
 func (sm *StationMessages) Put(s *StationMessage) error {
-	sm.Update(func() error {
+	_ = sm.Update(func() error {
 		if len(s.Station) > 0 {
 			sm.messages[s.ID] = s
 		} else {
@@ -82,7 +82,7 @@ func (sm *StationMessages) Put(s *StationMessage) error {
 // BroadcastStationMessages sends all StationMessage's to the event queue as if they have
 // just been received.
 func (d *DarwinD3) BroadcastStationMessages() {
-	d.Messages.Update(func() error {
+	_ = d.Messages.Update(func() error {
 		if len(d.Messages.messages) > 0 {
 			for _, s := range d.Messages.messages {
 				d.EventManager.PostEvent(&DarwinEvent{
@@ -99,7 +99,7 @@ func (d *DarwinD3) BroadcastStationMessages() {
 
 // ExpireStationMessages expires any old (>6 hours) station messages
 func (d *DarwinD3) ExpireStationMessages() {
-	d.Messages.Update(func() error {
+	_ = d.Messages.Update(func() error {
 		cutoff := time.Now().Add(-6 * time.Hour)
 		cnt := 0
 
@@ -131,7 +131,7 @@ func (d *DarwinD3) ExpireStationMessages() {
 		return nil
 	})
 
-	d.Messages.Persist()
+	_ = d.Messages.Persist()
 }
 
 // Load reloads the station messages from disk
@@ -182,6 +182,6 @@ func (sm *StationMessages) Persist() error {
 			return err
 		}
 
-		return ioutil.WriteFile(sm.cache, b, 0x655)
+		return ioutil.WriteFile(sm.cache, b, 0655)
 	})
 }

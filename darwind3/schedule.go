@@ -69,7 +69,7 @@ func (s *Schedule) View(f func() error) error {
 func (a *Schedule) Clone() *Schedule {
 	var b *Schedule
 
-	a.Update(func() error {
+	_ = a.Update(func() error {
 		b = &Schedule{
 			RID:              a.RID,
 			UID:              a.UID,

@@ -21,7 +21,7 @@ func (p *DeactivatedSchedule) Process(tx *Transaction) error {
 		// Mark as not active & persist
 		sched.Active = false
 		sched.Date = tx.pport.TS
-		tx.d3.putSchedule(sched)
+		tx.d3.PutSchedule(sched)
 	}
 
 	// Post event
