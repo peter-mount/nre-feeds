@@ -94,19 +94,19 @@ func (a *DarwinD3Service) Start() error {
 	}
 
 	// Purge old schedules every hour
-	_, err = a.cron.AddFunc("5 0 * * * *", a.darwind3.PurgeSchedules)
+	_, err = a.cron.AddFunc("0 5 0 * * *", a.darwind3.PurgeSchedules)
 	if err != nil {
 		return err
 	}
 
 	// Check for any orphans once every 6 hours
-	_, err = a.cron.AddFunc("15 0 0/6 * * *", a.darwind3.PurgeOrphans)
+	_, err = a.cron.AddFunc("0 15 0/6 * * *", a.darwind3.PurgeOrphans)
 	if err != nil {
 		return err
 	}
 
 	// Log DB status every hour
-	_, err = a.cron.AddFunc("10 0 * * * *", a.darwind3.DBStatus)
+	_, err = a.cron.AddFunc("0 10 * * * *", a.darwind3.DBStatus)
 	if err != nil {
 		return err
 	}
