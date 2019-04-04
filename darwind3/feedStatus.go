@@ -2,8 +2,6 @@ package darwind3
 
 import (
 	"log"
-	"os"
-	"sync"
 	"time"
 )
 
@@ -17,11 +15,17 @@ import (
 type FeedStatus struct {
 	SequenceNumber int32
 	TS             time.Time
-	mutex          sync.Mutex
 	d3             *DarwinD3
-	snapshotTime   time.Time
+	initialized    bool
+	entries        []logEntry
 }
 
+// process checks the message SequenceNumber and if we are missing any then holds the feed whilst it checks for a
+// new Snapshot and retrieves the pending logs.
+// There is a chance it still misses a recent message if that message hasn't yet been put into the remote log files
+// however this will pickup missing messages if there was a longer outage, network disconnection etc.
+//
+// Also, on startup this will also force a retrieval so we are in a consistent state.
 func (fs *FeedStatus) process(p *Pport) {
 	// Do nothing for sR entries
 	if p.SnapshotUpdate {
@@ -33,11 +37,9 @@ func (fs *FeedStatus) process(p *Pport) {
 
 	if fs.snapshotRequired(p) {
 		log.Println("Sequence Mismatch", p.FeedHeaders.SequenceNumber, fs.SequenceNumber)
-		err := fs.loadSnapshot(p.TS, &fs.mutex)
+		err := fs.loadSnapshot(p.TS)
 		if err != nil {
-			// Treat this as terminal
 			log.Println("Error", err)
-			os.Exit(1)
 		}
 	}
 
@@ -47,6 +49,12 @@ func (fs *FeedStatus) process(p *Pport) {
 }
 
 func (fs *FeedStatus) snapshotRequired(p *Pport) bool {
+	// Ensures we always require a snapshot on startup
+	if !fs.initialized {
+		fs.initialized = true
+		return true
+	}
+
 	lastId := fs.SequenceNumber
 	nextId := p.FeedHeaders.SequenceNumber
 
