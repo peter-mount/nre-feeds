@@ -58,6 +58,7 @@ func (a *DarwinD3Service) PostInit() error {
 
 	a.restService.Handle("/schedule/{rid}", a.ScheduleHandler).Methods("GET")
 
+	a.restService.Handle("/status", a.StatusHandler).Methods("GET")
 	return nil
 }
 
