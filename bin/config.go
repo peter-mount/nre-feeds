@@ -43,15 +43,6 @@ type Config struct {
 	// Used for archiving data
 	Upload s3.S3Credentials `yaml:"upload"`
 
-	// FTP used by the V12 feed
-	Ftp struct {
-		Enabled  bool   `yaml:"enabled"`
-		Server   string `yaml:"server"`
-		User     string `yaml:"user"`
-		Password string `yaml:"password"`
-		Schedule string `yaml:"schedule"`
-	} `yaml:"ftp"`
-
 	KB struct {
 		Username string `yaml:"username"`
 		Password string `yaml:"password"`
