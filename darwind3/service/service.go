@@ -51,6 +51,9 @@ func (a *DarwinD3Service) PostInit() error {
 	}
 
 	// Rest services
+	a.restService.Handle("/alarm/{rid}", a.AlarmHandler).Methods("GET")
+	a.restService.Handle("/alarms", a.AlarmsHandler).Methods("GET")
+
 	a.restService.Handle("/message/broadcast", a.BroadcastStationMessagesHandler).Methods("POST")
 	a.restService.Handle("/message/{id}", a.StationMessageHandler).Methods("GET")
 	a.restService.Handle("/messages", a.AllMessageHandler).Methods("GET")
@@ -84,14 +87,26 @@ func (a *DarwinD3Service) Start() error {
 		return err
 	}
 
+	// Check for old alarms every 6 hours
+	_, err = a.cron.AddFunc("0 0 0/6 * * *", a.darwind3.ExpireAlarms)
+	if err != nil {
+		return err
+	}
+
 	// Purge old schedules every hour
-	_, err = a.cron.AddFunc("0 0 * * * *", a.darwind3.PurgeSchedules)
+	_, err = a.cron.AddFunc("5 0 * * * *", a.darwind3.PurgeSchedules)
 	if err != nil {
 		return err
 	}
 
 	// Check for any orphans once every 6 hours
-	_, err = a.cron.AddFunc("0 0 0/6 * * *", a.darwind3.PurgeOrphans)
+	_, err = a.cron.AddFunc("15 0 0/6 * * *", a.darwind3.PurgeOrphans)
+	if err != nil {
+		return err
+	}
+
+	// Log DB status every hour
+	_, err = a.cron.AddFunc("10 0 * * * *", a.darwind3.DBStatus)
 	if err != nil {
 		return err
 	}

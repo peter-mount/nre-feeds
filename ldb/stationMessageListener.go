@@ -12,7 +12,7 @@ func (d *LDB) stationMessageListener(e *darwind3.DarwinEvent) {
 			// Only store in public stations
 			if s := d.GetStationCrs(crs); s != nil && s.public {
 				updated := false
-				s.Update(func() error {
+				_ = s.Update(func() error {
 					for _, i := range s.messages {
 						if i == e.NewStationMessage.ID {
 							return nil
@@ -32,7 +32,7 @@ func (d *LDB) stationMessageListener(e *darwind3.DarwinEvent) {
 
 	// Existing message so check for stations it no longer applies to
 	if e.ExistingStationMessage != nil {
-		var m map[string]int = make(map[string]int)
+		var m map[string]uint64 = make(map[string]uint64)
 		for _, crs := range e.ExistingStationMessage.Station {
 			m[crs] = e.ExistingStationMessage.ID
 		}
@@ -49,8 +49,8 @@ func (d *LDB) stationMessageListener(e *darwind3.DarwinEvent) {
 			// Only store in public stations
 			if s := d.GetStationCrs(crs); s != nil && s.public {
 				updated := false
-				s.Update(func() error {
-					var ary []int
+				_ = s.Update(func() error {
+					var ary []uint64
 
 					for _, i := range s.messages {
 						if i != id {

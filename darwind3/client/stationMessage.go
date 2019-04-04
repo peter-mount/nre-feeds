@@ -7,7 +7,7 @@ import (
 
 // GetJourney returns a Journey by making an HTTP call to a remote instance of
 // DarwinTimetable
-func (c *DarwinD3Client) GetStationMessage(id int) (*darwind3.StationMessage, error) {
+func (c *DarwinD3Client) GetStationMessage(id uint64) (*darwind3.StationMessage, error) {
 	msg := &darwind3.StationMessage{}
 	if found, err := c.get(fmt.Sprintf("/message/%d", id), msg); err != nil {
 		return nil, err

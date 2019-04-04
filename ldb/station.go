@@ -19,7 +19,7 @@ type Station struct {
 	// This station is public - i.e. has a CRS so can have departures
 	public bool
 	// The Station message id's applicable to this station
-	messages []int
+	messages []uint64
 	// Mutex for this station
 	mutex *sync.Mutex
 	// Pointer to Stations object
@@ -54,7 +54,7 @@ func (s *Station) GetServices(from *util.WorkingTime, to *util.WorkingTime) []*S
 	var services []*Service
 
 	// Get a copy the services from the station within the lock, filtering as needed
-	s.Update(func() error {
+	_ = s.Update(func() error {
 		for _, service := range s.services {
 			if !service.Location.Forecast.Departed && service.Location.Time.Between(from, to) {
 				services = append(services, service.Clone())
@@ -75,8 +75,8 @@ func (s *Station) GetServices(from *util.WorkingTime, to *util.WorkingTime) []*S
 func (s *Station) GetMessages(client *d3client.DarwinD3Client) []*darwind3.StationMessage {
 
 	// Get a copy of the current id's within the lock
-	var ids []int
-	s.Update(func() error {
+	var ids []uint64
+	_ = s.Update(func() error {
 		for _, id := range s.messages {
 			ids = append(ids, id)
 		}

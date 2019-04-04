@@ -22,6 +22,8 @@ const (
 	Event_TimeTableUpdate = "timeTableUpdate"
 	// TrackingID update
 	Event_TrackingID = "trackingID"
+	// Alarms
+	Event_Alarm = "alarm"
 )
 
 // An event notifying of something happening within DarwinD3
@@ -42,6 +44,9 @@ type DarwinEvent struct {
 	TimeTableId *TimeTableId
 	// TrackingID update
 	TrackingID *TrackingID
+	// Alarm
+	Alarm   *Alarm
+	AlarmId string
 }
 
 // The core of the eventing system
@@ -75,11 +80,6 @@ func NewDarwinEventManager(mq *rabbitmq.RabbitMQ, eventKeyPrefix string) *Darwin
 // ListenToEvents will run a function which will reveive DarwinEvent's for the
 // specified type until it exists.
 func (d *DarwinEventManager) ListenToEvents(eventType string, f func(*DarwinEvent)) error {
-	//seq := d.sequence
-	//d.sequence++
-
-	//queueName := fmt.Sprintf( "%s.%sd3.event.%d.%d", d.prefix, d.eventKeyPrefix, eventType, seq)
-	//routingKey := fmt.Sprintf( "%sd3.event.%d", d.eventKeyPrefix, eventType )
 	queueName := fmt.Sprintf("%s.%sd3.event.%s", d.prefix, d.eventKeyPrefix, eventType)
 	routingKey := fmt.Sprintf("%sd3.event.%s", d.eventKeyPrefix, eventType)
 
@@ -87,6 +87,9 @@ func (d *DarwinEventManager) ListenToEvents(eventType string, f func(*DarwinEven
 		log.Println(err)
 		return err
 	} else {
+
+		// Force prefetchCount to 1 so we don't get everything in one go
+		channel.Qos(1, 0, false)
 
 		// non-durable auto-delete queue
 		d.mq.QueueDeclare(channel, queueName, false, true, false, false, nil)
@@ -117,12 +120,7 @@ func (d *DarwinEventManager) ListenToEvents(eventType string, f func(*DarwinEven
 
 // PostEvent posts a DarwinEvent to all listeners listening for that specific type
 func (d *DarwinEventManager) PostEvent(e *DarwinEvent) {
-	//if e.Schedule != nil {
-	//  e.Schedule = e.Schedule.Clone()
-	//}
-
 	if b, err := json.Marshal(e); err == nil {
-		//d.mq.Publish( fmt.Sprintf( "%sd3.event.%d", d.eventKeyPrefix, e.Type ), b )
 		d.mq.Publish(fmt.Sprintf("%sd3.event.%s", d.eventKeyPrefix, e.Type), b)
 	}
 }

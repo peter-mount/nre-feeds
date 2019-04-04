@@ -80,6 +80,8 @@ func (fs *FeedStatus) cleanup() {
 	fs.d3.PurgeSchedules()
 	fs.d3.PurgeOrphans()
 	fs.d3.ExpireStationMessages()
+	fs.d3.ExpireAlarms()
+	fs.d3.DBStatus()
 }
 
 func (fs *FeedStatus) resolveFiles(dirname string, con *ftp.ServerConn, origFiles []logEntry) ([]logEntry, error) {

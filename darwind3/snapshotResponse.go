@@ -38,22 +38,21 @@ func (s *SR) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error {
 			case "OW":
 				elem = &StationMessage{}
 
-			// Added in v16 2018-12-18
 			case "formationLoading":
 				elem = &Loading{}
 
-			// association added 2019-01-25
 			case "association":
 				elem = &Association{}
 
-				// trackingID
 			case "trackingID":
 				elem = &TrackingID{}
+
+			case "alarm":
+				elem = &RttiAlarm{}
 
 			// Unsupported (so far) elements:
 			// scheduleFormations
 			// trainAlert
-			// alarm
 			default:
 				log.Println("Skipping", tok.Name.Local, tok.Name.Space)
 				if err := decoder.Skip(); err != nil {
