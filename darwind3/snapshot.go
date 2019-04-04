@@ -126,52 +126,79 @@ func sortLogEntry(orig, new []logEntry) []logEntry {
 	return append(orig, new...)
 }
 
+type importLog struct {
+	scanner  *bufio.Scanner
+	hasToken bool
+	lc       int
+	d3       *DarwinD3
+}
+
+func (il *importLog) next() bool {
+	il.hasToken = il.scanner.Scan()
+	return il.hasToken
+}
+
 func (fs *FeedStatus) importLogEntry(entry logEntry) error {
-	err := fs.d3.BulkUpdate(func(tx *bolt.Tx) error {
-		log.Println("Importing", entry.path)
+	f, err := os.Open(entry.path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
 
-		f, err := os.Open(entry.path)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
+	gr, err := gzip.NewReader(f)
+	if err != nil {
+		return err
+	}
 
-		gr, err := gzip.NewReader(f)
-		if err != nil {
-			return err
-		}
+	il := importLog{
+		hasToken: true,
+		d3:       fs.d3,
+		scanner:  bufio.NewScanner(gr),
+	}
 
+	log.Println("Importing", entry.path)
+	for il.hasToken {
 		lc := 0
-		scanner := bufio.NewScanner(gr)
-		for scanner.Scan() {
-			ln := scanner.Bytes()
-			err = scanner.Err()
-			if err != nil {
-				return err
-			}
-
-			if len(ln) > 0 {
-				p := &Pport{}
-				r := bytes.NewReader(ln)
-				err := xml.NewDecoder(r).Decode(p)
+		err := fs.d3.BulkUpdate(func(tx *bolt.Tx) error {
+			for il.next() && lc < 500 {
+				ln := il.scanner.Bytes()
+				err = il.scanner.Err()
 				if err != nil {
 					return err
 				}
 
-				err = p.Process(fs.d3)
-				if err != nil {
-					return err
-				}
+				if len(ln) > 0 {
+					p := &Pport{}
+					r := bytes.NewReader(ln)
+					err := xml.NewDecoder(r).Decode(p)
+					if err != nil {
+						return err
+					}
 
-				lc++
-				if (lc % 1000) == 0 {
-					log.Println("Imported", lc)
+					err = p.Process(fs.d3)
+					if err != nil {
+						return err
+					}
+
+					il.lc++
+					if (il.lc % 1000) == 0 {
+						log.Println("Imported", il.lc)
+					}
+
+					// Internal counter, so we break updates into smaller chunks
+					// so that callers to the rest api can still get dirty data during the refresh
+					lc++
 				}
 			}
+			return nil
+		})
+		if err != nil {
+			return err
 		}
+	}
 
-		log.Println("Finished importing", lc, "messages")
-		return fs.d3.PutMetaTx(tx, entry.meta, entry.time)
-	})
-	return err
+	log.Println("Finished importing", il.lc, "messages")
+
+	// Update the meta
+	return fs.d3.PutMeta(entry.meta, entry.time)
 }
