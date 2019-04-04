@@ -16,3 +16,9 @@
 config.yaml
 docs
 Dockerfile.*
+
+*.iml
+Dockerfile.*
+config.yaml
+.idea
+go.sum
