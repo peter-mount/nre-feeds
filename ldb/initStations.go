@@ -1,23 +1,28 @@
 package ldb
 
 import (
+	"github.com/etcd-io/bbolt"
 	"github.com/peter-mount/nre-feeds/darwinref"
 	"github.com/peter-mount/nre-feeds/darwinref/client"
 	"log"
 )
 
-// initStations ensures we have all public stations defined on startup.
+// RefreshStations ensures we have all Public stations defined on startup.
 // Not doing so incurs a performance hit when a train references it for the
 // first time.
-func (d *LDB) initStations() {
-	if err := d.Stations.Update(func() error {
+func (d *LDB) RefreshStations() {
+	err := d.Update(func(tx *bbolt.Tx) error {
+
 		log.Println("LDB: Initialising stations")
 
 		refClient := &client.DarwinRefClient{Url: d.Reference}
 
-		if locations, err := refClient.GetStations(); err != nil {
+		locations, err := refClient.GetStations()
+		if err != nil {
 			return err
-		} else if locations != nil {
+		}
+
+		if locations != nil {
 			// Map tiplocs by crs
 			m := make(map[string][]*darwinref.Location)
 			for _, loc := range locations {
@@ -31,13 +36,14 @@ func (d *LDB) initStations() {
 
 			// create a station for each
 			for _, l := range m {
-				d.createStation(l)
+				createStation(tx, l)
 			}
 		}
 
-		log.Println("LDB:", len(d.Stations.crs), "Stations initialised")
+		log.Printf("LDB: %d stations initialized\n", tx.Bucket([]byte(crsBucket)).Stats().KeyN)
 		return nil
-	}); err != nil {
+	})
+	if err != nil {
 		log.Println("LDB: Station import failed", err)
 	}
 }

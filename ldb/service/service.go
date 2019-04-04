@@ -63,11 +63,14 @@ func (a *LDBService) Start() error {
 
 	a.ldb.EventManager = darwind3.NewDarwinEventManager(&a.config.RabbitMQ, a.config.D3.EventKeyPrefix)
 
-	if err := a.ldb.Init(); err != nil {
+	a.config.DbPath(&a.config.Database.LDB, "ldb.db")
+
+	err := a.ldb.Init(a.config.Database.LDB)
+	if err != nil {
 		return err
 	}
 
 	// Expire old schedules every 15 minutes
-	a.cron.AddFunc("0 * * * * *", a.ldb.Stations.Cleanup)
+	//a.cron.AddFunc("0 * * * * *", a.ldb.Stations.Cleanup)
 	return nil
 }

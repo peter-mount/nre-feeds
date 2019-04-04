@@ -59,7 +59,7 @@ func (a *Service) LocationIndex() int {
 	return a.locationIndex
 }
 
-// Compare two services by the times at a location
+// Compare two Services by the times at a location
 func (a *Service) Compare(b *Service) bool {
 	return b != nil && a.Location.Compare(b.Location)
 }

@@ -28,13 +28,15 @@ type Config struct {
 	} `yaml:"services"`
 
 	Database struct {
-		Path string `yaml:path`
+		Path string `yaml:"path"`
 		// Darwin Reference
 		Reference string `yaml:"reference"`
 		// Darwin Timetable
 		Timetable string `yaml:"timetable"`
 		// Darwin PushPort
 		PushPort string `yaml:"pushPort"`
+		// Live Departure Boards
+		LDB string `yaml:"ldb"`
 	} `yaml:"database"`
 
 	// S3 bucket used by the V16 feed

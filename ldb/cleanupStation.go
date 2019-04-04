@@ -1,27 +1,26 @@
 package ldb
 
-import (
-	"github.com/peter-mount/golib/statistics"
-	"time"
-)
-
 // Cleans up a station removing old schedules
 func (s *Station) cleanup() {
+	/* TODO reimplement station cleanup
 	now := time.Now()
 	day := now.Add(-2 * time.Hour)
 
 	s.Update(func() error {
-		for rid, service := range s.services {
+		for rid, service := range s.Services {
 			if service.Timestamp().Before(day) {
 				statistics.Incr("ldb.clean")
-				delete(s.services, rid)
+				delete(s.Services, rid)
 			}
 		}
 		return nil
 	})
+
+	*/
 }
 
 // Cleanup removes any old schedules still in memory for each station
+/* TODO reimplement Cleanup
 func (st *Stations) Cleanup() {
 	// Get set of current stations
 	var crs []*Station
@@ -37,3 +36,5 @@ func (st *Stations) Cleanup() {
 		s.cleanup()
 	}
 }
+
+*/
