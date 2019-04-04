@@ -79,6 +79,7 @@ func (fs *FeedStatus) cleanup() {
 	// Run maintenance jobs now
 	fs.d3.PurgeSchedules()
 	fs.d3.PurgeOrphans()
+	fs.d3.ExpireStationMessages()
 }
 
 func (fs *FeedStatus) resolveFiles(dirname string, con *ftp.ServerConn, origFiles []logEntry) ([]logEntry, error) {

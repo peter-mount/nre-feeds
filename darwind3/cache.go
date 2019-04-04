@@ -14,13 +14,14 @@ type cache struct {
 }
 
 const (
+	messageBucket  = "messages"
 	metaBucket     = "meta"
 	scheduleBucket = "schedule"
 	tsBucket       = "ts"
 )
 
 func (c *cache) initCache(cacheDir string) error {
-	db, err := bolt.Open(cacheDir+"/schedules.dat", 0666, &bolt.Options{
+	db, err := bolt.Open(cacheDir, 0666, &bolt.Options{
 		Timeout: 5 * time.Second,
 	})
 	if err != nil {
@@ -32,7 +33,7 @@ func (c *cache) initCache(cacheDir string) error {
 	// schedule for the live data
 	// ts for the times per rid - used for cleaning up
 	err = db.Update(func(tx *bolt.Tx) error {
-		for _, bucket := range []string{metaBucket, scheduleBucket, tsBucket} {
+		for _, bucket := range []string{messageBucket, metaBucket, scheduleBucket, tsBucket} {
 			err := c.createBucket(tx, bucket)
 			if err != nil {
 				return err

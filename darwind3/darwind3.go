@@ -9,7 +9,7 @@ type DarwinD3 struct {
 	Timetable    string
 	EventManager *DarwinEventManager
 	cache        cache
-	Messages     *StationMessages
+	Messages     StationMessages
 	FeedStatus   FeedStatus
 	Config       *bin.Config
 	status       string
@@ -18,9 +18,9 @@ type DarwinD3 struct {
 
 // OpenDB opens a DarwinReference database.
 func (r *DarwinD3) OpenDB(dbFile string, em *DarwinEventManager) error {
-	r.FeedStatus.d3 = r
 	r.EventManager = em
-	r.Messages = NewStationMessages(dbFile)
+	r.FeedStatus.d3 = r
+	r.Messages.d3 = r
 
 	return r.cache.initCache(dbFile)
 }

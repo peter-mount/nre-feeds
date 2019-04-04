@@ -1,13 +1,14 @@
 package darwind3
 
 import (
+	"encoding/json"
 	"encoding/xml"
 	"strconv"
 	"time"
 )
 
 type StationMessage struct {
-	ID int `json:"id" xml:"id,attr"`
+	ID uint64 `json:"id" xml:"id,attr"`
 	// The message
 	Message string `json:"message" xml:"message"`
 	// CRS codes for the stations this message applies
@@ -25,14 +26,34 @@ type StationMessage struct {
 	Self string `json:"self,omitempty" xml:"self,attr,omitempty"`
 }
 
+// Bytes returns the message as an encoded byte slice
+func (s *StationMessage) Bytes() ([]byte, error) {
+	b, err := json.Marshal(s)
+	return b, err
+}
+
+// ScheduleFromBytes returns a schedule based on a slice or nil if none
+func StationMessageFromBytes(b []byte) *StationMessage {
+	if b == nil {
+		return nil
+	}
+
+	message := &StationMessage{}
+	err := json.Unmarshal(b, message)
+	if err != nil {
+		return nil
+	}
+	return message
+}
+
 func (s *StationMessage) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error {
 	for _, attr := range start.Attr {
 		switch attr.Name.Local {
 		case "id":
-			if i, err := strconv.Atoi(attr.Value); err != nil {
+			if i, err := strconv.ParseInt(attr.Value, 10, 64); err != nil {
 				return err
 			} else {
-				s.ID = i
+				s.ID = uint64(i)
 			}
 
 		case "cat":

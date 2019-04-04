@@ -78,12 +78,11 @@ func (a *DarwinD3Service) Start() error {
 		return err
 	}
 
-	// Expire old messages every 15 minutes & run an expire on startup
+	// Expire old station messages every 15 minutes
 	_, err = a.cron.AddFunc("0 0/15 * * * *", a.darwind3.ExpireStationMessages)
 	if err != nil {
 		return err
 	}
-	go a.darwind3.ExpireStationMessages()
 
 	// Purge old schedules every hour
 	_, err = a.cron.AddFunc("0 0 * * * *", a.darwind3.PurgeSchedules)

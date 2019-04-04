@@ -1,10 +1,9 @@
 package darwind3
 
 import (
-	"encoding/json"
-	"io/ioutil"
+	"encoding/binary"
+	"github.com/etcd-io/bbolt"
 	"log"
-	"os"
 	"sync"
 	"time"
 )
@@ -12,176 +11,143 @@ import (
 // StationMessages is an in-memory with disk backup of all received StationMessage's
 // This is periodically cleared down as messages expire
 type StationMessages struct {
+	d3       *DarwinD3
 	mutex    sync.Mutex
 	messages map[int]*StationMessage
 	cacheDir string
 	cache    string
 }
 
-func NewStationMessages(cacheDir string) *StationMessages {
-	s := &StationMessages{}
-	s.messages = make(map[int]*StationMessage)
-	s.cacheDir = cacheDir
-	s.cache = s.cacheDir + "/stationMessages.dat"
-
-	err := s.Load()
-	if err != nil {
-		log.Println(err)
-	}
-
-	return s
-}
-
-func (sm *StationMessages) Update(f func() error) error {
-	sm.mutex.Lock()
-	defer sm.mutex.Unlock()
-	return f()
+func uint64key(id uint64) []byte {
+	key := make([]byte, 8)
+	binary.LittleEndian.PutUint64(key, id)
+	return key
 }
 
 func (sm *StationMessages) ForEach(f func(*StationMessage) error) error {
-	sm.mutex.Lock()
-	defer sm.mutex.Unlock()
-
-	for _, m := range sm.messages {
-		err := f(m)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return sm.d3.View(func(tx *bbolt.Tx) error {
+		bucket := tx.Bucket([]byte(messageBucket))
+		return bucket.ForEach(func(k, v []byte) error {
+			message := StationMessageFromBytes(v)
+			if message == nil {
+				bucket.Delete(k)
+			} else {
+				err := f(message)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+	})
 }
 
 // Get returns the specified StationMessage or nil if none
-func (sm *StationMessages) Get(id int) *StationMessage {
+func (sm *StationMessages) Get(id uint64) *StationMessage {
 	var s *StationMessage
 
-	_ = sm.Update(func() error {
-		s = sm.messages[id]
+	_ = sm.d3.View(func(tx *bbolt.Tx) error {
+		s = sm.get(tx, id)
 		return nil
 	})
 
 	return s
+}
+
+func (sm *StationMessages) get(tx *bbolt.Tx, id uint64) *StationMessage {
+	bucket := tx.Bucket([]byte(messageBucket))
+
+	b := bucket.Get(uint64key(id))
+	if b != nil {
+		return StationMessageFromBytes(b)
+	}
+	return nil
 }
 
 // Put stores a StationMessage or deletes it if it has no applicable stations
 func (sm *StationMessages) Put(s *StationMessage) error {
-	_ = sm.Update(func() error {
-		if len(s.Station) > 0 {
-			sm.messages[s.ID] = s
-		} else {
-			delete(sm.messages, s.ID)
-		}
+	// Check for the snapshot transaction being open. If so then use that
+	if sm.d3.cache.tx != nil {
+		return sm.put(sm.d3.cache.tx, s)
+	}
 
-		return nil
+	return sm.d3.Update(func(tx *bbolt.Tx) error {
+		return sm.put(tx, s)
 	})
+}
+func (sm *StationMessages) put(tx *bbolt.Tx, s *StationMessage) error {
+	bucket := tx.Bucket([]byte(messageBucket))
 
-	return sm.Persist()
+	key := uint64key(s.ID)
+
+	if len(s.Station) > 0 {
+		b, err := s.Bytes()
+		if err != nil {
+			return err
+		}
+		return bucket.Put(key, b)
+	} else {
+		return bucket.Delete(key)
+	}
 }
 
 // BroadcastStationMessages sends all StationMessage's to the event queue as if they have
 // just been received.
 func (d *DarwinD3) BroadcastStationMessages() {
-	_ = d.Messages.Update(func() error {
-		if len(d.Messages.messages) > 0 {
-			for _, s := range d.Messages.messages {
-				d.EventManager.PostEvent(&DarwinEvent{
-					Type:              Event_StationMessage,
-					NewStationMessage: s,
-				})
-			}
+	cnt := 0
+	_ = d.Messages.ForEach(func(message *StationMessage) error {
+		d.EventManager.PostEvent(&DarwinEvent{
+			Type:              Event_StationMessage,
+			NewStationMessage: message,
+		})
 
-			log.Println("Broadcast", len(d.Messages.messages), "StationMessage's")
-		}
+		cnt++
+
 		return nil
 	})
+
+	log.Println("Broadcast", cnt, "StationMessage's")
 }
 
-// ExpireStationMessages expires any old (>6 hours) station messages
+// ExpireStationMessages expires any old (>24 hours) station messages
+// Note: this is only to keep the DB size down, they should delete automatically now
 func (d *DarwinD3) ExpireStationMessages() {
-	_ = d.Messages.Update(func() error {
-		cutoff := time.Now().Add(-6 * time.Hour)
-		cnt := 0
+	cutoff := time.Now().Add(-24 * time.Hour)
+	cnt := 0
 
-		for id, s := range d.Messages.messages {
-			if s.Date.Before(cutoff) {
+	_ = d.Update(func(tx *bbolt.Tx) error {
+		bucket := tx.Bucket([]byte(messageBucket))
+
+		return bucket.ForEach(func(k, v []byte) error {
+			message := StationMessageFromBytes(v)
+			if message == nil {
+				// Damaged message
 				cnt++
-				delete(d.Messages.messages, id)
+				_ = bucket.Delete(k)
+			} else if message.Date.Before(cutoff) {
+				// Expired message
+				cnt++
+				_ = bucket.Delete(k)
 
 				d.EventManager.PostEvent(&DarwinEvent{
 					Type:                   Event_StationMessage,
-					ExistingStationMessage: s,
+					ExistingStationMessage: message,
 					// Simulate a delete from Darwin as a message with no stations
 					NewStationMessage: &StationMessage{
-						ID:       s.ID,
-						Message:  s.Message,
-						Category: s.Category,
-						Severity: s.Severity,
-						Suppress: s.Suppress,
-						Date:     s.Date,
+						ID:       message.ID,
+						Message:  message.Message,
+						Category: message.Category,
+						Severity: message.Severity,
+						Suppress: message.Suppress,
+						Date:     message.Date,
 					},
 				})
 			}
-		}
-
-		if cnt > 0 {
-			log.Println("Expired", cnt, "StationMessage's")
-		}
-
-		return nil
+			return nil
+		})
 	})
 
-	_ = d.Messages.Persist()
-}
-
-// Load reloads the station messages from disk
-func (sm *StationMessages) Load() error {
-	return sm.Update(func() error {
-		log.Println("Loading StationMessages")
-
-		err := os.MkdirAll(sm.cacheDir, 0777)
-		if err != nil {
-			return err
-		}
-
-		buf, err := ioutil.ReadFile(sm.cache)
-		if err != nil {
-			return err
-		}
-
-		var messages []*StationMessage
-		err = json.Unmarshal(buf, &messages)
-		if err != nil {
-			return err
-		}
-
-		for _, m := range messages {
-			sm.messages[m.ID] = m
-		}
-
-		log.Println("Loaded", len(sm.messages), "StationMessage's")
-		return nil
-	})
-}
-
-// Persist stores all StationMessage's to disk
-func (sm *StationMessages) Persist() error {
-	return sm.Update(func() error {
-		err := os.MkdirAll(sm.cacheDir, 0777)
-		if err != nil {
-			return err
-		}
-
-		var messages []*StationMessage
-		for _, m := range sm.messages {
-			messages = append(messages, m)
-		}
-
-		b, err := json.Marshal(&messages)
-		if err != nil {
-			return err
-		}
-
-		return ioutil.WriteFile(sm.cache, b, 0655)
-	})
+	if cnt > 0 {
+		log.Println("Expired", cnt, "StationMessage's")
+	}
 }
