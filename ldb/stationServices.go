@@ -5,7 +5,7 @@ import (
 )
 
 // Adds a service to the station
-func (s *Station) addService(e *darwind3.DarwinEvent, idx int) {
+func (s *Station) addService(e *darwind3.DarwinEvent, idx int) bool {
 	// Only Public stations can be updated. Pass to the channel so the worker thread
 	// can read it
 	if s.Public && e.Schedule.Locations[idx].Times.IsPublic() {
@@ -26,11 +26,13 @@ func (s *Station) addService(e *darwind3.DarwinEvent, idx int) {
 				// so we use the RID, tiploc and the timetable time
 				k := e.RID + ":" + loc.Tiploc + ":" + loc.Times.Time.String()
 				s.Services[k] = service
+				return true
 			}
 
 		}
 
 	}
+	return false
 }
 
 // Removes a service from a station.

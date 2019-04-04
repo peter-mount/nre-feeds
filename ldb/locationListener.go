@@ -7,20 +7,15 @@ import (
 // locationListener listens to location updates and updates the relevant
 // Station with the new/updated entry
 func (d *LDB) locationListener(e *darwind3.DarwinEvent) {
-	e.Schedule.Update(func() error {
+	// Ignore anything without a location & no Public times
+	for idx, l := range e.Schedule.Locations {
+		if l.Times.IsPublic() {
 
-		// Ignore anything without a location & no Public times
-		for idx, l := range e.Schedule.Locations {
-			if l.Times.IsPublic() {
-
-				// Retrieve the station, it should be a valid one if we have Public times
-				station := d.GetStationTiploc(l.Tiploc)
-				if station != nil {
-					station.addService(e, idx)
-				}
+			// Retrieve the station, it should be a valid one if we have Public times
+			station := d.GetStationTiploc(l.Tiploc)
+			if station != nil && station.addService(e, idx) {
+				d.PutStation(station)
 			}
 		}
-
-		return nil
-	})
+	}
 }

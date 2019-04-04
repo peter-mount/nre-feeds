@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"github.com/etcd-io/bbolt"
 	"github.com/peter-mount/nre-feeds/darwinref"
-	"log"
 )
 
 func (d *LDB) PutStation(s *Station) {
@@ -126,13 +125,11 @@ func createStation(tx *bbolt.Tx, locations []*darwinref.Location) *Station {
 
 	s := getStationCrs(tx, crs)
 	if s == nil {
-		log.Println("New station", crs)
 		s = &Station{}
 		s.Crs = crs
 		s.Locations = locations
 		s.Services = make(map[string]*Service)
 	} else {
-		log.Println("Existing station", crs)
 		// Remove any tiplocs that have been removed
 		tpl := make(map[string]interface{})
 		for _, loc := range locations {
