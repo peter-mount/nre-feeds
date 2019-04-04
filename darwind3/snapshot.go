@@ -23,6 +23,8 @@ type logEntry struct {
 func (fs *FeedStatus) loadSnapshot(ts time.Time) error {
 	log.Println("Suspending realtime message processing for NRDP synchronization")
 
+	fs.d3.SetStatus("Resyncing", "orange")
+
 	// List of retrieved files & delete them once we are done
 	defer fs.cleanup()
 
@@ -71,6 +73,12 @@ func (fs *FeedStatus) cleanup() {
 	fs.entries = nil
 
 	log.Println("Resuming realtime message processing")
+
+	fs.d3.SetStatus("Normal", "green")
+
+	// Run maintenance jobs now
+	fs.d3.PurgeSchedules()
+	fs.d3.PurgeOrphans()
 }
 
 func (fs *FeedStatus) resolveFiles(dirname string, con *ftp.ServerConn, origFiles []logEntry) ([]logEntry, error) {

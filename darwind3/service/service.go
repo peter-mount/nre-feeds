@@ -66,7 +66,10 @@ func (a *DarwinD3Service) Start() error {
 
 	// Connect to Rabbit & name the connection so its easier to debug
 	a.config.RabbitMQ.ConnectionName = "darwin d3"
-	a.config.RabbitMQ.Connect()
+	err := a.config.RabbitMQ.Connect()
+	if err != nil {
+		return err
+	}
 
 	em := darwind3.NewDarwinEventManager(&a.config.RabbitMQ, a.config.D3.EventKeyPrefix)
 
@@ -76,12 +79,28 @@ func (a *DarwinD3Service) Start() error {
 	}
 
 	// Expire old messages every 15 minutes & run an expire on startup
-	a.cron.AddFunc("0 0/15 * * * *", a.darwind3.ExpireStationMessages)
+	_, err = a.cron.AddFunc("0 0/15 * * * *", a.darwind3.ExpireStationMessages)
+	if err != nil {
+		return err
+	}
 	go a.darwind3.ExpireStationMessages()
 
-	if a.config.RabbitMQ.Url != "" {
-		// The V16 PushPort queue
-		a.darwind3.BindConsumer(&a.config.RabbitMQ, a.config.D3.PushPort.QueueName, a.config.D3.PushPort.RoutingKey)
+	// Purge old schedules every hour
+	_, err = a.cron.AddFunc("0 0 * * * *", a.darwind3.PurgeSchedules)
+	if err != nil {
+		return err
+	}
+
+	// Check for any orphans once every 6 hours
+	_, err = a.cron.AddFunc("0 0 0/6 * * *", a.darwind3.PurgeOrphans)
+	if err != nil {
+		return err
+	}
+
+	// The V16 PushPort queue
+	err = a.darwind3.BindConsumer(&a.config.RabbitMQ, a.config.D3.PushPort.QueueName, a.config.D3.PushPort.RoutingKey)
+	if err != nil {
+		return err
 	}
 
 	return nil
