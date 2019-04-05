@@ -111,6 +111,12 @@ func (a *DarwinD3Service) Start() error {
 		return err
 	}
 
+	// Listen for broadcast events
+	err = a.darwind3.EventManager.ListenToEvents(darwind3.Event_Request_StationMessage, a.darwind3.BroadcastStationMessages)
+	if err != nil {
+		return err
+	}
+
 	// The V16 PushPort queue
 	err = a.darwind3.BindConsumer(&a.config.RabbitMQ, a.config.D3.PushPort.QueueName, a.config.D3.PushPort.RoutingKey)
 	if err != nil {

@@ -93,7 +93,7 @@ func (sm *StationMessages) put(tx *bbolt.Tx, s *StationMessage) error {
 
 // BroadcastStationMessages sends all StationMessage's to the event queue as if they have
 // just been received.
-func (d *DarwinD3) BroadcastStationMessages() {
+func (d *DarwinD3) BroadcastStationMessages(e *DarwinEvent) {
 	cnt := 0
 	_ = d.Messages.ForEach(func(message *StationMessage) error {
 		d.EventManager.PostEvent(&DarwinEvent{

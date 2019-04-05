@@ -24,7 +24,7 @@ func (d *DarwinD3Service) StationMessageHandler(r *rest.Rest) error {
 
 // BroadcastStationMessagesHandler allows us to re-broadcast all messages
 func (d *DarwinD3Service) BroadcastStationMessagesHandler(r *rest.Rest) error {
-	d.darwind3.BroadcastStationMessages()
+	d.darwind3.BroadcastStationMessages(nil)
 	r.Status(200).
 		JSON().
 		Value("OK")

@@ -3,7 +3,14 @@ package ldb
 import (
 	"github.com/etcd-io/bbolt"
 	"github.com/peter-mount/nre-feeds/darwind3"
+	"log"
 )
+
+func (d *LDB) RequestStationMessages() {
+	d.EventManager.PostEvent(&darwind3.DarwinEvent{
+		Type: darwind3.Event_Request_StationMessage,
+	})
+}
 
 // deactivationListener removes Services when a schedule is deactivated
 func (d *LDB) stationMessageListener(e *darwind3.DarwinEvent) {
@@ -11,6 +18,8 @@ func (d *LDB) stationMessageListener(e *darwind3.DarwinEvent) {
 
 		// Ensure all stations have this message
 		if e.NewStationMessage != nil {
+			log.Println("StationMessage", e.NewStationMessage.ID, e.NewStationMessage.Station)
+
 			for _, crs := range e.NewStationMessage.Station {
 				// Only store in Public stations
 				s := getStationCrs(tx, crs)

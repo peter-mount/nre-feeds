@@ -53,6 +53,7 @@ func (d *LDB) Init(dbFile string) error {
 
 	// Ensure we have our stations loaded on startup
 	d.RefreshStations()
+	d.RequestStationMessages()
 	d.DBStatus()
 
 	return nil

@@ -24,6 +24,8 @@ const (
 	Event_TrackingID = "trackingID"
 	// Alarms
 	Event_Alarm = "alarm"
+	// Request station message broadcast
+	Event_Request_StationMessage = "requestStationMessage"
 )
 
 // An event notifying of something happening within DarwinD3
