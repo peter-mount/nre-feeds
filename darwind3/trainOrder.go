@@ -1,6 +1,7 @@
 package darwind3
 
 import (
+	"encoding/xml"
 	"github.com/peter-mount/nre-feeds/util"
 	"time"
 )
@@ -43,11 +44,19 @@ type trainOrderData struct {
 type trainOrderItem struct {
 	// For trains in the train order where the train is the Darwin timetable,
 	// it will be identified by its RID
-	RID string `xml:"rid"`
-	// One or more scheduled times to identify the instance of the location in
-	// the train schedule for which the train order is set.
-	Times util.CircularTimes `xml:"times"`
+	RID TrainOrderRID `xml:"rid"`
 	// Where a train in the train order is not in the Darwin timetable,
 	// a Train ID (headcode) will be supplied
 	TrainId string `xml:"trainID"`
+}
+
+type TrainOrderRID struct {
+	RID   string             `json:"rid"`
+	Times util.CircularTimes `json:"times"`
+}
+
+func (t *TrainOrderRID) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error {
+	t.Times.UnmarshalXMLAttributes(start)
+
+	return decoder.DecodeElement(&t.RID, &start)
 }
