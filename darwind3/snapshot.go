@@ -72,16 +72,16 @@ func (fs *FeedStatus) cleanup() {
 	// Empty the slice
 	fs.entries = nil
 
-	log.Println("Resuming realtime message processing")
-
-	fs.d3.SetStatus("Normal", "green")
-
 	// Run maintenance jobs now
 	fs.d3.PurgeSchedules()
 	fs.d3.PurgeOrphans()
 	fs.d3.ExpireStationMessages()
 	fs.d3.ExpireAlarms()
 	fs.d3.DBStatus()
+
+	log.Println("Resuming realtime message processing")
+
+	fs.d3.SetStatus("Normal", "green")
 }
 
 func (fs *FeedStatus) resolveFiles(dirname string, con *ftp.ServerConn, origFiles []logEntry) ([]logEntry, error) {
