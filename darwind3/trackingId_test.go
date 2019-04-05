@@ -11,7 +11,7 @@ func TestTracingIdXML(t *testing.T) {
 	var id TrackingID
 
 	if err := xml.Unmarshal([]byte(src), &id); err != nil {
-		t.Errorf("Failed to unmarshal test xml: %v", err)
+		t.Errorf("Failed to unmarshal pport xml: %v", err)
 	}
 
 	if id.Berth.Area != "EH" {

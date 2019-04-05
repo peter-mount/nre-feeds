@@ -37,6 +37,7 @@ func AlarmFromBytes(b []byte) *Alarm {
 }
 
 func (d *DarwinD3) SetAlarm(a *Alarm) error {
+	log.Println("Set alarm", a)
 	if d.cache.tx != nil {
 		return d.setAlarm(d.cache.tx, a)
 	}
@@ -105,7 +106,7 @@ func (p *RttiAlarm) Process(tx *Transaction) error {
 
 		tx.d3.EventManager.PostEvent(&DarwinEvent{
 			Type:    Event_Alarm,
-			AlarmId: p.Set.ID,
+			AlarmId: p.Clear,
 		})
 
 		return err
