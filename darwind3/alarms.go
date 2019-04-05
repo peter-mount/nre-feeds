@@ -89,7 +89,7 @@ func (d *DarwinD3) DeleteAlarm(id string) error {
 		return d.deleteAlarm(d.cache.tx, id)
 	}
 	return d.Update(func(tx *bbolt.Tx) error {
-		return d.deleteAlarm(d.cache.tx, id)
+		return d.deleteAlarm(tx, id)
 	})
 }
 
