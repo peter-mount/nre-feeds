@@ -1,7 +1,7 @@
 package darwind3
 
 import (
-	"encoding/xml"
+	"github.com/peter-mount/nre-feeds/util"
 	"time"
 )
 
@@ -18,61 +18,36 @@ type TrainOrder struct {
 // The trainOrder as received from darwin
 type trainOrderWrapper struct {
 	// The tiploc where the train order applies
-	Tiploc string
+	Tiploc string `xml:"tiploc,attr"`
 	// The CRS code of the station where the train order applies
-	CRS string
+	CRS string `xml:"crs,attr"`
 	// The platform number where the train order applies
-	Platform string
+	Platform string `xml:"platform,attr"`
 	// The Train orders to set
-	Set *trainOrderData
+	Set *trainOrderData `xml:"set"`
 	// Clear the current train order
-	Clear bool
+	Clear bool `xml:"clear"`
 }
 
-func (s *trainOrderWrapper) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error {
+// Defines the sequence of trains making up the train order
+type trainOrderData struct {
+	// The first train in the train order.
+	First *trainOrderItem `xml:"first"`
+	// The second train in the train order.
+	Second *trainOrderItem `xml:"second"`
+	// The third train in the train order.
+	Third *trainOrderItem `xml:"third"`
+}
 
-	for _, attr := range start.Attr {
-		switch attr.Name.Local {
-		case "tiploc":
-			s.Tiploc = attr.Value
-
-		case "crs":
-			s.CRS = attr.Value
-
-		case "platform":
-			s.Platform = attr.Value
-		}
-	}
-
-	for {
-		token, err := decoder.Token()
-		if err != nil {
-			return err
-		}
-
-		switch tok := token.(type) {
-		case xml.StartElement:
-			switch tok.Name.Local {
-			case "clear":
-				s.Clear = true
-				if err := decoder.Skip(); err != nil {
-					return err
-				}
-
-			case "set":
-				s.Set = &trainOrderData{}
-				if err := decoder.DecodeElement(s.Set, &tok); err != nil {
-					return err
-				}
-
-			default:
-				if err := decoder.Skip(); err != nil {
-					return err
-				}
-			}
-
-		case xml.EndElement:
-			return nil
-		}
-	}
+// Describes the identifier of a train in the train order
+type trainOrderItem struct {
+	// For trains in the train order where the train is the Darwin timetable,
+	// it will be identified by its RID
+	RID string `xml:"rid"`
+	// One or more scheduled times to identify the instance of the location in
+	// the train schedule for which the train order is set.
+	Times util.CircularTimes `xml:"times"`
+	// Where a train in the train order is not in the Darwin timetable,
+	// a Train ID (headcode) will be supplied
+	TrainId string `xml:"trainID"`
 }
