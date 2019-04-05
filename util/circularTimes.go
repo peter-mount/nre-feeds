@@ -94,20 +94,23 @@ func (l *CircularTimes) UpdateTime() {
 // Equals returns true if both CircularTimes are exactly the same
 func (a *CircularTimes) Equals(b *CircularTimes) bool {
 	return b != nil &&
-		PublicTimeEquals(a.Pta, b.Pta) &&
-		PublicTimeEquals(a.Ptd, b.Ptd) &&
-		WorkingTimeEquals(a.Wta, b.Wta) &&
-		WorkingTimeEquals(a.Wtd, b.Wtd) &&
-		WorkingTimeEquals(a.Wtp, b.Wtp)
+		a.Pta.Equals(b.Pta) &&
+		a.Ptd.Equals(b.Ptd) &&
+		a.Wta.Equals(b.Wta) &&
+		a.Wtd.Equals(b.Wtd) &&
+		a.Wtp.Equals(b.Wtp)
 }
 
 // EqualInSchedule returns true if the working timetable fields of both
 // CircularTimes are equal as they are the primary key
 func (a *CircularTimes) EqualInSchedule(b *CircularTimes) bool {
+	if a == nil {
+		return b == nil
+	}
 	return b != nil &&
-		WorkingTimeEquals(a.Wta, b.Wta) &&
-		WorkingTimeEquals(a.Wtd, b.Wtd) &&
-		WorkingTimeEquals(a.Wtp, b.Wtp)
+		a.Wta.Equals(b.Wta) &&
+		a.Wtd.Equals(b.Wtd) &&
+		a.Wtp.Equals(b.Wtp)
 }
 
 func (l *CircularTimes) String() string {

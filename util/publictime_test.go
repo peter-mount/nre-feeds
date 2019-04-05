@@ -118,6 +118,11 @@ func TestPublicTime_Equals(t *testing.T) {
 	tst(a, nil, false)
 	tst(a, c, false)
 	tst(c, a, false)
+
+	a = nil
+	tst(a, b, false)
+	b = nil
+	tst(a, b, true)
 }
 
 func TestPublicTime_JSON(t *testing.T) {

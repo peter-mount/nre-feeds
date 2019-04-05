@@ -123,3 +123,36 @@ func TestCircularTimes_SliceStable(t *testing.T) {
 	}
 
 }
+
+func TestCircularTimes_Equals(t *testing.T) {
+	// Two identical but distinct instances of times
+	a := &CircularTimes{
+		Pta: NewPublicTime("13:11"),
+		Ptd: NewPublicTime("13:11"),
+		Wta: NewWorkingTime("13:11"),
+		Wtd: NewWorkingTime("13:11:30"),
+	}
+
+	b := &CircularTimes{
+		Pta: NewPublicTime("13:11"),
+		Ptd: NewPublicTime("13:11"),
+		Wta: NewWorkingTime("13:11"),
+		Wtd: NewWorkingTime("13:11:30"),
+	}
+
+	if !a.Equals(b) {
+		t.Error("Equals returned false")
+	}
+
+	// Different Wtd
+	c := &CircularTimes{
+		Pta: NewPublicTime("13:11"),
+		Ptd: NewPublicTime("13:11"),
+		Wta: NewWorkingTime("13:11"),
+		Wtd: NewWorkingTime("13:11"),
+	}
+
+	if a.Equals(c) {
+		t.Error("Equals returned true")
+	}
+}

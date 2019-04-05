@@ -41,10 +41,7 @@ func (p *TS) Process(tx *Transaction) error {
 		for _, a := range sched.Locations {
 			for _, b := range p.Locations {
 				if a.EqualInSchedule(b) {
-					a.Times = b.Times
-					a.Forecast = b.Forecast
-					// Mark location as updated
-					a.updated = true
+					a.MergeFrom(b)
 				}
 			}
 		}

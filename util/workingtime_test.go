@@ -121,6 +121,12 @@ func TestWorkingTime_Equals(t *testing.T) {
 	tst(a, nil, false)
 	tst(a, c, false)
 	tst(c, a, false)
+
+	// Test for nil
+	a = nil
+	tst(a, b, false)
+	b = nil
+	tst(a, b, true)
 }
 
 func TestWorkingTime_JSON(t *testing.T) {

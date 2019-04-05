@@ -285,67 +285,15 @@ func (a *Location) Clone() *Location {
 	return b
 }
 
-/*
-func (t *Location) append( b *bytes.Buffer, c bool, f string, v interface{} ) bool {
-  // Any null, "" or false ignore
-  if vb, err := json.Marshal( v );
-    err == nil &&
-    !( len(vb) == 2 && vb[0] == '"' && vb[1] == '"' ) &&
-    !( len(vb) == 4 && vb[0] == 'n' && vb[1] == 'u' && vb[2] == 'l' && vb[3] == 'l') &&
-    !( len(vb) == 5 && vb[0] == 'f' && vb[1] == 'a' && vb[2] == 'l' && vb[3] == 's' && vb[4] == 'e') {
-    if c {
-      b.WriteByte( ',' )
-    }
+// MergeFrom merges data from one location into another
+func (dest *Location) MergeFrom(src *Location) {
+	dest.Times = src.Times
 
-    b.WriteByte( '"' )
-    b.WriteString( f )
-    b.WriteByte( '"' )
-    b.WriteByte( ':' )
-    b.Write( vb )
-    return true
-  }
+	// Copy the forecast but preserve metadata that won't be in the src
+	trainOrder := dest.Forecast.TrainOrder
+	dest.Forecast = src.Forecast
+	dest.Forecast.TrainOrder = trainOrder
 
-  return c
+	// Mark location as updated
+	dest.updated = true
 }
-
-func (t *Location) MarshalJSON() ( []byte, error ) {
-  var b bytes.Buffer
-
-  b.WriteByte( '{' )
-  c := t.append( &b, false, "type", t.Type )
-  c = t.append( &b, c, "tiploc", t.Tiploc )
-  c = t.append( &b, c, "displaytime", &t.Time )
-  c = t.append( &b, c, "timetable", &t.Times )
-  c = t.append( &b, c, "falseDestination", t.FalseDestination )
-  c = t.append( &b, c, "cancelled", &t.Cancelled )
-  c = t.append( &b, c, "delay", &t.Delay )
-
-  if c {
-    b.WriteByte( ',' )
-  }
-  b.WriteString( "\"planned\":{")
-  c1 := t.append( &b, false, "activity", t.Planned.ActivityType )
-  c1 = t.append( &b, c1, "plannedActivity", t.Planned.PlannedActivity )
-  if t.Planned.RDelay != 0 {
-    c1 = t.append( &b, c1, "rDelay", &t.Planned.RDelay )
-  }
-  b.WriteByte( '}' )
-
-  b.WriteString( ",\"forecast\":{")
-  c1 = t.append( &b, false, "time", &t.Forecast.Time )
-  c1 = t.append( &b, c1, "delated", &t.Forecast.Delayed )
-  c1 = t.append( &b, c1, "arrived", &t.Forecast.Arrived )
-  c1 = t.append( &b, c1, "departed", &t.Forecast.Departed )
-  c1 = t.append( &b, c1, "arr", &t.Forecast.Arrival )
-  c1 = t.append( &b, c1, "dep", &t.Forecast.Departure )
-  c1 = t.append( &b, c1, "pass", &t.Forecast.Pass )
-  c1 = t.append( &b, c1, "plat", &t.Forecast.Platform )
-  c1 = t.append( &b, c1, "suppressed", &t.Forecast.Suppressed )
-  c1 = t.append( &b, c1, "detachFront", &t.Forecast.DetachFront )
-  c1 = t.append( &b, c1, "trainOrder", t.Forecast.TrainOrder )
-  b.WriteByte( '}' )
-
-  b.WriteByte( '}' )
-  return b.Bytes(), nil
-}
-*/

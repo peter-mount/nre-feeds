@@ -15,6 +15,9 @@ type PublicTime struct {
 }
 
 func (a *PublicTime) Equals(b *PublicTime) bool {
+	if a == nil {
+		return b == nil
+	}
 	if b == nil {
 		return false
 	}
@@ -42,15 +45,6 @@ func (a *PublicTime) Compare(b *PublicTime) bool {
 	}
 
 	return d < 0
-}
-
-// PublicTimeEquals compares equality between two PublicTime.
-// Unlike PublicTime.Equals() this will return true if both are null, otherwise
-// both must not be null and equal to be true
-
-func PublicTimeEquals(a *PublicTime, b *PublicTime) bool {
-	return (a == nil && b == nil) ||
-		(a != nil && a.Equals(b))
 }
 
 // NewPublicTime returns a new PublicTime instance from a string of format "HH:MM"

@@ -21,6 +21,9 @@ const (
 )
 
 func (a *WorkingTime) Equals(b *WorkingTime) bool {
+	if a == nil {
+		return b == nil
+	}
 	if b == nil {
 		return false
 	}
@@ -48,14 +51,6 @@ func (a *WorkingTime) Compare(b *WorkingTime) bool {
 	}
 
 	return a.t < b.t
-}
-
-// WorkingTimeEquals compares equality between two WorkingTimes.
-// Unlike WorkingTime.Equals() this will return true if both are null, otherwise
-// both must not be null and equal to be true
-func WorkingTimeEquals(a *WorkingTime, b *WorkingTime) bool {
-	return (a == nil && b == nil) ||
-		(a != nil && a.Equals(b))
 }
 
 // NewWorkingTime returns a new WorkingTime instance from a string of format "HH:MM:SS"
