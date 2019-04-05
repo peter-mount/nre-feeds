@@ -42,7 +42,7 @@ func (d *DarwinD3) SetAlarm(a *Alarm) error {
 		return d.setAlarm(d.cache.tx, a)
 	}
 	return d.Update(func(tx *bbolt.Tx) error {
-		return d.setAlarm(d.cache.tx, a)
+		return d.setAlarm(tx, a)
 	})
 }
 
