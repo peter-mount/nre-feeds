@@ -14,7 +14,23 @@ type FeedHeaders struct {
 
 // Populate the FeedHeaders from the inbound message
 func (h *FeedHeaders) populate(msg amqp.Delivery) {
-	h.SequenceNumber = msg.Headers["SequenceNumber"].(int32)
-	h.MessageType = msg.Headers["MessageType"].(string)
-	h.PushPortSequence = msg.Headers["PushPortSequence"].(string)
+	h.SequenceNumber = h.intHeader(msg, "SequenceNumber")
+	h.MessageType = h.stringHeader(msg, "MessageType")
+	h.PushPortSequence = h.stringHeader(msg, "PushPortSequence")
+}
+
+func (h *FeedHeaders) intHeader(msg amqp.Delivery, s string) int32 {
+	sn := msg.Headers[s]
+	if sn != nil {
+		return sn.(int32)
+	}
+	return 0
+}
+
+func (h *FeedHeaders) stringHeader(msg amqp.Delivery, s string) string {
+	sn := msg.Headers[s]
+	if sn != nil {
+		return sn.(string)
+	}
+	return ""
 }
