@@ -6,6 +6,7 @@ import (
 	d3client "github.com/peter-mount/nre-feeds/darwind3/client"
 	"github.com/peter-mount/nre-feeds/darwinref"
 	"github.com/peter-mount/nre-feeds/util"
+	"log"
 	"sort"
 )
 
@@ -73,6 +74,7 @@ func (s *Station) GetServices(from *util.WorkingTime, to *util.WorkingTime) []*S
 		return services[i].Compare(services[j])
 	})
 
+	log.Printf("GetServices %s %v to %v returning %d/%d services", s.Crs, from, to, len(services), len(s.Services))
 	return services
 }
 

@@ -42,21 +42,13 @@ type Service struct {
 	// The associations
 	Associations []*darwind3.Association `json:"association"`
 	// The latest schedule entry used for this service
-	schedule *darwind3.Schedule `json:"-"`
+	Schedule *darwind3.Schedule `json:"schedule"`
 	// The index within the schedule of this location
-	locationIndex int `json:"-"`
+	LocationIndex int `json:"-"`
 	// The time this entry was set
 	Date time.Time `json:"date,omitempty" xml:"date,attr,omitempty"`
 	// URL to the train detail page
 	Self string `json:"self,omitempty" xml:"self,attr,omitempty"`
-}
-
-func (a *Service) Schedule() *darwind3.Schedule {
-	return a.schedule
-}
-
-func (a *Service) LocationIndex() int {
-	return a.locationIndex
 }
 
 // Compare two Services by the times at a location
@@ -77,8 +69,8 @@ func (s *Service) update(sched *darwind3.Schedule, idx int) bool {
 		idx >= 0 && idx < len(sched.Locations) {
 
 		// Copy of our meta data
-		s.schedule = sched
-		s.locationIndex = idx
+		s.Schedule = sched
+		s.LocationIndex = idx
 
 		// Clear calling points so we'll update again later when needed
 		s.CallingPoints = nil
@@ -139,8 +131,8 @@ func (a *Service) Clone() *Service {
 		LateReason:       a.LateReason,
 		Location:         a.Location.Clone(),
 		Associations:     a.Associations,
-		schedule:         a.schedule,
-		locationIndex:    a.locationIndex,
+		Schedule:         a.Schedule,
+		LocationIndex:    a.LocationIndex,
 		Date:             a.Date,
 		Self:             a.Self,
 	}
