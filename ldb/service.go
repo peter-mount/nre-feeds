@@ -1,6 +1,7 @@
 package ldb
 
 import (
+	"encoding/json"
 	"github.com/peter-mount/nre-feeds/darwind3"
 	"github.com/peter-mount/nre-feeds/util"
 	"time"
@@ -49,6 +50,26 @@ type Service struct {
 	Date time.Time `json:"date,omitempty" xml:"date,attr,omitempty"`
 	// URL to the train detail page
 	Self string `json:"self,omitempty" xml:"self,attr,omitempty"`
+}
+
+// Bytes returns the message as an encoded byte slice
+func (s *Service) Bytes() ([]byte, error) {
+	b, err := json.Marshal(s)
+	return b, err
+}
+
+// ScheduleFromBytes returns a schedule based on a slice or nil if none
+func ServiceFromBytes(b []byte) *Service {
+	if b == nil {
+		return nil
+	}
+
+	service := &Service{}
+	err := json.Unmarshal(b, service)
+	if err != nil {
+		return nil
+	}
+	return service
 }
 
 // Compare two Services by the times at a location

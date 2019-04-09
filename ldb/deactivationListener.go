@@ -25,7 +25,7 @@ func (d *LDB) deactivationListener(e *darwind3.DarwinEvent) {
 		}
 
 		if e.RID != "" {
-			d.RemoveSchedule(e.RID)
+			removeSchedule(tx, e.RID)
 		}
 
 		return nil

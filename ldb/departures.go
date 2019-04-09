@@ -11,6 +11,7 @@ import (
 const (
 	crsBucket      = "crs"
 	scheduleBucket = "schedule"
+	serviceBucket  = "service"
 	tiplocBucket   = "tiploc"
 )
 
@@ -40,7 +41,7 @@ func (d *LDB) Init(dbFile string) error {
 	// schedule for the live data
 	// ts for the times per rid - used for cleaning up
 	err = db.Update(func(tx *bolt.Tx) error {
-		for _, bucket := range []string{crsBucket, scheduleBucket, tiplocBucket} {
+		for _, bucket := range []string{crsBucket, scheduleBucket, serviceBucket, tiplocBucket} {
 			err := d.createBucket(tx, bucket)
 			if err != nil {
 				return err

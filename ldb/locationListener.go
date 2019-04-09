@@ -23,9 +23,9 @@ func (d *LDB) locationListener(e *darwind3.DarwinEvent) {
 					updated := false
 
 					if l.Forecast.Departed {
-						updated = station.removeDepartedService(e, idx)
+						updated = station.removeDepartedService(tx, e, idx)
 					} else {
-						updated = station.addService(e, idx)
+						updated = station.addService(tx, e, idx)
 					}
 
 					if updated {

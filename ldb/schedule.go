@@ -33,6 +33,10 @@ func (d *LDB) GetSchedule(rid string) *darwind3.Schedule {
 
 func (d *LDB) RemoveSchedule(rid string) {
 	_ = d.Update(func(tx *bolt.Tx) error {
-		return tx.Bucket([]byte(scheduleBucket)).Delete([]byte(rid))
+		return removeSchedule(tx, rid)
 	})
+}
+
+func removeSchedule(tx *bolt.Tx, rid string) error {
+	return tx.Bucket([]byte(scheduleBucket)).Delete([]byte(rid))
 }
