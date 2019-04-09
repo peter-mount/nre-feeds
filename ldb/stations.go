@@ -43,22 +43,28 @@ func getStationCrs(tx *bbolt.Tx, crs string) *Station {
 	return nil
 }
 
+func (d *LDB) getStationTiploc(tx *bbolt.Tx, tiploc string) *Station {
+	key := []byte(tiploc)
+
+	// Try to resolve the crs
+	crs := tx.Bucket([]byte(tiplocBucket)).Get(key)
+	if crs != nil {
+		b := tx.Bucket([]byte(crsBucket)).Get([]byte(crs))
+		if b != nil {
+			return StationFromBytes(b)
+		}
+	}
+	return nil
+}
+
 // GetStationTiploc returns the Station instance by Tiploc or nil if not found.
 // Note: If we don't have an entry then this will create one
 func (d *LDB) GetStationTiploc(tiploc string) *Station {
-	key := []byte(tiploc)
-
 	var station *Station
 
 	// Try to resolve the crs
 	_ = d.View(func(tx *bbolt.Tx) error {
-		crs := tx.Bucket([]byte(tiplocBucket)).Get(key)
-		if crs != nil {
-			b := tx.Bucket([]byte(crsBucket)).Get([]byte(crs))
-			if b != nil {
-				station = StationFromBytes(b)
-			}
-		}
+		station = d.getStationTiploc(tx, tiploc)
 		return nil
 	})
 

@@ -1,12 +1,13 @@
 package ldb
 
 import (
+	"github.com/etcd-io/bbolt"
 	"github.com/peter-mount/nre-feeds/darwind3"
 	"time"
 )
 
 const (
-	dewllTime = time.Minute * 10
+	dwellTime = time.Minute * 10
 )
 
 // Key must be unique so to support circular routes
@@ -24,7 +25,7 @@ func (s *Station) addService(e *darwind3.DarwinEvent, idx int) bool {
 		// Add service
 
 		t := e.Schedule.GetTime(idx)
-		if t.After(time.Now().Add(-dewllTime)) {
+		if t.After(time.Now().Add(-dwellTime)) {
 			k := s.key(e.Schedule, idx)
 
 			service, exists := s.Services[k]
@@ -33,12 +34,8 @@ func (s *Station) addService(e *darwind3.DarwinEvent, idx int) bool {
 			}
 
 			if service.update(e.Schedule, idx) {
-
-				if !exists {
-					s.Services[k] = service
-					return true
-				}
-
+				s.Services[k] = service
+				return true
 			}
 		}
 
@@ -52,7 +49,8 @@ func (s *Station) removeDepartedService(e *darwind3.DarwinEvent, idx int) bool {
 }
 
 // Removes all entries of a service from a station.
-func (s *Station) removeService(rid string) {
+func (s *Station) removeService(tx *bbolt.Tx, rid string) bool {
+	updated := false
 
 	if s.Public {
 
@@ -61,9 +59,11 @@ func (s *Station) removeService(rid string) {
 		for k, service := range s.Services {
 			if service.RID == rid {
 				delete(s.Services, k)
+				updated = true
 			}
 		}
 
 	}
 
+	return updated
 }

@@ -1,7 +1,7 @@
 package darwind3
 
 // Process processes an inbound schedule importing or merging it with the
-// current Schedule in the database
+// current schedule in the database
 func (p *Schedule) Process(tx *Transaction) error {
 	// Only look at an existing entry for uR messages. sR messages must replace the existing one
 	if !tx.pport.SnapshotUpdate {

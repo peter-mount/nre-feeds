@@ -1,32 +1,43 @@
 package ldb
 
 import (
+	"github.com/etcd-io/bbolt"
 	"github.com/peter-mount/nre-feeds/darwind3"
 )
+
+type locationTask struct {
+}
 
 // locationListener listens to location updates and updates the relevant
 // Station with the new/updated entry
 func (d *LDB) locationListener(e *darwind3.DarwinEvent) {
+	_ = d.Update(func(tx *bbolt.Tx) error {
 
-	// Ignore anything without a location & no Public times
-	for idx, l := range e.Schedule.Locations {
-		if l.Times.IsPublic() {
+		// Ignore anything without a location & no Public times
+		for idx, l := range e.Schedule.Locations {
+			if l.Times.IsPublic() {
 
-			// Retrieve the station, it should be a valid one if we have Public times
-			station := d.GetStationTiploc(l.Tiploc)
-			if station != nil && station.Public {
-				updated := false
+				// Retrieve the station, it should be a valid one if we have Public times
+				station := d.getStationTiploc(tx, l.Tiploc)
+				if station != nil && station.Public {
+					updated := false
 
-				if l.Forecast.Departed {
-					updated = station.removeDepartedService(e, idx)
-				} else {
-					updated = station.addService(e, idx)
-				}
+					if l.Forecast.Departed {
+						updated = station.removeDepartedService(e, idx)
+					} else {
+						updated = station.addService(e, idx)
+					}
 
-				if updated {
-					d.PutStation(station)
+					if updated {
+						putStation(tx, station)
+					}
+
 				}
 			}
 		}
-	}
+
+		_ = putSchedule(tx, e.Schedule)
+
+		return nil
+	})
 }

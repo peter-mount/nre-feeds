@@ -98,9 +98,10 @@ func (d *LDBService) stationHandler(r *rest.Rest) error {
 			}
 
 			// Add CallingPoints tiplocs to map & via request
-			if s.Schedule != nil {
-				s.CallingPoints = s.Schedule.GetCallingPoints(s.LocationIndex)
-				s.LastReport = s.Schedule.GetLastReport()
+			sched := d.ldb.GetSchedule(s.RID)
+			if sched != nil {
+				s.CallingPoints = sched.GetCallingPoints(s.LocationIndex)
+				s.LastReport = sched.GetLastReport()
 				if s.LastReport != nil {
 					tiplocs[s.LastReport.Tiploc] = nil
 				}

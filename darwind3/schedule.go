@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// Train Schedule
+// Train schedule
 type Schedule struct {
 	RID     string   `json:"rid"`
 	UID     string   `json:"uid"`

@@ -34,7 +34,7 @@ type DarwinEvent struct {
 	Type string
 	// The RID of the train that caused this event
 	RID string
-	// The affected Schedule or nil if none
+	// The affected schedule or nil if none
 	Schedule *Schedule
 	// The CRS code of the station in this event (LDB only)
 	Crs string
@@ -53,9 +53,8 @@ type DarwinEvent struct {
 
 // The core of the eventing system
 type DarwinEventManager struct {
-	mq     *rabbitmq.RabbitMQ
-	prefix string
-	//sequence        int
+	mq             *rabbitmq.RabbitMQ
+	prefix         string
 	eventKeyPrefix string
 }
 

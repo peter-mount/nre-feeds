@@ -16,7 +16,7 @@ import (
 // As schedules can be circular (i.e. start and end at the same station) then
 // the unique key is Tiploc and CircularTimes.Time.
 //
-// Location's within a Schedule are sorted by CircularTimes.Time accounting for
+// Location's within a schedule are sorted by CircularTimes.Time accounting for
 // crossing over midnight.
 type Location struct {
 	// Type of location, OR OPOR IP OPIP PP DT or OPDT

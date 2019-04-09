@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	crsBucket    = "crs"
-	tiplocBucket = "tiploc"
+	crsBucket      = "crs"
+	scheduleBucket = "schedule"
+	tiplocBucket   = "tiploc"
 )
 
 type LDB struct {
@@ -18,6 +19,12 @@ type LDB struct {
 	Reference    string
 	EventManager *darwind3.DarwinEventManager
 	db           *bolt.DB
+}
+
+type Task struct {
+	d *LDB
+	e *darwind3.DarwinEvent
+	f func(*Task) error
 }
 
 func (d *LDB) Init(dbFile string) error {
@@ -33,7 +40,7 @@ func (d *LDB) Init(dbFile string) error {
 	// schedule for the live data
 	// ts for the times per rid - used for cleaning up
 	err = db.Update(func(tx *bolt.Tx) error {
-		for _, bucket := range []string{crsBucket, tiplocBucket} {
+		for _, bucket := range []string{crsBucket, scheduleBucket, tiplocBucket} {
 			err := d.createBucket(tx, bucket)
 			if err != nil {
 				return err
