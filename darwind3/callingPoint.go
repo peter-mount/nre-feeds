@@ -53,11 +53,15 @@ func (s *Schedule) GetCallingPoints(idx int) []*CallingPoint {
 	var cp []*CallingPoint
 
 	if idx >= 0 && (idx+1) < len(s.Locations) {
+		loc := s.Locations[idx]
+
 		// departureboards#4 If set then we need to stop at this tiploc rather than the entire schedule
-		falseDest := s.Locations[idx].FalseDestination
+		falseDest := loc.FalseDestination
 
 		for _, l := range s.Locations[idx+1:] {
-			if l.IsCallingPoint() {
+			// Filter by calling point & if it's after the location time else during delays
+			// we see the previous entries first
+			if l.IsCallingPoint() && l.Time.After(&loc.Time) && l.Tiploc != loc.Tiploc {
 				cp = append(cp, l.AsCallingPoint())
 			}
 
