@@ -281,3 +281,17 @@ func (s *Schedule) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) er
 		}
 	}
 }
+
+func (sched *Schedule) GetTime(idx int) time.Time {
+	t := sched.SSD.Time()
+
+	if len(sched.Locations) > 0 {
+		loc := sched.Locations[idx].Time
+		// Cross midnight check
+		if sched.Locations[0].Time.After(&loc) {
+			t = t.Add(24 * time.Hour)
+		}
+		t = t.Add(time.Duration(loc.Get()) * time.Second)
+	}
+	return t
+}

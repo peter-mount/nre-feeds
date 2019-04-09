@@ -9,7 +9,7 @@ import (
 )
 
 // Working Timetable time.
-// WorkingTime is similar to PublciTime, except we can have seconds.
+// WorkingTime is similar to PublicTime, except we can have seconds.
 // In the Working Timetable, the seconds can be either 0 or 30.
 type WorkingTime struct {
 	t int
