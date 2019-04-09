@@ -2,12 +2,11 @@ package ldb
 
 import (
 	"encoding/json"
+	"github.com/etcd-io/bbolt"
 	"github.com/peter-mount/nre-feeds/darwind3"
 	d3client "github.com/peter-mount/nre-feeds/darwind3/client"
 	"github.com/peter-mount/nre-feeds/darwinref"
 	"github.com/peter-mount/nre-feeds/util"
-	"log"
-	"sort"
 )
 
 // The holder for a station's departure boards
@@ -15,17 +14,10 @@ type Station struct {
 	// The location details for this station
 	Locations []*darwinref.Location
 	Crs       string
-	// The Services at this station
-	Services map[string]*Service
 	// This station is Public - i.e. has a CRS so can have departures
 	Public bool
 	// The Station message id's applicable to this station
 	Messages []uint64
-}
-
-// Only valid for Public stations, initialise it
-func (s *Station) init() {
-	s.Services = make(map[string]*Service)
 }
 
 func (l *LDB) updateStation(s *Station) {
@@ -58,23 +50,14 @@ func StationFromBytes(b []byte) *Station {
 // GetServices returns all Services that have not yet departed that are within
 // the specified time range.
 // If from is before to then it's resumed the time range crosses midnight.
-func (s *Station) GetServices(from *util.WorkingTime, to *util.WorkingTime) []*Service {
-
+func (d *LDB) GetServices(s *Station, from *util.WorkingTime, to *util.WorkingTime) []*Service {
 	var services []*Service
 
-	// Get a copy the Services from the station, filtering as needed
-	for _, service := range s.Services {
-		if !service.Location.Forecast.Departed && service.Location.Time.Between(from, to) {
-			services = append(services, service.Clone())
-		}
-	}
-
-	// sort into time order
-	sort.SliceStable(services, func(i, j int) bool {
-		return services[i].Compare(services[j])
+	_ = d.View(func(tx *bbolt.Tx) error {
+		services = s.getServices(tx, from, to)
+		return nil
 	})
 
-	log.Printf("GetServices %s %v to %v returning %d/%d services", s.Crs, from, to, len(services), len(s.Services))
 	return services
 }
 

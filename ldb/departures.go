@@ -10,6 +10,7 @@ import (
 
 const (
 	crsBucket      = "crs"
+	messageBucket  = "message"
 	scheduleBucket = "schedule"
 	serviceBucket  = "service"
 	tiplocBucket   = "tiploc"

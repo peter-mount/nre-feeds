@@ -107,6 +107,7 @@ func (s *Service) update(sched *darwind3.Schedule, idx int) bool {
 
 		// Clone the location
 		s.Location = sched.Locations[idx].Clone()
+		s.Location.UpdateTime()
 
 		s.SSD = sched.SSD
 		s.TrainId = sched.TrainId

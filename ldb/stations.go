@@ -134,7 +134,6 @@ func createStation(tx *bbolt.Tx, locations []*darwinref.Location) *Station {
 		s = &Station{}
 		s.Crs = crs
 		s.Locations = locations
-		s.Services = make(map[string]*Service)
 	} else {
 		// Remove any tiplocs that have been removed
 		tpl := make(map[string]interface{})
@@ -156,15 +155,12 @@ func createStation(tx *bbolt.Tx, locations []*darwinref.Location) *Station {
 	b, _ := s.Bytes()
 	_ = tx.Bucket([]byte(crsBucket)).Put([]byte(crs), b)
 
-	// Only Public entries are usable
-	s.init()
-
 	// Ensure all our tiplocs point to this crs
 	cb := []byte(crs)
 	for _, l := range s.Locations {
 		tpl := []byte(l.Tiploc)
 		b = tb.Get(tpl)
-		if b == nil || bytes.Compare(cb, b) == 0 {
+		if b == nil || bytes.Compare(cb, b) != 0 {
 			_ = tb.Put(tpl, cb)
 		}
 	}

@@ -1,6 +1,7 @@
 package util
 
 import (
+	"encoding/binary"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -19,6 +20,29 @@ const (
 	workingTime_min = 0
 	workingTime_max = 86400
 )
+
+func (a *WorkingTime) Bytes() []byte {
+	var v uint32
+	if a.t < 0 {
+		v = 0xffffffff
+	} else {
+		v = uint32(a.t)
+	}
+	b := make([]byte, 4)
+	binary.LittleEndian.PutUint32(b, v)
+	return b
+}
+
+func WorkingTimeFromBytes(b []byte) *WorkingTime {
+	if b == nil || len(b) != 4 {
+		return nil
+	}
+	v := binary.LittleEndian.Uint32(b)
+	if v == 0xffffffff {
+		return &WorkingTime{t: -1}
+	}
+	return &WorkingTime{t: int(v)}
+}
 
 func (a *WorkingTime) Equals(b *WorkingTime) bool {
 	if a == nil {
@@ -93,7 +117,7 @@ func (t *WorkingTime) UnmarshalJSON(b []byte) error {
 
 // Custom XML Marshaler.
 func (t *WorkingTime) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
-	if t.IsZero() {
+	if t == nil || t.IsZero() {
 		return xml.Attr{}, nil
 	}
 	return xml.Attr{Name: name, Value: t.String()}, nil
@@ -101,7 +125,7 @@ func (t *WorkingTime) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
 
 // String returns a PublicTime in HH:MM:SS format or 8 blank spaces if it's not set.
 func (t *WorkingTime) String() string {
-	if t.IsZero() {
+	if t == nil || t.IsZero() {
 		return "        "
 	}
 

@@ -38,5 +38,16 @@ func (d *LDB) RemoveSchedule(rid string) {
 }
 
 func removeSchedule(tx *bolt.Tx, rid string) error {
-	return tx.Bucket([]byte(scheduleBucket)).Delete([]byte(rid))
+	err := tx.Bucket([]byte(scheduleBucket)).Delete([]byte(rid))
+	if err != nil {
+		return err
+	}
+
+	bucket := tx.Bucket([]byte(serviceBucket))
+	return bucket.ForEach(func(k, v []byte) error {
+		if getServiceRID(k) == rid {
+			return bucket.Delete(k)
+		}
+		return nil
+	})
 }

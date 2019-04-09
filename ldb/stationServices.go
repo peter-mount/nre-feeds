@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"github.com/etcd-io/bbolt"
 	"github.com/peter-mount/nre-feeds/darwind3"
+	"github.com/peter-mount/nre-feeds/util"
+	"sort"
 	"time"
 )
 
@@ -12,10 +14,42 @@ const (
 )
 
 // Key must be unique so to support circular routes
-// so we use the RID, tiploc and the timetable time
+// so we use Crs:RID:Tiploc:Time
 func (s *Station) key(sched *darwind3.Schedule, idx int) []byte {
 	loc := sched.Locations[idx]
-	return []byte(sched.RID + ":" + loc.Tiploc + ":" + loc.Times.Time.String())
+	loc.UpdateTime()
+	b := []byte(s.Crs + ":" + sched.RID + ":" + loc.Tiploc + ":")
+	b = append(b, loc.Times.Time.Bytes()...)
+	return b
+}
+
+func getServiceRID(b []byte) string {
+	p := 0
+	l := len(b)
+	// Skip crs
+	for p < l && b[p] != ':' {
+		p++
+	}
+	// Find end of RID
+	p++
+	s := p
+	for p < l && b[p] != ':' {
+		p++
+	}
+	return string(b[s:p])
+}
+
+func getServiceTime(b []byte) *util.WorkingTime {
+	p := 0
+	l := len(b)
+	// Skip crs, rid & tiploc
+	for i := 0; i < 3; i++ {
+		for p < l && b[p] != ':' {
+			p++
+		}
+		p++
+	}
+	return util.WorkingTimeFromBytes(b[p:])
 }
 
 // Adds a service to the station
@@ -39,7 +73,7 @@ func (s *Station) addService(tx *bbolt.Tx, e *darwind3.DarwinEvent, idx int) boo
 
 				if service.update(e.Schedule, idx) {
 					b, _ := service.Bytes()
-					bucket.Put(key, b)
+					_ = bucket.Put(key, b)
 					return true
 				}
 			}
@@ -63,14 +97,45 @@ func (s *Station) removeService(tx *bbolt.Tx, rid string) bool {
 
 		// As a service can call at a station more than once, scan all and remove
 		// every instance of it.
-		prefix := []byte(rid + ":")
+		prefix := []byte(s.Crs + ":" + rid + ":")
 		bucket := tx.Bucket([]byte(serviceBucket))
 		c := bucket.Cursor()
 		for k, _ := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, _ = c.Next() {
-			bucket.Delete(k)
+			_ = bucket.Delete(k)
 		}
 
 	}
 
 	return updated
+}
+
+func (s *Station) getServices(tx *bbolt.Tx, from *util.WorkingTime, to *util.WorkingTime) []*Service {
+	var services []*Service
+
+	if s.Public {
+
+		// As a service can call at a station more than once, scan all and remove
+		// every instance of it.
+		prefix := []byte(s.Crs + ":")
+
+		bucket := tx.Bucket([]byte(serviceBucket))
+		c := bucket.Cursor()
+		for k, v := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, v = c.Next() {
+			t := getServiceTime(k)
+			if t != nil && t.Between(from, to) {
+				service := ServiceFromBytes(v)
+				if !service.Location.Forecast.Departed {
+					services = append(services, service)
+				}
+			}
+		}
+
+	}
+
+	// sort into time order
+	sort.SliceStable(services, func(i, j int) bool {
+		return services[i].Compare(services[j])
+	})
+
+	return services
 }

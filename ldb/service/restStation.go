@@ -53,7 +53,7 @@ func (d *LDBService) stationHandler(r *rest.Rest) error {
 		from := util.WorkingTime_FromTime(now)
 		to := util.WorkingTime_FromTime(now.Add(time.Hour))
 
-		services := station.GetServices(from, to)
+		services := d.ldb.GetServices(station, from, to)
 
 		res := &stationResult{
 			Crs:      crs,
