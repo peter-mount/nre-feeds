@@ -26,22 +26,7 @@ func (as *AssocService) processSched(tx *Transaction, a *Association) error {
 		sched.Defaults()
 	}
 
-	if err := sched.Update(func() error {
-
-		// Replace if we already have it
-		for i, e := range sched.Associations {
-			if e.Equals(a) {
-				sched.Associations[i] = a
-				return nil
-			}
-		}
-
-		// Not found then add it
-		sched.Associations = append(sched.Associations, a)
-		return nil
-	}); err != nil {
-		return err
-	}
+	sched.appendAssociation(a)
 
 	sched.Date = tx.pport.TS
 	if tx.d3.PutSchedule(sched) {
@@ -52,4 +37,17 @@ func (as *AssocService) processSched(tx *Transaction, a *Association) error {
 		})
 	}
 	return nil
+}
+
+func (sched *Schedule) appendAssociation(a *Association) {
+	// Replace if we already have it
+	for i, e := range sched.Associations {
+		if e.Equals(a) {
+			sched.Associations[i] = a
+			return
+		}
+	}
+
+	// Not found then add it
+	sched.Associations = append(sched.Associations, a)
 }

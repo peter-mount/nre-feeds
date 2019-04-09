@@ -6,7 +6,6 @@ import (
 	"github.com/peter-mount/golib/rest"
 	"github.com/peter-mount/nre-feeds/util"
 	"sort"
-	"sync"
 	"time"
 )
 
@@ -48,53 +47,35 @@ type Schedule struct {
 	// as returned from darwin
 	Date time.Time `json:"date,omitempty" xml:"date,attr,omitempty"`
 	// URL to this entity
-	Self  string `json:"self,omitempty" xml:"self,attr,omitempty"`
-	mutex sync.RWMutex
-}
-
-// SnapshotUpdate runs a function within a Write lock within the schedule
-func (s *Schedule) Update(f func() error) error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-	return f()
-}
-
-// View runs a function within a Read lock within the schedule
-func (s *Schedule) View(f func() error) error {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
-	return f()
+	Self string `json:"self,omitempty" xml:"self,attr,omitempty"`
 }
 
 func (a *Schedule) Clone() *Schedule {
 	var b *Schedule
 
-	_ = a.Update(func() error {
-		b = &Schedule{
-			RID:              a.RID,
-			UID:              a.UID,
-			TrainId:          a.TrainId,
-			SSD:              a.SSD,
-			Toc:              a.Toc,
-			Status:           a.Status,
-			TrainCat:         a.TrainCat,
-			PassengerService: a.PassengerService,
-			Active:           a.Active,
-			Deleted:          a.Deleted,
-			Charter:          a.Charter,
-			CancelReason:     a.CancelReason,
-			LateReason:       a.LateReason,
-		}
+	b = &Schedule{
+		RID:              a.RID,
+		UID:              a.UID,
+		TrainId:          a.TrainId,
+		SSD:              a.SSD,
+		Toc:              a.Toc,
+		Status:           a.Status,
+		TrainCat:         a.TrainCat,
+		PassengerService: a.PassengerService,
+		Active:           a.Active,
+		Deleted:          a.Deleted,
+		Charter:          a.Charter,
+		CancelReason:     a.CancelReason,
+		LateReason:       a.LateReason,
+	}
 
-		for _, l := range a.Locations {
-			b.Locations = append(b.Locations, l.Clone())
-		}
+	for _, l := range a.Locations {
+		b.Locations = append(b.Locations, l.Clone())
+	}
 
-		for _, assoc := range a.Associations {
-			b.Associations = append(b.Associations, assoc.Clone())
-		}
-		return nil
-	})
+	for _, assoc := range a.Associations {
+		b.Associations = append(b.Associations, assoc.Clone())
+	}
 
 	b.Sort()
 	return b

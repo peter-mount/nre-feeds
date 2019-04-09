@@ -33,45 +33,41 @@ func (p *TS) Process(tx *Transaction) error {
 		a.Forecast.Date = tx.pport.TS
 	}
 
-	_ = sched.Update(func() error {
-		// SnapshotUpdate the LateReason
-		sched.LateReason = p.LateReason
+	// SnapshotUpdate the LateReason
+	sched.LateReason = p.LateReason
 
-		// Run through schedule locations, any that match the new ones update the forecast
-		for _, a := range sched.Locations {
-			for _, b := range p.Locations {
-				if a.EqualInSchedule(b) {
-					a.MergeFrom(b)
-				}
+	// Run through schedule locations, any that match the new ones update the forecast
+	for _, a := range sched.Locations {
+		for _, b := range p.Locations {
+			if a.EqualInSchedule(b) {
+				a.MergeFrom(b)
 			}
 		}
+	}
 
-		// Append any locations not in the schedule
-		sortRequired := false
-		for _, a := range p.Locations {
-			f := true
-			for _, b := range sched.Locations {
-				if a.EqualInSchedule(b) {
-					f = false
-				}
-			}
-			if f {
-				sched.Locations = append(sched.Locations, a)
-				sortRequired = true
+	// Append any locations not in the schedule
+	sortRequired := false
+	for _, a := range p.Locations {
+		f := true
+		for _, b := range sched.Locations {
+			if a.EqualInSchedule(b) {
+				f = false
 			}
 		}
-
-		tx.d3.updateAssociations(sched)
-
-		// Sort if required else just update the times
-		if sortRequired {
-			sched.Sort()
-		} else {
-			sched.UpdateTime()
+		if f {
+			sched.Locations = append(sched.Locations, a)
+			sortRequired = true
 		}
+	}
 
-		return nil
-	})
+	tx.d3.updateAssociations(sched)
+
+	// Sort if required else just update the times
+	if sortRequired {
+		sched.Sort()
+	} else {
+		sched.UpdateTime()
+	}
 
 	sched.Date = tx.pport.TS
 	if tx.d3.PutSchedule(sched) {

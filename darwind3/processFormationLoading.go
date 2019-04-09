@@ -25,19 +25,7 @@ func (l *Loading) Process(tx *Transaction) error {
 	// Set the Date field to the TS time
 	l.Date = tx.pport.TS
 
-	_ = sched.Update(func() error {
-
-		for _, loc := range sched.Locations {
-			if loc.Tiploc == l.Tiploc && l.Times.Equals(&loc.Times) {
-				loc.Loading = l
-				tx.d3.updateAssociations(sched)
-				return nil
-			}
-		}
-
-		log.Println("Unknown Loading", l)
-		return nil
-	})
+	sched.appendFormationLoading(tx, l)
 
 	sched.Date = tx.pport.TS
 	if tx.d3.PutSchedule(sched) {
@@ -48,4 +36,16 @@ func (l *Loading) Process(tx *Transaction) error {
 		})
 	}
 	return nil
+}
+
+func (sched *Schedule) appendFormationLoading(tx *Transaction, l *Loading) {
+	for _, loc := range sched.Locations {
+		if loc.Tiploc == l.Tiploc && l.Times.Equals(&loc.Times) {
+			loc.Loading = l
+			tx.d3.updateAssociations(sched)
+			return
+		}
+	}
+
+	log.Println("Unknown Loading", l)
 }
