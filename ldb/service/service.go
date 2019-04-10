@@ -71,7 +71,7 @@ func (a *LDBService) Start() error {
 	}
 
 	// Purge old schedules every hour
-	_, err = a.cron.AddFunc("0 5 0 * * *", a.ldb.PurgeSchedules)
+	_, err = a.cron.AddFunc("0 5 * * * *", a.ldb.PurgeSchedules)
 	if err != nil {
 		return err
 	}

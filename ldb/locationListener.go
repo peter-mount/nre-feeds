@@ -5,9 +5,6 @@ import (
 	"github.com/peter-mount/nre-feeds/darwind3"
 )
 
-type locationTask struct {
-}
-
 // locationListener listens to location updates and updates the relevant
 // Station with the new/updated entry
 func (d *LDB) locationListener(e *darwind3.DarwinEvent) {
@@ -20,17 +17,19 @@ func (d *LDB) locationListener(e *darwind3.DarwinEvent) {
 				// Retrieve the station, it should be a valid one if we have Public times
 				station := d.getStationTiploc(tx, l.Tiploc)
 				if station != nil && station.Public {
-					updated := false
+					//updated := false
 
 					if l.Forecast.Departed {
-						updated = station.removeDepartedService(tx, e, idx)
+						_ = station.removeDepartedService(tx, e, idx)
 					} else {
-						updated = station.addService(tx, e, idx)
+						_ = station.addService(tx, e, idx)
 					}
 
-					if updated {
-						putStation(tx, station)
-					}
+					/*
+						if updated {
+							putStation(tx, station)
+						}
+					*/
 
 				}
 			}

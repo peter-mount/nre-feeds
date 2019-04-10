@@ -1,6 +1,7 @@
 package darwind3
 
 import (
+	"github.com/etcd-io/bbolt"
 	"log"
 	"time"
 )
@@ -8,6 +9,14 @@ import (
 // Process processes an inbound set of TrainOrders and applies them to the
 // relevant schedules
 func (to *trainOrderWrapper) Process(tx *Transaction) error {
+	if tx.d3.cache.tx != nil {
+		return to.process(tx, tx.d3.cache.tx)
+	}
+	return tx.d3.Update(func(dbtx *bbolt.Tx) error {
+		return to.process(tx, dbtx)
+	})
+}
+func (to *trainOrderWrapper) process(tx *Transaction, dbtx *bbolt.Tx) error {
 
 	// No order data then ignore
 	if to.Set == nil {
@@ -15,19 +24,19 @@ func (to *trainOrderWrapper) Process(tx *Transaction) error {
 	}
 
 	if to.Set.First != nil {
-		if err := to.processOrder(tx, 1, to.Set.First); err != nil {
+		if err := to.processOrder(tx, dbtx, 1, to.Set.First); err != nil {
 			return err
 		}
 	}
 
 	if to.Set.Second != nil {
-		if err := to.processOrder(tx, 2, to.Set.Second); err != nil {
+		if err := to.processOrder(tx, dbtx, 2, to.Set.Second); err != nil {
 			return err
 		}
 	}
 
 	if to.Set.Third != nil {
-		if err := to.processOrder(tx, 3, to.Set.Third); err != nil {
+		if err := to.processOrder(tx, dbtx, 3, to.Set.Third); err != nil {
 			return err
 		}
 	}
@@ -36,9 +45,9 @@ func (to *trainOrderWrapper) Process(tx *Transaction) error {
 }
 
 // Processes a specific TrainOrderItem
-func (to *trainOrderWrapper) processOrder(tx *Transaction, order int, tod *trainOrderItem) error {
+func (to *trainOrderWrapper) processOrder(tx *Transaction, dbtx *bbolt.Tx, order int, tod *trainOrderItem) error {
 	if tod.RID.RID != "" {
-		return to.processOrderRID(tx, order, tod)
+		return to.processOrderRID(tx, dbtx, order, tod)
 	}
 
 	if tod.TrainId != "" {
@@ -69,10 +78,10 @@ func (tod *trainOrderItem) apply(to *trainOrderWrapper, order int, ts time.Time,
 	return false
 }
 
-func (to *trainOrderWrapper) processOrderRID(tx *Transaction, order int, tod *trainOrderItem) error {
+func (to *trainOrderWrapper) processOrderRID(tx *Transaction, dbtx *bbolt.Tx, order int, tod *trainOrderItem) error {
 
 	// Retrieve the schedule to be updated
-	sched := tx.d3.GetSchedule(tod.RID.RID)
+	sched := GetSchedule(dbtx, tod.RID.RID)
 
 	// No schedule then try to fetch it from the timetable
 	if sched == nil {
@@ -89,8 +98,9 @@ func (to *trainOrderWrapper) processOrderRID(tx *Transaction, order int, tod *tr
 	sched.UpdateTime()
 
 	if tod.apply(to, order, tx.pport.TS, sched) {
+		tx.d3.updateAssociations(dbtx, sched)
 		sched.Date = tx.pport.TS
-		if tx.d3.PutSchedule(sched) {
+		if PutSchedule(dbtx, sched) {
 			tx.d3.EventManager.PostEvent(&DarwinEvent{
 				Type:     Event_ScheduleUpdated,
 				RID:      sched.RID,

@@ -1,11 +1,21 @@
 package darwind3
 
+import "github.com/etcd-io/bbolt"
+
 // Process processes an inbound schedule importing or merging it with the
 // current schedule in the database
 func (p *Schedule) Process(tx *Transaction) error {
+	if tx.d3.cache.tx != nil {
+		return p.process(tx, tx.d3.cache.tx)
+	}
+	return tx.d3.Update(func(dbtx *bbolt.Tx) error {
+		return p.process(tx, dbtx)
+	})
+}
+func (p *Schedule) process(tx *Transaction, dbtx *bbolt.Tx) error {
 	// Only look at an existing entry for uR messages. sR messages must replace the existing one
 	if !tx.pport.SnapshotUpdate {
-		old := tx.d3.GetSchedule(p.RID)
+		old := GetSchedule(dbtx, p.RID)
 		if old != nil {
 
 			// If they are completely the same or the old entry is newer than the new one
@@ -45,8 +55,7 @@ func (p *Schedule) Process(tx *Transaction) error {
 		}
 	}
 
-	tx.d3.updateAssociations(p)
-
+	tx.d3.updateAssociations(dbtx, p)
 	p.Date = tx.pport.TS
 	p.Sort()
 	if tx.d3.PutSchedule(p) {

@@ -14,11 +14,12 @@ type cache struct {
 }
 
 const (
-	alarmBucket    = "alarms"
-	messageBucket  = "messages"
-	MetaBucket     = "meta"
-	ScheduleBucket = "schedule"
-	TsBucket       = "ts"
+	alarmBucket       = "alarms"
+	AssociationBucket = "assoc"
+	messageBucket     = "messages"
+	MetaBucket        = "meta"
+	ScheduleBucket    = "schedule"
+	TsBucket          = "ts"
 )
 
 func (c *cache) initCache(cacheDir string) error {
@@ -34,7 +35,7 @@ func (c *cache) initCache(cacheDir string) error {
 	// schedule for the live data
 	// ts for the times per rid - used for cleaning up
 	err = db.Update(func(tx *bolt.Tx) error {
-		for _, bucket := range []string{alarmBucket, messageBucket, MetaBucket, ScheduleBucket, TsBucket} {
+		for _, bucket := range []string{alarmBucket, AssociationBucket, messageBucket, MetaBucket, ScheduleBucket, TsBucket} {
 			_, err := tx.CreateBucketIfNotExists([]byte(bucket))
 			if err != nil {
 				return err
@@ -51,7 +52,7 @@ func (c *cache) initCache(cacheDir string) error {
 }
 
 func (d *DarwinD3) DBStatus() {
-	DBStatus(d.cache.db, alarmBucket, messageBucket, MetaBucket, ScheduleBucket, TsBucket)
+	DBStatus(d.cache.db, alarmBucket, AssociationBucket, messageBucket, MetaBucket, ScheduleBucket, TsBucket)
 }
 
 func DBStatus(db *bolt.DB, buckets ...string) {
@@ -223,6 +224,13 @@ func (d *DarwinD3) DeleteSchedule(rid string) {
 }
 
 func DeleteSchedule(tx *bolt.Tx, rid []byte) {
-	_ = tx.Bucket([]byte(ScheduleBucket)).Delete(rid)
-	_ = tx.Bucket([]byte(TsBucket)).Delete(rid)
+	deleteSchedule(tx.Bucket([]byte(AssociationBucket)), rid)
+	deleteSchedule(tx.Bucket([]byte(ScheduleBucket)), rid)
+	deleteSchedule(tx.Bucket([]byte(TsBucket)), rid)
+}
+
+func deleteSchedule(bucket *bolt.Bucket, rid []byte) {
+	if bucket != nil {
+		_ = bucket.Delete(rid)
+	}
 }

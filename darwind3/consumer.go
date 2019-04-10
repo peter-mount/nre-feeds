@@ -16,10 +16,10 @@ func (d *DarwinD3) BindConsumer(r *rabbitmq.RabbitMQ, queueName, routingKey stri
 	}
 
 	// Force prefetchCount to 1 so we don't get everything in one go
-	channel.Qos(1, 0, false)
+	_ = channel.Qos(1, 0, false)
 
-	r.QueueDeclare(channel, queueName, true, false, false, false, nil)
-	r.QueueBind(channel, queueName, routingKey, "amq.topic", false, nil)
+	_, _ = r.QueueDeclare(channel, queueName, true, false, false, false, nil)
+	_ = r.QueueBind(channel, queueName, routingKey, "amq.topic", false, nil)
 	ch, _ := r.Consume(channel, queueName, "ldb consumer", false, true, false, false, nil)
 
 	go func() {
@@ -42,7 +42,7 @@ func (d *DarwinD3) consume(msg amqp.Delivery) {
 	reader := bytes.NewReader(msg.Body)
 	if err := xml.NewDecoder(reader).Decode(p); err == nil {
 		d.FeedStatus.process(p)
-		p.Process(d)
+		_ = p.Process(d)
 		statistics.Incr("d3.in")
 	}
 }

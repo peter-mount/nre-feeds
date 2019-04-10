@@ -100,7 +100,10 @@ func (d *LDBService) stationHandler(r *rest.Rest) error {
 			// Add CallingPoints tiplocs to map & via request
 			sched := d.ldb.GetSchedule(s.RID)
 			if sched != nil {
+				s.Associations = sched.Associations
+
 				s.CallingPoints = sched.GetCallingPoints(s.LocationIndex)
+
 				s.LastReport = sched.GetLastReport()
 				if s.LastReport != nil {
 					tiplocs[s.LastReport.Tiploc] = nil
@@ -123,6 +126,65 @@ func (d *LDBService) stationHandler(r *rest.Rest) error {
 			// The association tiplocs
 			for _, assoc := range s.Associations {
 				tiplocs[assoc.Tiploc] = nil
+				if assoc.IsJoin() || assoc.IsSplit() {
+					ar := assoc.Main.RID
+					ai := assoc.Main.LocInd
+					if ar == s.RID {
+						ar = assoc.Assoc.RID
+						ai = assoc.Assoc.LocInd
+					}
+					if ar != s.RID {
+						as := d.ldb.GetSchedule(ar)
+						if as != nil {
+							assoc.Schedule = as
+							refClient.AddToc(res.Tocs, as.Toc)
+
+							if as.Origin != nil {
+								tiplocs[as.Origin.Tiploc] = nil
+							}
+
+							if as.Destination != nil {
+								tiplocs[as.Destination.Tiploc] = nil
+							}
+
+							if ai < (len(as.Locations) - 1) {
+								viaRequest := &darwinref.ViaResolveRequest{
+									Crs:         station.Crs,
+									Destination: as.Locations[len(as.Locations)-1].Tiploc,
+								}
+								vias[s.RID] = viaRequest
+
+								for _, l := range as.Locations[ai:] {
+									tiplocs[l.Tiploc] = nil
+									viaRequest.Tiplocs = append(viaRequest.Tiplocs, l.Tiploc)
+								}
+							}
+
+							// Cancellation reason
+							if as.CancelReason.Reason > 0 {
+								if reason, _ := refClient.GetCancelledReason(as.CancelReason.Reason); reason != nil {
+									res.Reasons.AddReason(reason)
+								}
+
+								if as.CancelReason.Tiploc != "" {
+									tiplocs[as.CancelReason.Tiploc] = nil
+								}
+							}
+
+							// Late reason
+							if as.LateReason.Reason > 0 {
+								if reason, _ := refClient.GetLateReason(as.LateReason.Reason); reason != nil {
+									res.Reasons.AddReason(reason)
+								}
+
+								if as.LateReason.Tiploc != "" {
+									tiplocs[as.LateReason.Tiploc] = nil
+								}
+							}
+
+						}
+					}
+				}
 			}
 
 			// Toc running this service

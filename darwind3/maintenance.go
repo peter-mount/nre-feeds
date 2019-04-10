@@ -50,31 +50,39 @@ func PurgeOrphans(db *bbolt.DB, del func(tx *bbolt.Tx, rid []byte)) {
 	_ = db.Update(func(tx *bbolt.Tx) error {
 		log.Println("Checking for orphans")
 
+		ab := tx.Bucket([]byte(AssociationBucket))
 		sb := tx.Bucket([]byte(ScheduleBucket))
 		ts := tx.Bucket([]byte(TsBucket))
 
-		tc := 0
-		sc := 0
+		c := testForOrphan(tx, del, ts, sb, ab)
+		c += testForOrphan(tx, del, ab, ts, sb)
+		c += testForOrphan(tx, del, sb, ab, ts)
 
-		// Any TS entry with no schedule then delete it
-		_ = ts.ForEach(func(k, v []byte) error {
-			if sb.Get(k) == nil {
-				del(tx, k)
-				tc++
-			}
-			return nil
-		})
-
-		// Any Schedule entry with no ts then delete it
-		_ = sb.ForEach(func(k, v []byte) error {
-			if ts.Get(k) == nil {
-				del(tx, k)
-				sc++
-			}
-			return nil
-		})
-
-		log.Printf("Removed %d ts & %d schedule orphans", tc, sc)
+		log.Printf("Removed %d orphans", c)
 		return nil
 	})
+}
+
+func testForOrphan(tx *bbolt.Tx, del func(tx *bbolt.Tx, rid []byte), targetBucket *bbolt.Bucket, srcBuckets ...*bbolt.Bucket) int {
+	if targetBucket == nil {
+		return 0
+	}
+
+	c := 0
+
+	_ = targetBucket.ForEach(func(k, v []byte) error {
+		found := true
+		for _, bucket := range srcBuckets {
+			if found && bucket != nil {
+				found = bucket.Get(k) != nil
+			}
+		}
+		if !found {
+			del(tx, k)
+			c++
+		}
+		return nil
+	})
+
+	return c
 }

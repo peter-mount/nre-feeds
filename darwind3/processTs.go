@@ -1,11 +1,21 @@
 package darwind3
 
+import "github.com/etcd-io/bbolt"
+
 // Process processes an inbound Train Status update, merging it with an existing
 // schedule in the database
 func (p *TS) Process(tx *Transaction) error {
+	if tx.d3.cache.tx != nil {
+		return p.process(tx, tx.d3.cache.tx)
+	}
+	return tx.d3.Update(func(dbtx *bbolt.Tx) error {
+		return p.process(tx, dbtx)
+	})
+}
+func (p *TS) process(tx *Transaction, dbtx *bbolt.Tx) error {
 
 	// Retrieve the schedule to be updated
-	sched := tx.d3.GetSchedule(p.RID)
+	sched := GetSchedule(dbtx, p.RID)
 
 	// No schedule then try to fetch it from the timetable
 	if sched == nil {
@@ -60,8 +70,6 @@ func (p *TS) Process(tx *Transaction) error {
 		}
 	}
 
-	tx.d3.updateAssociations(sched)
-
 	// Sort if required else just update the times
 	if sortRequired {
 		sched.Sort()
@@ -69,8 +77,9 @@ func (p *TS) Process(tx *Transaction) error {
 		sched.UpdateTime()
 	}
 
+	tx.d3.updateAssociations(dbtx, sched)
 	sched.Date = tx.pport.TS
-	if tx.d3.PutSchedule(sched) {
+	if PutSchedule(dbtx, sched) {
 		tx.d3.EventManager.PostEvent(&DarwinEvent{
 			Type:     Event_ScheduleUpdated,
 			RID:      sched.RID,
