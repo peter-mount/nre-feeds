@@ -1,8 +1,11 @@
 package ldb
 
 import (
+	"bytes"
 	bolt "github.com/etcd-io/bbolt"
 	"github.com/peter-mount/nre-feeds/darwind3"
+	"log"
+	"time"
 )
 
 func (d *LDB) PutSchedule(s *darwind3.Schedule) error {
@@ -23,18 +26,53 @@ func (d *LDB) GetSchedule(rid string) *darwind3.Schedule {
 
 func (d *LDB) RemoveSchedule(rid string) {
 	_ = d.Update(func(tx *bolt.Tx) error {
-		return removeSchedule(tx, rid)
+		RemoveSchedule(tx, []byte(rid))
+		return nil
 	})
 }
 
-func removeSchedule(tx *bolt.Tx, rid string) error {
+func RemoveSchedule(tx *bolt.Tx, rid []byte) {
 	darwind3.DeleteSchedule(tx, rid)
 
 	bucket := tx.Bucket([]byte(serviceBucket))
-	return bucket.ForEach(func(k, v []byte) error {
-		if getServiceRID(k) == rid {
+	_ = bucket.ForEach(func(k, v []byte) error {
+		if bytes.Compare(getServiceRID(k), rid) == 0 {
 			return bucket.Delete(k)
 		}
+		return nil
+	})
+}
+
+func (d *LDB) PurgeSchedules() {
+	darwind3.PurgeSchedules(d.db, 24*time.Hour, RemoveSchedule)
+}
+
+func (d *LDB) PurgeOrphans() {
+	darwind3.PurgeOrphans(d.db, RemoveSchedule)
+}
+
+// PurgeServices looks for any services who's schedule has been deleted
+func (d *LDB) PurgeServices() {
+	_ = d.Update(func(tx *bolt.Tx) error {
+		log.Println("Looking for orphaned services")
+
+		schedBucket := tx.Bucket([]byte(darwind3.ScheduleBucket))
+		svcBucket := tx.Bucket([]byte(serviceBucket))
+
+		deleted := 0
+		count := 0
+
+		_ = svcBucket.ForEach(func(k, v []byte) error {
+			rid := getServiceRID(k)
+			count++
+			if schedBucket.Get([]byte(rid)) == nil {
+				svcBucket.Delete(k)
+				deleted++
+			}
+			return nil
+		})
+
+		log.Printf("Purged %d/%d services", deleted, count)
 		return nil
 	})
 }

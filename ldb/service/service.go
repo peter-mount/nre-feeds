@@ -70,7 +70,29 @@ func (a *LDBService) Start() error {
 		return err
 	}
 
-	// Expire old schedules every 15 minutes
-	//a.cron.AddFunc("0 * * * * *", a.ldb.Stations.Cleanup)
+	// Purge old schedules every hour
+	_, err = a.cron.AddFunc("0 5 0 * * *", a.ldb.PurgeSchedules)
+	if err != nil {
+		return err
+	}
+
+	// Check for any orphans once every 6 hours
+	_, err = a.cron.AddFunc("0 10 0/6 * * *", a.ldb.PurgeOrphans)
+	if err != nil {
+		return err
+	}
+
+	// Check for any orphaned services every 6 hours
+	_, err = a.cron.AddFunc("0 15 0/6 * * *", a.ldb.PurgeServices)
+	if err != nil {
+		return err
+	}
+
+	// Log DB status every hour
+	_, err = a.cron.AddFunc("0 10 * * * *", a.ldb.DBStatus)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

@@ -65,9 +65,12 @@ func (d *LDB) Init(dbFile string) error {
 	d.EventManager.ListenToEvents(darwind3.Event_Deactivated, d.deactivationListener)
 	d.EventManager.ListenToEvents(darwind3.Event_StationMessage, d.stationMessageListener)
 
-	// Ensure we have our stations loaded on startup
+	// Ensure we have our stations loaded on startup, current messages & run the maintenance tasks
 	d.RefreshStations()
 	d.RequestStationMessages()
+	d.PurgeSchedules()
+	d.PurgeOrphans()
+	d.PurgeServices()
 	d.DBStatus()
 
 	return nil

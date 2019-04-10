@@ -23,7 +23,7 @@ func (s *Station) key(sched *darwind3.Schedule, idx int) []byte {
 	return b
 }
 
-func getServiceRID(b []byte) string {
+func getServiceRID(b []byte) []byte {
 	p := 0
 	l := len(b)
 	// Skip crs
@@ -36,7 +36,7 @@ func getServiceRID(b []byte) string {
 	for p < l && b[p] != ':' {
 		p++
 	}
-	return string(b[s:p])
+	return b[s:p]
 }
 
 func getServiceTime(b []byte) *util.WorkingTime {

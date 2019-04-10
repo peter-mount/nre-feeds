@@ -13,15 +13,14 @@ const scheduleExpiry = time.Hour * 24 * 3
 // PurgeSchedules purges all old schedules from the database, freeing up disk space
 func (d *DarwinD3) PurgeSchedules() {
 	// Run through the ts bucket and delete any entry older than our expiry time
-	PurgeSchedules(d.cache.db, scheduleExpiry)
+	PurgeSchedules(d.cache.db, scheduleExpiry, DeleteSchedule)
 }
 
-func PurgeSchedules(db *bbolt.DB, maxAge time.Duration) {
+func PurgeSchedules(db *bbolt.DB, maxAge time.Duration, del func(tx *bbolt.Tx, rid []byte)) {
 	_ = db.Update(func(tx *bbolt.Tx) error {
 		limit := time.Now().Add(-maxAge)
 		log.Println("Expiring schedules older than ", limit.Format(util.HumanDateTime))
 
-		sb := tx.Bucket([]byte(ScheduleBucket))
 		ts := tx.Bucket([]byte(TsBucket))
 
 		var t time.Time
@@ -30,8 +29,7 @@ func PurgeSchedules(db *bbolt.DB, maxAge time.Duration) {
 		_ = ts.ForEach(func(k, v []byte) error {
 			ec++
 			if t.UnmarshalBinary(v) == nil && t.Before(limit) {
-				_ = sb.Delete(k)
-				_ = ts.Delete(k)
+				del(tx, k)
 				dc++
 			}
 			return nil
@@ -45,10 +43,10 @@ func PurgeSchedules(db *bbolt.DB, maxAge time.Duration) {
 // PurgeOrphans removes any schedules or ts entries which do not have a corresponding entry in the
 // other bucket.
 func (d *DarwinD3) PurgeOrphans() {
-	PurgeOrphans(d.cache.db)
+	PurgeOrphans(d.cache.db, DeleteSchedule)
 }
 
-func PurgeOrphans(db *bbolt.DB) {
+func PurgeOrphans(db *bbolt.DB, del func(tx *bbolt.Tx, rid []byte)) {
 	_ = db.Update(func(tx *bbolt.Tx) error {
 		log.Println("Checking for orphans")
 
@@ -61,7 +59,7 @@ func PurgeOrphans(db *bbolt.DB) {
 		// Any TS entry with no schedule then delete it
 		_ = ts.ForEach(func(k, v []byte) error {
 			if sb.Get(k) == nil {
-				_ = ts.Delete(k)
+				del(tx, k)
 				tc++
 			}
 			return nil
@@ -70,7 +68,7 @@ func PurgeOrphans(db *bbolt.DB) {
 		// Any Schedule entry with no ts then delete it
 		_ = sb.ForEach(func(k, v []byte) error {
 			if ts.Get(k) == nil {
-				_ = sb.Delete(k)
+				del(tx, k)
 				sc++
 			}
 			return nil

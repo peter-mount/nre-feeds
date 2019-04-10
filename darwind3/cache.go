@@ -217,12 +217,12 @@ func PutSchedule(tx *bolt.Tx, sched *Schedule) bool {
 // Delete a schedule
 func (d *DarwinD3) DeleteSchedule(rid string) {
 	_ = d.Update(func(tx *bolt.Tx) error {
-		DeleteSchedule(tx, rid)
+		DeleteSchedule(tx, []byte(rid))
 		return nil
 	})
 }
 
-func DeleteSchedule(tx *bolt.Tx, rid string) {
-	_ = tx.Bucket([]byte(ScheduleBucket)).Delete([]byte(rid))
-	_ = tx.Bucket([]byte(TsBucket)).Delete([]byte(rid))
+func DeleteSchedule(tx *bolt.Tx, rid []byte) {
+	_ = tx.Bucket([]byte(ScheduleBucket)).Delete(rid)
+	_ = tx.Bucket([]byte(TsBucket)).Delete(rid)
 }
