@@ -45,7 +45,7 @@ type Service struct {
 	// The latest schedule entry used for this service
 	schedule *darwind3.Schedule `json:"schedule"`
 	// The index within the schedule of this location
-	LocationIndex int `json:"-"`
+	LocationIndex int `json:"locind"`
 	// The time this entry was set
 	Date time.Time `json:"date,omitempty" xml:"date,attr,omitempty"`
 	// URL to the train detail page
