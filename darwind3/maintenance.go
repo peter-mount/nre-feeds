@@ -13,13 +13,16 @@ const scheduleExpiry = time.Hour * 24 * 3
 // PurgeSchedules purges all old schedules from the database, freeing up disk space
 func (d *DarwinD3) PurgeSchedules() {
 	// Run through the ts bucket and delete any entry older than our expiry time
-	_ = d.Update(func(tx *bbolt.Tx) error {
+	PurgeSchedules(d.cache.db, scheduleExpiry)
+}
 
-		limit := time.Now().Add(-scheduleExpiry)
+func PurgeSchedules(db *bbolt.DB, maxAge time.Duration) {
+	_ = db.Update(func(tx *bbolt.Tx) error {
+		limit := time.Now().Add(-maxAge)
 		log.Println("Expiring schedules older than ", limit.Format(util.HumanDateTime))
 
-		sb := tx.Bucket([]byte(scheduleBucket))
-		ts := tx.Bucket([]byte(tsBucket))
+		sb := tx.Bucket([]byte(ScheduleBucket))
+		ts := tx.Bucket([]byte(TsBucket))
 
 		var t time.Time
 		ec := 0
@@ -33,6 +36,7 @@ func (d *DarwinD3) PurgeSchedules() {
 			}
 			return nil
 		})
+
 		log.Printf("Expired %d/%d schedules\n", dc, ec)
 		return nil
 	})
@@ -41,16 +45,20 @@ func (d *DarwinD3) PurgeSchedules() {
 // PurgeOrphans removes any schedules or ts entries which do not have a corresponding entry in the
 // other bucket.
 func (d *DarwinD3) PurgeOrphans() {
-	_ = d.Update(func(tx *bbolt.Tx) error {
+	PurgeOrphans(d.cache.db)
+}
 
+func PurgeOrphans(db *bbolt.DB) {
+	_ = db.Update(func(tx *bbolt.Tx) error {
 		log.Println("Checking for orphans")
 
-		sb := tx.Bucket([]byte(scheduleBucket))
-		ts := tx.Bucket([]byte(tsBucket))
+		sb := tx.Bucket([]byte(ScheduleBucket))
+		ts := tx.Bucket([]byte(TsBucket))
 
 		tc := 0
 		sc := 0
 
+		// Any TS entry with no schedule then delete it
 		_ = ts.ForEach(func(k, v []byte) error {
 			if sb.Get(k) == nil {
 				_ = ts.Delete(k)
@@ -59,6 +67,7 @@ func (d *DarwinD3) PurgeOrphans() {
 			return nil
 		})
 
+		// Any Schedule entry with no ts then delete it
 		_ = sb.ForEach(func(k, v []byte) error {
 			if ts.Get(k) == nil {
 				_ = sb.Delete(k)

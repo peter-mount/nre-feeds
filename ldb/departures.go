@@ -4,16 +4,21 @@ package ldb
 import (
 	bolt "github.com/etcd-io/bbolt"
 	"github.com/peter-mount/nre-feeds/darwind3"
-	"log"
 	"time"
 )
 
+// The various bucket names
+// crs holds the station details
+// tiploc cross references tiploc to crs
+// schedule holds the latest schedules
+// message holds the station messages
+// Also we use darwind3.ScheduleBucket & darwind3.TsBucket so we share the same mechanism's to keep
+// schedules
 const (
-	crsBucket      = "crs"
-	messageBucket  = "message"
-	scheduleBucket = "schedule"
-	serviceBucket  = "service"
-	tiplocBucket   = "tiploc"
+	crsBucket     = "crs"
+	messageBucket = "message"
+	serviceBucket = "service"
+	tiplocBucket  = "tiploc"
 )
 
 type LDB struct {
@@ -42,8 +47,8 @@ func (d *LDB) Init(dbFile string) error {
 	// schedule for the live data
 	// ts for the times per rid - used for cleaning up
 	err = db.Update(func(tx *bolt.Tx) error {
-		for _, bucket := range []string{crsBucket, scheduleBucket, serviceBucket, tiplocBucket} {
-			err := d.createBucket(tx, bucket)
+		for _, bucket := range []string{crsBucket, darwind3.ScheduleBucket, serviceBucket, tiplocBucket, darwind3.TsBucket} {
+			_, err := tx.CreateBucketIfNotExists([]byte(bucket))
 			if err != nil {
 				return err
 			}
@@ -69,32 +74,7 @@ func (d *LDB) Init(dbFile string) error {
 }
 
 func (d *LDB) DBStatus() {
-	log.Printf("%-10s %8s %5s", "Bucket", "Keys", "Depth")
-	_ = d.View(func(tx *bolt.Tx) error {
-		for _, bucket := range []string{crsBucket, tiplocBucket} {
-			bs := tx.Bucket([]byte(bucket)).
-				Stats()
-
-			log.Printf(
-				"%-10s %8d %5d",
-				bucket,
-				bs.KeyN,
-				bs.Depth,
-			)
-		}
-		return nil
-	})
-}
-
-func (d *LDB) createBucket(tx *bolt.Tx, n string) error {
-	key := []byte(n)
-	b := tx.Bucket(key)
-	if b == nil {
-		log.Println("Creating bucket", n)
-		_, err := tx.CreateBucket(key)
-		return err
-	}
-	return nil
+	darwind3.DBStatus(d.db, crsBucket, darwind3.ScheduleBucket, serviceBucket, tiplocBucket, darwind3.TsBucket)
 }
 
 func (d *LDB) Update(f func(tx *bolt.Tx) error) error {

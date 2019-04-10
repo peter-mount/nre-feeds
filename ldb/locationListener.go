@@ -36,7 +36,7 @@ func (d *LDB) locationListener(e *darwind3.DarwinEvent) {
 			}
 		}
 
-		_ = putSchedule(tx, e.Schedule)
+		_ = darwind3.PutSchedule(tx, e.Schedule)
 
 		return nil
 	})

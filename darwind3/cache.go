@@ -16,9 +16,9 @@ type cache struct {
 const (
 	alarmBucket    = "alarms"
 	messageBucket  = "messages"
-	metaBucket     = "meta"
-	scheduleBucket = "schedule"
-	tsBucket       = "ts"
+	MetaBucket     = "meta"
+	ScheduleBucket = "schedule"
+	TsBucket       = "ts"
 )
 
 func (c *cache) initCache(cacheDir string) error {
@@ -34,8 +34,8 @@ func (c *cache) initCache(cacheDir string) error {
 	// schedule for the live data
 	// ts for the times per rid - used for cleaning up
 	err = db.Update(func(tx *bolt.Tx) error {
-		for _, bucket := range []string{alarmBucket, messageBucket, metaBucket, scheduleBucket, tsBucket} {
-			err := c.createBucket(tx, bucket)
+		for _, bucket := range []string{alarmBucket, messageBucket, MetaBucket, ScheduleBucket, TsBucket} {
+			_, err := tx.CreateBucketIfNotExists([]byte(bucket))
 			if err != nil {
 				return err
 			}
@@ -51,9 +51,13 @@ func (c *cache) initCache(cacheDir string) error {
 }
 
 func (d *DarwinD3) DBStatus() {
+	DBStatus(d.cache.db, alarmBucket, messageBucket, MetaBucket, ScheduleBucket, TsBucket)
+}
+
+func DBStatus(db *bolt.DB, buckets ...string) {
 	log.Printf("%-10s %8s %5s", "Bucket", "Keys", "Depth")
-	_ = d.View(func(tx *bolt.Tx) error {
-		for _, bucket := range []string{alarmBucket, messageBucket, metaBucket, scheduleBucket, tsBucket} {
+	_ = db.View(func(tx *bolt.Tx) error {
+		for _, bucket := range buckets {
 			bs := tx.Bucket([]byte(bucket)).
 				Stats()
 
@@ -68,25 +72,14 @@ func (d *DarwinD3) DBStatus() {
 	})
 }
 
-func (c *cache) createBucket(tx *bolt.Tx, n string) error {
-	key := []byte(n)
-	b := tx.Bucket(key)
-	if b == nil {
-		log.Println("Creating bucket", n)
-		_, err := tx.CreateBucket(key)
-		return err
-	}
-	return nil
-}
-
 func (r *DarwinD3) GetMeta(n string, o interface{}) error {
 	return r.View(func(tx *bolt.Tx) error {
-		return r.GetMetaTx(tx, n, o)
+		return GetMeta(tx, n, o)
 	})
 }
 
-func (r *DarwinD3) GetMetaTx(tx *bolt.Tx, n string, o interface{}) error {
-	b := tx.Bucket([]byte(metaBucket)).Get([]byte(n))
+func GetMeta(tx *bolt.Tx, n string, o interface{}) error {
+	b := tx.Bucket([]byte(MetaBucket)).Get([]byte(n))
 	if b == nil {
 		return nil
 	}
@@ -95,16 +88,16 @@ func (r *DarwinD3) GetMetaTx(tx *bolt.Tx, n string, o interface{}) error {
 
 func (r *DarwinD3) PutMeta(n string, o interface{}) error {
 	return r.Update(func(tx *bolt.Tx) error {
-		return r.PutMetaTx(tx, n, o)
+		return PutMeta(tx, n, o)
 	})
 }
 
-func (r *DarwinD3) PutMetaTx(tx *bolt.Tx, n string, o interface{}) error {
+func PutMeta(tx *bolt.Tx, n string, o interface{}) error {
 	b, err := json.Marshal(o)
 	if err != nil {
 		return err
 	}
-	return tx.Bucket([]byte(metaBucket)).Put([]byte(n), b)
+	return tx.Bucket([]byte(MetaBucket)).Put([]byte(n), b)
 }
 
 // View performs a readonly operation on the database
@@ -141,18 +134,14 @@ func (r *DarwinD3) BulkUpdate(f func(*bolt.Tx) error) error {
 
 // Retrieve a schedule by it's rid
 func (d *DarwinD3) GetSchedule(rid string) *Schedule {
-	var sched *Schedule
 
-	_ = d.View(func(tx *bolt.Tx) error {
-		sched = d.cache.getSchedule(tx, rid)
-		return nil
-	})
+	sched := d.GetScheduleNoResolve(rid)
 
 	if sched == nil {
 		sched = d.resolveSchedule(rid)
 		if sched != nil {
 			_ = d.Update(func(tx *bolt.Tx) error {
-				d.cache.putSchedule(tx, sched)
+				PutSchedule(tx, sched)
 				return nil
 			})
 		}
@@ -165,14 +154,14 @@ func (d *DarwinD3) GetScheduleNoResolve(rid string) *Schedule {
 	var sched *Schedule
 
 	_ = d.View(func(tx *bolt.Tx) error {
-		sched = d.cache.getSchedule(tx, rid)
+		sched = GetSchedule(tx, rid)
 		return nil
 	})
 
 	return sched
 }
 
-func (d *cache) getSchedule(tx *bolt.Tx, rid string) *Schedule {
+func GetSchedule(tx *bolt.Tx, rid string) *Schedule {
 	sb := tx.Bucket([]byte("schedule"))
 	b := sb.Get([]byte(rid))
 	if b == nil {
@@ -193,19 +182,19 @@ func (d *DarwinD3) PutSchedule(sched *Schedule) bool {
 
 	if d.cache.tx == nil {
 		_ = d.Update(func(tx *bolt.Tx) error {
-			ret = d.cache.putSchedule(tx, sched)
+			ret = PutSchedule(tx, sched)
 			return nil
 		})
 	} else {
-		ret = d.cache.putSchedule(d.cache.tx, sched)
+		ret = PutSchedule(d.cache.tx, sched)
 	}
 	return ret
 }
 
-func (d *cache) putSchedule(tx *bolt.Tx, sched *Schedule) bool {
+func PutSchedule(tx *bolt.Tx, sched *Schedule) bool {
 	key := []byte(sched.RID)
 
-	sb := tx.Bucket([]byte(scheduleBucket))
+	sb := tx.Bucket([]byte(ScheduleBucket))
 	b := sb.Get(key)
 	if b != nil {
 		os := ScheduleFromBytes(b)
@@ -219,7 +208,7 @@ func (d *cache) putSchedule(tx *bolt.Tx, sched *Schedule) bool {
 
 	b, err := sched.Date.MarshalBinary()
 	if err == nil {
-		_ = tx.Bucket([]byte(tsBucket)).Put(key, b)
+		_ = tx.Bucket([]byte(TsBucket)).Put(key, b)
 	}
 
 	return true
@@ -228,8 +217,12 @@ func (d *cache) putSchedule(tx *bolt.Tx, sched *Schedule) bool {
 // Delete a schedule
 func (d *DarwinD3) DeleteSchedule(rid string) {
 	_ = d.Update(func(tx *bolt.Tx) error {
-		_ = tx.Bucket([]byte(scheduleBucket)).Delete([]byte(rid))
-		_ = tx.Bucket([]byte(tsBucket)).Delete([]byte(rid))
+		DeleteSchedule(tx, rid)
 		return nil
 	})
+}
+
+func DeleteSchedule(tx *bolt.Tx, rid string) {
+	_ = tx.Bucket([]byte(ScheduleBucket)).Delete([]byte(rid))
+	_ = tx.Bucket([]byte(TsBucket)).Delete([]byte(rid))
 }
