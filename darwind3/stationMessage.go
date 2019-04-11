@@ -8,7 +8,8 @@ import (
 )
 
 type StationMessage struct {
-	ID uint64 `json:"id" xml:"id,attr"`
+	ID   int64 `json:"id" xml:"id,attr"`
+	Motd bool  `json:"motd"`
 	// The message
 	Message string `json:"message" xml:"message"`
 	// CRS codes for the stations this message applies
@@ -24,6 +25,8 @@ type StationMessage struct {
 	Date time.Time `json:"date,omitempty" xml:"date,attr,omitempty"`
 	// URL to this entity
 	Self string `json:"self,omitempty" xml:"self,attr,omitempty"`
+	// Used for system messages, i.e. ID < 0
+	Active bool `json:"active,omitempty"`
 }
 
 // Bytes returns the message as an encoded byte slice
@@ -50,11 +53,11 @@ func (s *StationMessage) UnmarshalXML(decoder *xml.Decoder, start xml.StartEleme
 	for _, attr := range start.Attr {
 		switch attr.Name.Local {
 		case "id":
-			if i, err := strconv.ParseInt(attr.Value, 10, 64); err != nil {
+			i, err := strconv.ParseInt(attr.Value, 10, 64)
+			if err != nil {
 				return err
-			} else {
-				s.ID = uint64(i)
 			}
+			s.ID = i
 
 		case "cat":
 			s.Category = attr.Value

@@ -7,6 +7,7 @@ import (
 	d3client "github.com/peter-mount/nre-feeds/darwind3/client"
 	"github.com/peter-mount/nre-feeds/darwinref"
 	"github.com/peter-mount/nre-feeds/util"
+	"sort"
 )
 
 // The holder for a station's departure boards
@@ -17,7 +18,7 @@ type Station struct {
 	// This station is Public - i.e. has a CRS so can have departures
 	Public bool
 	// The Station message id's applicable to this station
-	Messages []uint64
+	Messages []int64
 }
 
 func (l *LDB) updateStation(s *Station) {
@@ -74,12 +75,20 @@ func (s *Station) GetMessages(client *d3client.DarwinD3Client) []*darwind3.Stati
 	return messages
 }
 
-func (s *Station) addStationMessage(msg *darwind3.StationMessage) bool {
-	for _, i := range s.Messages {
+func (s *Station) addStationMessage(msg *darwind3.StationMessage) {
+	found := false
+	for idx, i := range s.Messages {
 		if i == msg.ID {
-			return false
+			s.Messages[idx] = msg.ID
+			found = true
 		}
 	}
-	s.Messages = append(s.Messages, msg.ID)
-	return true
+
+	if !found {
+		s.Messages = append(s.Messages, msg.ID)
+	}
+
+	sort.SliceStable(s.Messages, func(i, j int) bool {
+		return s.Messages[i] < s.Messages[j]
+	})
 }

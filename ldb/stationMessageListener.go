@@ -17,18 +17,31 @@ func (d *LDB) stationMessageListener(e *darwind3.DarwinEvent) {
 
 		// Ensure all stations have this message
 		if e.NewStationMessage != nil {
-			for _, crs := range e.NewStationMessage.Station {
+			if e.NewStationMessage.ID < 0 {
+				// All stations get this message
+				_ = tx.Bucket([]byte(crsBucket)).ForEach(func(k, v []byte) error {
+					s := StationFromBytes(v)
+					if s != nil && s.Public {
+						s.addStationMessage(e.NewStationMessage)
+						putStation(tx, s)
+					}
+					return nil
+				})
+			} else {
 				// Only store in Public stations
-				s := getStationCrs(tx, crs)
-				if s != nil && s.Public && s.addStationMessage(e.NewStationMessage) {
-					putStation(tx, s)
+				for _, crs := range e.NewStationMessage.Station {
+					s := getStationCrs(tx, crs)
+					if s != nil && s.Public {
+						s.addStationMessage(e.NewStationMessage)
+						putStation(tx, s)
+					}
 				}
 			}
 		}
 
 		// Existing message so check for stations it no longer applies to
 		if e.ExistingStationMessage != nil {
-			m := make(map[string]uint64)
+			m := make(map[string]int64)
 			for _, crs := range e.ExistingStationMessage.Station {
 				m[crs] = e.ExistingStationMessage.ID
 			}
@@ -47,7 +60,7 @@ func (d *LDB) stationMessageListener(e *darwind3.DarwinEvent) {
 				if s != nil && s.Public {
 					updated := false
 
-					var ary []uint64
+					var ary []int64
 
 					for _, i := range s.Messages {
 						if i != id {

@@ -196,15 +196,19 @@ func PutSchedule(tx *bolt.Tx, sched *Schedule) bool {
 	key := []byte(sched.RID)
 
 	sb := tx.Bucket([]byte(ScheduleBucket))
-	b := sb.Get(key)
-	if b != nil {
-		os := ScheduleFromBytes(b)
-		if os != nil && os.RID == sched.RID && !sched.Date.After(os.Date) {
-			return false
-		}
-	}
 
-	b, _ = sched.Bytes()
+	/*
+			TODO remove this if neccessary
+		b := sb.Get(key)
+		if b != nil {
+			os := ScheduleFromBytes(b)
+			if os != nil && os.RID == sched.RID && !sched.Date.After(os.Date) {
+				return false
+			}
+		}
+	*/
+
+	b, _ := sched.Bytes()
 	_ = sb.Put(key, b)
 
 	b, err := sched.Date.MarshalBinary()

@@ -15,8 +15,8 @@ import (
 // Also we use darwind3.ScheduleBucket & darwind3.TsBucket so we share the same mechanism's to keep
 // schedules
 const (
-	crsBucket     = "crs"
-	messageBucket = "message"
+	crsBucket = "crs"
+	//messageBucket = "message"
 	serviceBucket = "service"
 	tiplocBucket  = "tiploc"
 )

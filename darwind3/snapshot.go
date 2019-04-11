@@ -23,7 +23,10 @@ type logEntry struct {
 func (fs *FeedStatus) loadSnapshot(ts time.Time) error {
 	log.Println("Suspending realtime message processing for NRDP synchronization")
 
-	fs.d3.SetStatus("Resyncing", "orange")
+	fs.d3.SetStatus("Resynchronizing", "orange")
+
+	fs.d3.Messages.AddMotd(StationmessageResynchronisation, "The service is resynchronizing with Darwin.<br/>Departure Boards might be inaccurate whilst this process takes place.")
+	defer fs.d3.Messages.RemoveMotd(StationmessageResynchronisation)
 
 	// List of retrieved files & delete them once we are done
 	defer fs.cleanup()
@@ -168,10 +171,9 @@ func (fs *FeedStatus) importLogEntry(entry logEntry) error {
 	}
 
 	log.Println("Importing", entry.path)
-	for il.hasToken {
-		lc := 0
-		err := fs.d3.BulkUpdate(func(tx *bolt.Tx) error {
-			for il.next() && lc < 500 {
+	err = fs.d3.BulkUpdate(func(tx *bolt.Tx) error {
+		for il.hasToken {
+			for il.next() {
 				ln := il.scanner.Bytes()
 				err = il.scanner.Err()
 				if err != nil {
@@ -195,17 +197,13 @@ func (fs *FeedStatus) importLogEntry(entry logEntry) error {
 					if (il.lc % 1000) == 0 {
 						log.Println("Imported", il.lc)
 					}
-
-					// Internal counter, so we break updates into smaller chunks
-					// so that callers to the rest api can still get dirty data during the refresh
-					lc++
 				}
 			}
-			return nil
-		})
-		if err != nil {
-			return err
 		}
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	log.Println("Finished importing", il.lc, "messages")

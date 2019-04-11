@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"github.com/etcd-io/bbolt"
 	"log"
-	"sync"
 	"time"
 )
 
@@ -12,16 +11,101 @@ import (
 // This is periodically cleared down as messages expire
 type StationMessages struct {
 	d3       *DarwinD3
-	mutex    sync.Mutex
-	messages map[int]*StationMessage
 	cacheDir string
 	cache    string
 }
 
-func uint64key(id uint64) []byte {
+const (
+	StationmessageResynchronisation = -1000
+)
+
+func uint64key(id int64) []byte {
 	key := make([]byte, 8)
-	binary.LittleEndian.PutUint64(key, id)
+
+	// See https://groups.google.com/d/msg/golang-nuts/AMfYtFXZTRM/ldDCmpHfmR8J for this voodoo
+	v := uint64(id)
+
+	binary.LittleEndian.PutUint64(key, v)
 	return key
+}
+
+func (sm *StationMessages) AddMotd(id int64, text string) {
+	if sm.d3.cache.tx != nil {
+		sm.addMotd(sm.d3.cache.tx, id, text)
+	} else {
+		_ = sm.d3.Update(func(tx *bbolt.Tx) error {
+			sm.addMotd(tx, id, text)
+			return nil
+		})
+	}
+}
+
+func (sm *StationMessages) addMotd(tx *bbolt.Tx, id int64, text string) {
+	if id == 0 {
+		return
+	}
+
+	if id > 0 {
+		id = -id
+	}
+
+	message := &StationMessage{
+		Motd:     true,
+		Category: "System",
+		ID:       id,
+		Message:  text,
+		Date:     time.Now(),
+		Severity: 0,
+		Suppress: false,
+		Active:   true,
+	}
+
+	bucket := tx.Bucket([]byte(messageBucket))
+
+	key := uint64key(message.ID)
+
+	b, err := message.Bytes()
+	if err != nil {
+		return
+	}
+
+	err = bucket.Put(key, b)
+	if err != nil {
+		return
+	}
+
+	sm.d3.EventManager.PostEvent(&DarwinEvent{
+		Type:              Event_StationMessage,
+		NewStationMessage: message,
+	})
+}
+
+func (sm *StationMessages) RemoveMotd(id int64) {
+	if id == 0 {
+		return
+	}
+
+	if id > 0 {
+		id = -id
+	}
+
+	_ = sm.d3.Update(func(tx *bbolt.Tx) error {
+		bucket := tx.Bucket([]byte(messageBucket))
+
+		key := uint64key(id)
+
+		_ = bucket.Delete(key)
+
+		message := sm.get(tx, id)
+
+		// Simulate a delete from Darwin as a message with no stations
+		sm.d3.EventManager.PostEvent(&DarwinEvent{
+			Type:                   Event_StationMessage,
+			ExistingStationMessage: message,
+			NewStationMessage:      &StationMessage{ID: id},
+		})
+		return nil
+	})
 }
 
 func (sm *StationMessages) ForEach(f func(*StationMessage) error) error {
@@ -30,7 +114,7 @@ func (sm *StationMessages) ForEach(f func(*StationMessage) error) error {
 		return bucket.ForEach(func(k, v []byte) error {
 			message := StationMessageFromBytes(v)
 			if message == nil {
-				bucket.Delete(k)
+				_ = bucket.Delete(k)
 			} else {
 				err := f(message)
 				if err != nil {
@@ -43,7 +127,7 @@ func (sm *StationMessages) ForEach(f func(*StationMessage) error) error {
 }
 
 // Get returns the specified StationMessage or nil if none
-func (sm *StationMessages) Get(id uint64) *StationMessage {
+func (sm *StationMessages) Get(id int64) *StationMessage {
 	var s *StationMessage
 
 	_ = sm.d3.View(func(tx *bbolt.Tx) error {
@@ -54,7 +138,7 @@ func (sm *StationMessages) Get(id uint64) *StationMessage {
 	return s
 }
 
-func (sm *StationMessages) get(tx *bbolt.Tx, id uint64) *StationMessage {
+func (sm *StationMessages) get(tx *bbolt.Tx, id int64) *StationMessage {
 	bucket := tx.Bucket([]byte(messageBucket))
 
 	b := bucket.Get(uint64key(id))
@@ -129,10 +213,10 @@ func (d *DarwinD3) ExpireStationMessages() {
 				cnt++
 				_ = bucket.Delete(k)
 
+				// Simulate a delete from Darwin as a message with no stations
 				d.EventManager.PostEvent(&DarwinEvent{
 					Type:                   Event_StationMessage,
 					ExistingStationMessage: message,
-					// Simulate a delete from Darwin as a message with no stations
 					NewStationMessage: &StationMessage{
 						ID:       message.ID,
 						Message:  message.Message,
