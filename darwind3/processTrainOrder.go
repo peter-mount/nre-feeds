@@ -107,18 +107,6 @@ func (to *trainOrderWrapper) processOrderRID(tx *Transaction, dbtx *bbolt.Tx, or
 				Schedule: sched,
 			})
 		}
-	} else {
-		/* Testing shows this is true, in some schedules we don't actually find the tiploc
-		   log.Printf(
-		     "Failed to apply TrainOrder %d %s %s %s %v %s\n",
-		     order,
-		     tod.RID.RID,
-		     to.Tiploc,
-		     to.CRS,
-		     to.Clear,
-		     tod.RID.Times.String(),
-		   )
-		*/
 	}
 
 	return nil

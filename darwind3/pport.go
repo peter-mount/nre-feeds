@@ -88,9 +88,10 @@ func (p *Pport) Process(d3 *DarwinD3) error {
 	if len(p.Actions) > 0 {
 		for _, s := range p.Actions {
 			// Use a write transaction for each action
-			if err := d3.ProcessUpdate(p, func(tx *Transaction) error {
+			err := d3.ProcessUpdate(p, func(tx *Transaction) error {
 				return s.Process(tx)
-			}); err != nil {
+			})
+			if err != nil {
 				return err
 			}
 		}

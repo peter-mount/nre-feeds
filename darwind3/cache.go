@@ -119,12 +119,12 @@ func (r *DarwinD3) BulkUpdate(f func(*bolt.Tx) error) error {
 		oldTT := r.Timetable
 		r.Timetable = ""
 
-		err := f(tx)
+		defer func() {
+			r.Timetable = oldTT
+			r.cache.tx = oldTx
+		}()
 
-		r.Timetable = oldTT
-		r.cache.tx = oldTx
-
-		return err
+		return f(tx)
 	}
 
 	if r.cache.tx != nil {

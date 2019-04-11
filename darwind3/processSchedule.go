@@ -1,6 +1,8 @@
 package darwind3
 
-import "github.com/etcd-io/bbolt"
+import (
+	"github.com/etcd-io/bbolt"
+)
 
 // Process processes an inbound schedule importing or merging it with the
 // current schedule in the database
@@ -58,7 +60,7 @@ func (p *Schedule) process(tx *Transaction, dbtx *bbolt.Tx) error {
 	tx.d3.updateAssociations(dbtx, p)
 	p.Date = tx.pport.TS
 	p.Sort()
-	if tx.d3.PutSchedule(p) {
+	if PutSchedule(dbtx, p) {
 		tx.d3.EventManager.PostEvent(&DarwinEvent{
 			Type:     Event_ScheduleUpdated,
 			RID:      p.RID,

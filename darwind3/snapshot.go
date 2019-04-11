@@ -200,14 +200,14 @@ func (fs *FeedStatus) importLogEntry(entry logEntry) error {
 				}
 			}
 		}
-		return nil
+
+		// Update the meta
+		return PutMeta(tx, entry.meta, entry.time)
 	})
 	if err != nil {
 		return err
 	}
 
 	log.Println("Finished importing", il.lc, "messages")
-
-	// Update the meta
-	return fs.d3.PutMeta(entry.meta, entry.time)
+	return nil
 }
