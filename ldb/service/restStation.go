@@ -152,7 +152,7 @@ func (d *LDBService) stationHandler(r *rest.Rest) error {
 									Crs:         station.Crs,
 									Destination: as.Locations[len(as.Locations)-1].Tiploc,
 								}
-								vias[s.RID] = viaRequest
+								vias[ar] = viaRequest
 
 								for _, l := range as.Locations[ai:] {
 									tiplocs[l.Tiploc] = nil
