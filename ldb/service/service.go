@@ -7,6 +7,7 @@ import (
 	"github.com/peter-mount/nre-feeds/bin"
 	"github.com/peter-mount/nre-feeds/darwind3"
 	"github.com/peter-mount/nre-feeds/ldb"
+	"runtime/debug"
 )
 
 type LDBService struct {
@@ -93,6 +94,22 @@ func (a *LDBService) Start() error {
 	if err != nil {
 		return err
 	}
+
+	// Memory
+	_, err = a.cron.AddFunc("9/10 * * * * *", func() {
+		darwind3.SubmitMemStats("darwin.ldb")
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = a.cron.AddFunc("0 0/5 * * * *", debug.FreeOSMemory)
+	/*
+		_, err = a.cron.AddFunc("0 * * * * *", darwind3.GC)
+		if err != nil {
+			return err
+		}
+	*/
 
 	return nil
 }

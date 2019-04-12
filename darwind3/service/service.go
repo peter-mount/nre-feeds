@@ -6,6 +6,7 @@ import (
 	"github.com/peter-mount/golib/rest"
 	"github.com/peter-mount/nre-feeds/bin"
 	"github.com/peter-mount/nre-feeds/darwind3"
+	"runtime/debug"
 )
 
 type DarwinD3Service struct {
@@ -110,6 +111,22 @@ func (a *DarwinD3Service) Start() error {
 	if err != nil {
 		return err
 	}
+
+	// Memory
+	_, err = a.cron.AddFunc("9/10 * * * * *", func() {
+		darwind3.SubmitMemStats("darwin.d3")
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = a.cron.AddFunc("0 0/5 * * * *", debug.FreeOSMemory)
+	/*
+	   _, err = a.cron.AddFunc("0 * * * * *", darwind3.GC)
+	   if err != nil {
+	     return err
+	   }
+	*/
 
 	// Listen for broadcast events
 	err = a.darwind3.EventManager.ListenToEvents(darwind3.Event_Request_StationMessage, a.darwind3.BroadcastStationMessages)

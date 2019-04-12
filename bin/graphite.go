@@ -79,7 +79,7 @@ func (g *Graphite) publish(name string, val int64, ts int64) {
 	}
 	msg := fmt.Sprintf("%s %d %d", statName, val, ts)
 
-	g.channel.Publish(
+	_ = g.channel.Publish(
 		g.config.Graphite.Exchange,
 		statName,
 		false,

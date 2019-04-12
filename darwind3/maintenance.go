@@ -2,8 +2,11 @@ package darwind3
 
 import (
 	"github.com/etcd-io/bbolt"
+	"github.com/peter-mount/golib/statistics"
 	"github.com/peter-mount/nre-feeds/util"
 	"log"
+	"runtime"
+	"runtime/debug"
 	"time"
 )
 
@@ -85,4 +88,39 @@ func testForOrphan(tx *bbolt.Tx, del func(tx *bbolt.Tx, rid []byte), targetBucke
 	})
 
 	return c
+}
+
+func GC() {
+	log.Println("GC")
+	gcStats()
+	debug.FreeOSMemory()
+	gcStats()
+}
+
+func gcStats() {
+	var gcStats debug.GCStats
+
+	debug.ReadGCStats(&gcStats)
+	log.Printf(
+		"GC: %d Last %s Paused %s\n",
+		gcStats.NumGC,
+		gcStats.LastGC.Format(util.HumanDateTime),
+		gcStats.PauseTotal.String(),
+	)
+}
+
+func SubmitMemStats(prefix string) {
+	var memStats runtime.MemStats
+	runtime.ReadMemStats(&memStats)
+
+	statistics.Set(prefix+".mem.heap.nextgc", int64(memStats.NextGC))
+	statistics.Set(prefix+".mem.heap.alloc", int64(memStats.HeapAlloc))
+	statistics.Set(prefix+".mem.heap.sys", int64(memStats.HeapSys))
+	statistics.Set(prefix+".mem.heap.idle", int64(memStats.HeapIdle))
+	statistics.Set(prefix+".mem.heap.inuse", int64(memStats.HeapInuse))
+	statistics.Set(prefix+".mem.heap.released", int64(memStats.HeapReleased))
+	statistics.Set(prefix+".mem.heap.objects", int64(memStats.HeapObjects))
+
+	statistics.Set(prefix+".mem.stack.inuse", int64(memStats.StackInuse))
+	statistics.Set(prefix+".mem.stack.sys", int64(memStats.StackSys))
 }
