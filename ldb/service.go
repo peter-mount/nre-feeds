@@ -127,8 +127,10 @@ func (s *Service) Update(sched *darwind3.Schedule, idx int) bool {
 		s.RID = sched.RID
 
 		// Clone the location
-		s.Location = *sched.Locations[idx]
-		s.Location.UpdateTime()
+		if sched.Locations != nil {
+			s.Location = *sched.Locations[idx]
+			s.Location.UpdateTime()
+		}
 
 		s.SSD = sched.SSD
 		s.TrainId = sched.TrainId
@@ -138,8 +140,12 @@ func (s *Service) Update(sched *darwind3.Schedule, idx int) bool {
 		s.LateReason = sched.LateReason
 
 		// The origin/destination Locations
-		s.Origin = *sched.Origin
-		s.Dest = *sched.Destination
+		if sched.Origin != nil {
+			s.Origin = *sched.Origin
+		}
+		if sched.Destination != nil {
+			s.Dest = *sched.Destination
+		}
 
 		// Resolve the destination
 		if s.Location.FalseDestination != "" {
