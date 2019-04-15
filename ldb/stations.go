@@ -8,14 +8,15 @@ import (
 func (d *LDB) PutStation(s *Station) {
 	if s.Public {
 		_ = d.Update(func(tx *bbolt.Tx) error {
-			putStation(tx, s)
+			d.putStation(tx, s)
 			return nil
 		})
 	}
 }
 
-func putStation(tx *bbolt.Tx, s *Station) {
+func (d *LDB) putStation(tx *bbolt.Tx, s *Station) {
 	if s.Public {
+		d.stations[s.Crs] = s
 		b, _ := s.Bytes()
 		_ = tx.Bucket([]byte(crsBucket)).Put([]byte(s.Crs), b)
 	}
@@ -26,18 +27,28 @@ func putStation(tx *bbolt.Tx, s *Station) {
 func (d *LDB) GetStationCrs(crs string) *Station {
 	var station *Station
 
-	_ = d.View(func(tx *bbolt.Tx) error {
-		station = getStationCrs(tx, crs)
+	//_ = d.View(func(tx *bbolt.Tx) error {
+	_ = d.Update(func(tx *bbolt.Tx) error {
+		station = d.getStationCrs(tx, crs)
 		return nil
 	})
 
 	return station
 }
 
-func getStationCrs(tx *bbolt.Tx, crs string) *Station {
+func (d *LDB) getStationCrs(tx *bbolt.Tx, crs string) *Station {
+	station, exists := d.stations[crs]
+	if exists {
+		return station
+	}
+
 	b := tx.Bucket([]byte(crsBucket)).Get([]byte(crs))
 	if b != nil {
-		return StationFromBytes(b)
+		station = StationFromBytes(b)
+		if station != nil {
+			d.stations[crs] = station
+		}
+		return station
 	}
 	return nil
 }
@@ -47,7 +58,7 @@ func (d *LDB) getStationTiploc(tx *bbolt.Tx, tiploc string) *Station {
 	if !exists {
 		return nil
 	}
-	return getStationCrs(tx, crs)
+	return d.getStationCrs(tx, crs)
 	/*
 		key := []byte(tiploc)
 
@@ -100,7 +111,7 @@ func (d *LDB) createStation(tx *bbolt.Tx, locations []*darwinref.Location) *Stat
 
 	//tb := tx.Bucket([]byte(tiplocBucket))
 
-	s := getStationCrs(tx, crs)
+	s := d.getStationCrs(tx, crs)
 	if s == nil {
 		s = &Station{}
 		s.Crs = crs
@@ -124,6 +135,7 @@ func (d *LDB) createStation(tx *bbolt.Tx, locations []*darwinref.Location) *Stat
 
 	s.Public = public
 
+	d.stations[crs] = s
 	b, _ := s.Bytes()
 	_ = tx.Bucket([]byte(crsBucket)).Put([]byte(crs), b)
 

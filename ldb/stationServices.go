@@ -5,7 +5,6 @@ import (
 	"github.com/etcd-io/bbolt"
 	"github.com/peter-mount/nre-feeds/darwind3"
 	"github.com/peter-mount/nre-feeds/util"
-	"sort"
 	"time"
 )
 
@@ -65,12 +64,8 @@ func (s *Station) addService(tx *bbolt.Tx, e *darwind3.DarwinEvent, idx int) boo
 
 			bucket := tx.Bucket([]byte(serviceBucket))
 
-			service := ServiceFromBytes(bucket.Get(key))
-			if service == nil || service.Date.Before(t) {
-				if service == nil {
-					service = &Service{}
-				}
-
+			service := ServiceEntryFromBytes(bucket.Get(key))
+			if service.RID != "" || service.Date.Before(t) {
 				if service.update(e.Schedule, idx) {
 					b, _ := service.Bytes()
 					_ = bucket.Put(key, b)
@@ -109,8 +104,8 @@ func (s *Station) removeService(tx *bbolt.Tx, rid string) bool {
 	return updated
 }
 
-func (s *Station) getServices(tx *bbolt.Tx, from *util.WorkingTime, to *util.WorkingTime) []*Service {
-	var services []*Service
+func (s *Station) getServices(tx *bbolt.Tx, from *util.WorkingTime, to *util.WorkingTime) []ServiceEntry {
+	var services []ServiceEntry
 
 	if s.Public {
 
@@ -123,19 +118,14 @@ func (s *Station) getServices(tx *bbolt.Tx, from *util.WorkingTime, to *util.Wor
 		for k, v := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, v = c.Next() {
 			t := getServiceTime(k)
 			if t != nil && t.Between(from, to) {
-				service := ServiceFromBytes(v)
-				if !service.Location.Forecast.Departed {
+				service := ServiceEntryFromBytes(v)
+				if !service.Departed {
 					services = append(services, service)
 				}
 			}
 		}
 
 	}
-
-	// sort into time order
-	sort.SliceStable(services, func(i, j int) bool {
-		return services[i].Compare(services[j])
-	})
 
 	return services
 }

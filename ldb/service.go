@@ -15,9 +15,9 @@ type Service struct {
 	// if Location.FalseDestination is set
 	Destination string `json:"destination"`
 	// Origin Location of this service
-	Origin *darwind3.Location `json:"origin"`
+	Origin darwind3.Location `json:"origin"`
 	// Destination Location of this service
-	Dest *darwind3.Location `json:"dest"`
+	Dest darwind3.Location `json:"dest"`
 	// Service Start Date
 	SSD util.SSD `json:"ssd"`
 	// The trainId (headcode)
@@ -35,11 +35,11 @@ type Service struct {
 	// of this service which are not marked as cancelled
 	LateReason darwind3.DisruptionReason `json:"lateReason"`
 	// The "time" for this service
-	Location *darwind3.Location `json:"location"`
+	Location darwind3.Location `json:"location"`
 	// The calling points from this location
-	CallingPoints []*darwind3.CallingPoint `json:"calling"`
+	CallingPoints []darwind3.CallingPoint `json:"calling"`
 	// The last report
-	LastReport *darwind3.CallingPoint `json:"lastReport,omitempty"`
+	LastReport darwind3.CallingPoint `json:"lastReport,omitempty"`
 	// The associations
 	Associations []*darwind3.Association `json:"association"`
 	// The latest schedule entry used for this service
@@ -52,29 +52,30 @@ type Service struct {
 	Self string `json:"self,omitempty" xml:"self,attr,omitempty"`
 }
 
+// Entry in the DB, just the essential data
+type ServiceEntry struct {
+	RID           string
+	LocationIndex int
+	Departed      bool
+	Date          time.Time
+}
+
 // Bytes returns the message as an encoded byte slice
-func (s *Service) Bytes() ([]byte, error) {
+func (s *ServiceEntry) Bytes() ([]byte, error) {
 	b, err := json.Marshal(s)
 	return b, err
 }
 
 // ScheduleFromBytes returns a schedule based on a slice or nil if none
-func ServiceFromBytes(b []byte) *Service {
-	if b == nil {
-		return nil
-	}
-
-	service := &Service{}
-	err := json.Unmarshal(b, service)
-	if err != nil {
-		return nil
+func ServiceEntryFromBytes(b []byte) ServiceEntry {
+	service := ServiceEntry{}
+	if b != nil {
+		err := json.Unmarshal(b, &service)
+		if err != nil {
+			service.RID = ""
+		}
 	}
 	return service
-}
-
-// Compare two Services by the times at a location
-func (a *Service) Compare(b *Service) bool {
-	return b != nil && a.Location.Compare(b.Location)
 }
 
 // Timestamp returns the time.Time of this service based on the SSD and Location's Time.
@@ -83,7 +84,27 @@ func (s *Service) Timestamp() time.Time {
 	return s.SSD.Time().Add(time.Duration(s.Location.Forecast.Time.Get()) * time.Second)
 }
 
-func (s *Service) update(sched *darwind3.Schedule, idx int) bool {
+func (s *ServiceEntry) update(sched *darwind3.Schedule, idx int) bool {
+	if sched == nil {
+		return false
+	}
+
+	if !s.Date.IsZero() && !sched.Date.IsZero() && !s.Date.Before(sched.Date) {
+		return false
+	}
+
+	if (s.RID == "" || s.RID == sched.RID) && idx >= 0 && idx < len(sched.Locations) {
+		s.RID = sched.RID
+		s.LocationIndex = idx
+		s.Date = sched.Date
+
+		return true
+	}
+
+	return false
+}
+
+func (s *Service) Update(sched *darwind3.Schedule, idx int) bool {
 
 	if sched == nil {
 		return false
@@ -106,7 +127,7 @@ func (s *Service) update(sched *darwind3.Schedule, idx int) bool {
 		s.RID = sched.RID
 
 		// Clone the location
-		s.Location = sched.Locations[idx].Clone()
+		s.Location = *sched.Locations[idx]
 		s.Location.UpdateTime()
 
 		s.SSD = sched.SSD
@@ -117,8 +138,8 @@ func (s *Service) update(sched *darwind3.Schedule, idx int) bool {
 		s.LateReason = sched.LateReason
 
 		// The origin/destination Locations
-		s.Origin = sched.Origin
-		s.Dest = sched.Destination
+		s.Origin = *sched.Origin
+		s.Dest = *sched.Destination
 
 		// Resolve the destination
 		if s.Location.FalseDestination != "" {
@@ -158,7 +179,7 @@ func (a *Service) Clone() *Service {
 		Charter:          a.Charter,
 		CancelReason:     a.CancelReason,
 		LateReason:       a.LateReason,
-		Location:         a.Location.Clone(),
+		Location:         a.Location,
 		Associations:     a.Associations,
 		schedule:         a.schedule,
 		LocationIndex:    a.LocationIndex,

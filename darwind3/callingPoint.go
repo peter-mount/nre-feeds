@@ -36,8 +36,8 @@ func (l *Location) IsCallingPoint() bool {
 	return l.Times.Ptd != nil && !l.Times.Ptd.IsZero()
 }
 
-func (l *Location) AsCallingPoint() *CallingPoint {
-	return &CallingPoint{
+func (l *Location) AsCallingPoint() CallingPoint {
+	return CallingPoint{
 		Tiploc:  l.Tiploc,
 		Time:    l.Time,
 		Delay:   l.Delay,
@@ -49,8 +49,8 @@ func (l *Location) AsCallingPoint() *CallingPoint {
 // in the schedule. If the specific location has a FalseDestination set then
 // the calling point list will terminate there rather than at the
 // end of the schedule.
-func (s *Schedule) GetCallingPoints(idx int) []*CallingPoint {
-	var cp []*CallingPoint
+func (s *Schedule) GetCallingPoints(idx int) []CallingPoint {
+	var cp []CallingPoint
 
 	if idx >= 0 && (idx+1) < len(s.Locations) {
 		loc := s.Locations[idx]
@@ -76,7 +76,7 @@ func (s *Schedule) GetCallingPoints(idx int) []*CallingPoint {
 }
 
 // GetLastReport returns the last report as a CallingPoint
-func (s *Schedule) GetLastReport() *CallingPoint {
+func (s *Schedule) GetLastReport() CallingPoint {
 	var cp *Location
 	for _, l := range s.Locations {
 		if l.Forecast.Arrived || l.Forecast.Departed {
@@ -86,5 +86,5 @@ func (s *Schedule) GetLastReport() *CallingPoint {
 	if cp != nil {
 		return cp.AsCallingPoint()
 	}
-	return nil
+	return CallingPoint{}
 }

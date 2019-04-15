@@ -19,21 +19,22 @@ func (d *LDB) stationMessageListener(e *darwind3.DarwinEvent) {
 		if e.NewStationMessage != nil {
 			if e.NewStationMessage.ID < 0 {
 				// All stations get this message
-				_ = tx.Bucket([]byte(crsBucket)).ForEach(func(k, v []byte) error {
-					s := StationFromBytes(v)
+				for _, s := range d.stations {
+					//_ = tx.Bucket([]byte(crsBucket)).ForEach(func(k, v []byte) error {
+					//s := StationFromBytes(v)
 					if s != nil && s.Public {
 						s.addStationMessage(e.NewStationMessage)
-						putStation(tx, s)
+						d.putStation(tx, s)
 					}
-					return nil
-				})
+					//return nil
+				} //)
 			} else {
 				// Only store in Public stations
 				for _, crs := range e.NewStationMessage.Station {
-					s := getStationCrs(tx, crs)
+					s := d.getStationCrs(tx, crs)
 					if s != nil && s.Public {
 						s.addStationMessage(e.NewStationMessage)
-						putStation(tx, s)
+						d.putStation(tx, s)
 					}
 				}
 			}
@@ -56,7 +57,7 @@ func (d *LDB) stationMessageListener(e *darwind3.DarwinEvent) {
 
 			for crs, id := range m {
 				// Only store in Public stations
-				s := getStationCrs(tx, crs)
+				s := d.getStationCrs(tx, crs)
 				if s != nil && s.Public {
 					updated := false
 
@@ -72,7 +73,7 @@ func (d *LDB) stationMessageListener(e *darwind3.DarwinEvent) {
 					s.Messages = ary
 
 					if updated {
-						putStation(tx, s)
+						d.putStation(tx, s)
 					}
 				}
 			}

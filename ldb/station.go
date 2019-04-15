@@ -51,8 +51,8 @@ func StationFromBytes(b []byte) *Station {
 // GetServices returns all Services that have not yet departed that are within
 // the specified time range.
 // If from is before to then it's resumed the time range crosses midnight.
-func (d *LDB) GetServices(s *Station, from *util.WorkingTime, to *util.WorkingTime) []*Service {
-	var services []*Service
+func (d *LDB) GetServices(s *Station, from *util.WorkingTime, to *util.WorkingTime) []ServiceEntry {
+	var services []ServiceEntry
 
 	_ = d.View(func(tx *bbolt.Tx) error {
 		services = s.getServices(tx, from, to)

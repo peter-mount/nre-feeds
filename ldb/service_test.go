@@ -3,15 +3,11 @@ package ldb
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/peter-mount/nre-feeds/util"
-	"log"
-	"sort"
 	"testing"
 )
 
 const serviceJson = "{" +
 	"\"rid\":\"%s\"," +
-	"\"ssd\":\"20180102\"," +
 	"\"location\":{" +
 	"\"type\":\"TP\"," +
 	"\"tiploc\":\"%s\"," +
@@ -33,7 +29,7 @@ const serviceJson = "{" +
 // rid schedule running id
 // tpl tiploc for location
 // tm time to use for the arrival
-func service_new(t *testing.T, rid, tpl string, tm string) *Service {
+func service_new(t *testing.T, rid, tpl string, tm string) *ServiceEntry {
 	j := fmt.Sprintf(serviceJson,
 		rid,
 		tpl,
@@ -41,7 +37,7 @@ func service_new(t *testing.T, rid, tpl string, tm string) *Service {
 		tm, tm,
 		tm, tm,
 	)
-	v := &Service{}
+	v := &ServiceEntry{}
 	if err := json.Unmarshal([]byte(j), v); err != nil {
 		t.Errorf("Failed to unmarshal json: %v\n\n%s", err, j)
 	}
@@ -67,6 +63,7 @@ func service_testBool(t *testing.T, m string, e bool, f func() bool) {
 }
 
 // Test Service.Compare() works correctly
+/*
 func TestService_Compare(t *testing.T) {
 
 	a := service_new(t, "12345", "MSTONEE", "01:02")
@@ -91,10 +88,11 @@ func TestService_Compare(t *testing.T) {
 	})
 
 }
+*/
 
 // Test that slices sort correctly
-func service_timesSlice(t *testing.T) []*Service {
-	var ary []*Service
+func service_timesSlice(t *testing.T) []*ServiceEntry {
+	var ary []*ServiceEntry
 	var times = [...]string{
 		"09:50",
 		"09:14",
@@ -130,7 +128,8 @@ func service_timesSlice(t *testing.T) []*Service {
 	return ary
 }
 
-func pary(l string, a []*Service) {
+/*
+func pary(l string, a []*ServiceEntry) {
 	var ary []string
 	for _, av := range a {
 		ary = append(ary, av.Location.Time.String())
@@ -161,3 +160,4 @@ func TestService_SliceStable(t *testing.T) {
 	}
 
 }
+*/

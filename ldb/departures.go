@@ -27,6 +27,7 @@ type LDB struct {
 	EventManager *darwind3.DarwinEventManager
 	db           *bolt.DB
 	tiplocs      map[string]string
+	stations     map[string]*Station
 }
 
 type Task struct {
@@ -37,6 +38,7 @@ type Task struct {
 
 func (d *LDB) Init(dbFile string) error {
 	d.tiplocs = make(map[string]string)
+	d.stations = make(map[string]*Station)
 
 	db, err := bolt.Open(dbFile, 0666, &bolt.Options{
 		Timeout: 5 * time.Second,
