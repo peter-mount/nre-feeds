@@ -1,7 +1,6 @@
 package ldb
 
 import (
-	"bytes"
 	"github.com/etcd-io/bbolt"
 	"github.com/peter-mount/nre-feeds/darwinref"
 )
@@ -44,77 +43,49 @@ func getStationCrs(tx *bbolt.Tx, crs string) *Station {
 }
 
 func (d *LDB) getStationTiploc(tx *bbolt.Tx, tiploc string) *Station {
-	key := []byte(tiploc)
-
-	// Try to resolve the crs
-	crs := tx.Bucket([]byte(tiplocBucket)).Get(key)
-	if crs != nil {
-		b := tx.Bucket([]byte(crsBucket)).Get([]byte(crs))
-		if b != nil {
-			return StationFromBytes(b)
-		}
+	crs, exists := d.tiplocs[tiploc]
+	if !exists {
+		return nil
 	}
-	return nil
+	return getStationCrs(tx, crs)
+	/*
+		key := []byte(tiploc)
+
+			// Try to resolve the crs
+		crs := tx.Bucket([]byte(tiplocBucket)).Get(key)
+		if crs != nil {
+			b := tx.Bucket([]byte(crsBucket)).Get([]byte(crs))
+			if b != nil {
+				return StationFromBytes(b)
+			}
+		}
+		return nil
+	*/
 }
 
 // GetStationTiploc returns the Station instance by Tiploc or nil if not found.
 // Note: If we don't have an entry then this will create one
 func (d *LDB) GetStationTiploc(tiploc string) *Station {
-	var station *Station
-
-	// Try to resolve the crs
-	_ = d.View(func(tx *bbolt.Tx) error {
-		station = d.getStationTiploc(tx, tiploc)
+	crs, exists := d.tiplocs[tiploc]
+	if !exists {
 		return nil
-	})
-
-	// Still none so expensive but lock
+	}
+	return d.GetStationCrs(crs)
 	/*
-		d.Stations.Update(func() error {
-			station = d.Stations.tiploc[tiploc]
+		var station *Station
 
-			if station != nil {
-				return nil
-			}
-
-			var locs []*darwinref.Location
-			/ *
-			   d.Reference.View( func( tx *bolt.Tx ) error {
-			     // Lookup the tiploc
-			     loc, _ := d.Reference.GetTiploc( tx, tiploc )
-
-			     // Not found then bail - shouldn't happen unless reference data is out of sync
-			     if loc == nil {
-			       return nil
-			     }
-
-			     if loc.Crs == "" {
-			       // If no crs then use the single tiploc to prevent us from looking up again
-			       locs = append( locs, loc )
-			     } else {
-			       // Lookup by crs to get all of them
-			       locs, _ = d.Reference.GetCrs( tx, loc.Crs )
-			     }
-
-			     return nil
-			   } )
-			* /
-
-			if len(locs) == 0 {
-				return nil
-			}
-
-			station = d.createStation(locs)
-
+			// Try to resolve the crs
+		_ = d.View(func(tx *bbolt.Tx) error {
+			station = d.getStationTiploc(tx, tiploc)
 			return nil
 		})
-	*/
 
-	return station
+			return station
+	*/
 }
 
 // Creates a station keyed by the supplied locations
-func createStation(tx *bbolt.Tx, locations []*darwinref.Location) *Station {
+func (d *LDB) createStation(tx *bbolt.Tx, locations []*darwinref.Location) *Station {
 
 	if len(locations) == 0 {
 		return nil
@@ -127,7 +98,7 @@ func createStation(tx *bbolt.Tx, locations []*darwinref.Location) *Station {
 		return nil
 	}
 
-	tb := tx.Bucket([]byte(tiplocBucket))
+	//tb := tx.Bucket([]byte(tiplocBucket))
 
 	s := getStationCrs(tx, crs)
 	if s == nil {
@@ -146,7 +117,8 @@ func createStation(tx *bbolt.Tx, locations []*darwinref.Location) *Station {
 			}
 		}
 		for t, _ := range tpl {
-			_ = tb.Delete([]byte(t))
+			delete(d.tiplocs, t)
+			//_ = tb.Delete([]byte(t))
 		}
 	}
 
@@ -156,13 +128,14 @@ func createStation(tx *bbolt.Tx, locations []*darwinref.Location) *Station {
 	_ = tx.Bucket([]byte(crsBucket)).Put([]byte(crs), b)
 
 	// Ensure all our tiplocs point to this crs
-	cb := []byte(crs)
+	//cb := []byte(crs)
 	for _, l := range s.Locations {
-		tpl := []byte(l.Tiploc)
-		b = tb.Get(tpl)
-		if b == nil || bytes.Compare(cb, b) != 0 {
-			_ = tb.Put(tpl, cb)
-		}
+		d.tiplocs[l.Tiploc] = crs
+		//tpl := []byte(l.Tiploc)
+		//b = tb.Get(tpl)
+		//if b == nil || bytes.Compare(cb, b) != 0 {
+		//	_ = tb.Put(tpl, cb)
+		//}
 	}
 
 	return s

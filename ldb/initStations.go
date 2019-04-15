@@ -36,7 +36,7 @@ func (d *LDB) RefreshStations() {
 
 			// create a station for each
 			for _, l := range m {
-				createStation(tx, l)
+				d.createStation(tx, l)
 			}
 		}
 

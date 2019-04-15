@@ -18,7 +18,7 @@ const (
 	crsBucket = "crs"
 	//messageBucket = "message"
 	serviceBucket = "service"
-	tiplocBucket  = "tiploc"
+	//tiplocBucket  = "tiploc"
 )
 
 type LDB struct {
@@ -26,6 +26,7 @@ type LDB struct {
 	Reference    string
 	EventManager *darwind3.DarwinEventManager
 	db           *bolt.DB
+	tiplocs      map[string]string
 }
 
 type Task struct {
@@ -35,6 +36,8 @@ type Task struct {
 }
 
 func (d *LDB) Init(dbFile string) error {
+	d.tiplocs = make(map[string]string)
+
 	db, err := bolt.Open(dbFile, 0666, &bolt.Options{
 		Timeout: 5 * time.Second,
 	})
@@ -47,7 +50,7 @@ func (d *LDB) Init(dbFile string) error {
 	// schedule for the live data
 	// ts for the times per rid - used for cleaning up
 	err = db.Update(func(tx *bolt.Tx) error {
-		for _, bucket := range []string{crsBucket, darwind3.ScheduleBucket, serviceBucket, tiplocBucket, darwind3.TsBucket} {
+		for _, bucket := range []string{crsBucket, darwind3.ScheduleBucket, serviceBucket /*tiplocBucket,*/, darwind3.TsBucket} {
 			_, err := tx.CreateBucketIfNotExists([]byte(bucket))
 			if err != nil {
 				return err
@@ -77,7 +80,7 @@ func (d *LDB) Init(dbFile string) error {
 }
 
 func (d *LDB) DBStatus() {
-	darwind3.DBStatus(d.db, crsBucket, darwind3.ScheduleBucket, serviceBucket, tiplocBucket, darwind3.TsBucket)
+	darwind3.DBStatus(d.db, crsBucket, darwind3.ScheduleBucket, serviceBucket /*tiplocBucket,*/, darwind3.TsBucket)
 }
 
 func (d *LDB) Update(f func(tx *bolt.Tx) error) error {

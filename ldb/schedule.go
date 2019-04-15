@@ -66,7 +66,7 @@ func (d *LDB) PurgeServices() {
 			rid := getServiceRID(k)
 			count++
 			if schedBucket.Get([]byte(rid)) == nil {
-				svcBucket.Delete(k)
+				_ = svcBucket.Delete(k)
 				deleted++
 			}
 			return nil
