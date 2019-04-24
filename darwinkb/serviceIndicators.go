@@ -3,7 +3,6 @@ package darwinkb
 import (
 	"github.com/peter-mount/golib/kernel/bolt"
 	"log"
-	"time"
 )
 
 const (
@@ -19,7 +18,7 @@ func (r *DarwinKB) GetServiceIndicators() ([]byte, error) {
 
 func (r *DarwinKB) GetServiceIndicator(toc string) ([]byte, error) {
 	var data []byte
-	err := r.View("serviceIndicators", func(bucket *bolt.Bucket) error {
+	err := r.View(serviceIndicatorsBucket, func(bucket *bolt.Bucket) error {
 		data = bucket.Get(toc)
 		return nil
 	})
@@ -35,14 +34,14 @@ func (r *DarwinKB) refreshServiceIndicators() {
 
 func (r *DarwinKB) refreshServiceIndicatorsImpl() error {
 
-	updateRequired, err := r.refreshFile(serviceIndicatorsXml, "https://datafeeds.nationalrail.co.uk/api/staticfeeds/4.0/serviceIndicators", 9*time.Minute)
+	updateRequired, err := r.refreshFile(serviceIndicatorsXml, serviceIndicatorsUrl, serviceIndicatorsMaxAge)
 	if err != nil {
 		return err
 	}
 
 	// If no update check to see if the bucket is empty forcing an update
 	if !updateRequired {
-		updateRequired, err = r.bucketEmpty("serviceIndicators")
+		updateRequired, err = r.bucketEmpty(serviceIndicatorsBucket)
 		if err != nil {
 			return err
 		}
@@ -69,9 +68,9 @@ func (r *DarwinKB) refreshServiceIndicatorsImpl() error {
 	ForceJsonArray(root, "NSI", "TOC", "ServiceGroup")
 
 	serviceIndicators, _ := GetJsonArray(root, "NSI", "TOC")
-	log.Println("Found", len(serviceIndicators), "serviceIndicators")
+	log.Println("Found", len(serviceIndicators), serviceIndicatorsBucket)
 
-	err = r.Update("serviceIndicators", func(bucket *bolt.Bucket) error {
+	err = r.Update(serviceIndicatorsBucket, func(bucket *bolt.Bucket) error {
 		err := bucketRemoveAll(bucket)
 		if err != nil {
 			return err

@@ -5,7 +5,6 @@ import (
 	"github.com/peter-mount/sortfold"
 	"log"
 	"sort"
-	"time"
 )
 
 const (
@@ -32,7 +31,7 @@ func (r *DarwinKB) GetTicketIDs() ([]byte, error) {
 
 func (r *DarwinKB) GetTicketType(id string) ([]byte, error) {
 	var data []byte
-	err := r.View("ticketTypes", func(bucket *bolt.Bucket) error {
+	err := r.View(ticketTypesBucket, func(bucket *bolt.Bucket) error {
 		data = bucket.Get(id)
 		return nil
 	})
@@ -48,14 +47,14 @@ func (r *DarwinKB) refreshTicketTypes() {
 
 func (r *DarwinKB) refreshTicketTypesImpl() error {
 
-	updateRequired, err := r.refreshFile(ticketTypesXml, "https://datafeeds.nationalrail.co.uk/api/staticfeeds/4.0/ticket-types", 6*time.Hour)
+	updateRequired, err := r.refreshFile(ticketTypesXml, ticketTypesUrl, ticketTypesMaxAge)
 	if err != nil {
 		return err
 	}
 
 	// If no update check to see if the bucket is empty forcing an update
 	if !updateRequired {
-		updateRequired, err = r.bucketEmpty("ticketTypes")
+		updateRequired, err = r.bucketEmpty(ticketTypesBucket)
 		if err != nil {
 			return err
 		}
@@ -84,9 +83,9 @@ func (r *DarwinKB) refreshTicketTypesImpl() error {
 	var idIndex []*TicketType
 
 	ticketTypes, _ := GetJsonArray(root, "TicketTypeDescriptionList", "TicketTypeDescription")
-	log.Println("Found", len(ticketTypes), "ticketTypes")
+	log.Println("Found", len(ticketTypes), ticketTypesBucket)
 
-	err = r.Update("ticketTypes", func(bucket *bolt.Bucket) error {
+	err = r.Update(ticketTypesBucket, func(bucket *bolt.Bucket) error {
 		err := bucketRemoveAll(bucket)
 		if err != nil {
 			return err

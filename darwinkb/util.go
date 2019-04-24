@@ -102,7 +102,9 @@ func GetJsonObjectValue(r map[string]interface{}, n ...string) (interface{}, boo
 func GetJsonObject(o map[string]interface{}, n ...string) (map[string]interface{}, bool) {
 	v, e := GetJsonObjectValue(o, n...)
 	if e {
-		return v.(map[string]interface{}), true
+		if a, ok := v.(map[string]interface{}); ok {
+			return a, true
+		}
 	}
 	return nil, false
 }

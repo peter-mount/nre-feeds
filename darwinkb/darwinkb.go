@@ -20,15 +20,6 @@ func (r *DarwinKB) Name() string {
 	return "DarwinKB"
 }
 
-var (
-	buckets = []string{
-		"companies",
-		"incidents",
-		"serviceIndicators",
-		"stations",
-		"ticketTypes"}
-)
-
 func (a *DarwinKB) Init(k *kernel.Kernel) error {
 
 	service, err := k.AddService(&bin.Config{})
@@ -37,9 +28,16 @@ func (a *DarwinKB) Init(k *kernel.Kernel) error {
 	}
 	a.config = (service).(*bin.Config)
 
-	// see PostInit but use a dummy filename here, one db per bucket
+	// We use a separate DB for each bucket for mainenance reasons.
+	// see PostInit but use a dummy filename here
 	a.db = make(map[string]*bolt.BoltService)
-	for _, bucket := range buckets {
+	for _, bucket := range []string{
+		incidentsBucket,
+		serviceIndicatorsBucket,
+		stationsBucket,
+		ticketTypesBucket,
+		tocsBucket,
+	} {
 		service, err = k.AddService(&bolt.BoltService{FileName: bucket})
 		if err != nil {
 			return err
@@ -57,27 +55,29 @@ func (a *DarwinKB) Init(k *kernel.Kernel) error {
 }
 
 func (a *DarwinKB) PostInit() error {
-	if a.config.KB.DataDir == "" {
-		a.config.KB.DataDir = "/database/"
+	if a.config.Database.KB == "" {
+		a.config.Database.KB = "/database/"
 	}
-	err := os.MkdirAll(a.config.KB.DataDir+"static/", 0x755)
+
+	err := os.MkdirAll(a.config.Database.KB+"static/", 0x755)
 	if err != nil {
 		return err
 	}
 
-	// This will work as the db isn't stated yet
+	// Here we set the db filename for each bucket. This will work as the db isn't stated yet
 	for k, v := range a.db {
-		v.FileName = a.config.KB.DataDir + "dwkb_" + k + ".db"
+		v.FileName = a.config.Database.KB + "dwkb_" + k + ".db"
 	}
+
 	return nil
 }
 
 func (a *DarwinKB) Start() error {
 
 	// Ensure the buckets exist in each db
-	for k, db := range a.db {
+	for bucket, db := range a.db {
 		err := db.Update(func(tx *bolt.Tx) error {
-			_, err := tx.CreateBucketIfNotExists(k)
+			_, err := tx.CreateBucketIfNotExists(bucket)
 			return err
 		})
 		if err != nil {
@@ -85,23 +85,18 @@ func (a *DarwinKB) Start() error {
 		}
 	}
 
-	// Check for updates during the morning & on startup
-	a.cron.AddFunc("0 30 4-9 * * *", a.refreshStations)
-	a.refreshStations()
-
-	// Incidents are regular intervals but not during the early hours
-	a.cron.AddFunc("0 0/15 0-1,5-23 * * *", a.refreshIncidents)
-	a.refreshIncidents()
-
-	// Refresh companies during the morning
-	a.cron.AddFunc("0 35 4-9 * * *", a.refreshCompanies)
-	a.refreshCompanies()
-
-	a.cron.AddFunc("0 0/10 0-1,4-23 * * *", a.refreshServiceIndicators)
-	a.refreshServiceIndicators()
-
-	a.cron.AddFunc("0 40 4-9 * * *", a.refreshTicketTypes)
-	a.refreshTicketTypes()
+	// Now add the cron jobs for each feed.
+	a.addJob(stationsSchedule, a.refreshStations)
+	a.addJob(incidentsSchedule, a.refreshIncidents)
+	a.addJob(tocsSchedule, a.refreshCompanies)
+	a.addJob(serviceIndicatorsSchedule, a.refreshServiceIndicators)
+	a.addJob(ticketTypesSchedule, a.refreshTicketTypes)
 
 	return nil
+}
+
+// addJob adds the job to cron and then runs it so we always call the feed on startup
+func (a *DarwinKB) addJob(schedule string, f func()) {
+	_, _ = a.cron.AddFunc(schedule, f)
+	f()
 }

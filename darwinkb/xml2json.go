@@ -11,7 +11,7 @@ func (r *DarwinKB) xml2json(xmlFile, jsonFile string) (*bytes.Buffer, error) {
 
 	log.Println("Converting", xmlFile, "to json")
 
-	dir := r.config.KB.DataDir + "static/"
+	dir := r.config.Database.KB + "static/"
 
 	in, err := os.Open(dir + xmlFile)
 	if err != nil {
@@ -35,7 +35,11 @@ func (r *DarwinKB) xml2json(xmlFile, jsonFile string) (*bytes.Buffer, error) {
 		}
 		defer out.Close()
 
-		out.WriteString(json.String())
+		_, err = out.WriteString(json.String())
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
 	}
 
 	log.Println("Done")

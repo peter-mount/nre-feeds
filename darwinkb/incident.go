@@ -33,7 +33,7 @@ func (r *DarwinKB) GetIncidentsToc(toc string) ([]byte, error) {
 
 func (r *DarwinKB) GetIncident(id string) ([]byte, error) {
 	var data []byte
-	err := r.View("incidents", func(bucket *bolt.Bucket) error {
+	err := r.View(incidentsBucket, func(bucket *bolt.Bucket) error {
 		data = bucket.Get(id)
 		return nil
 	})
@@ -49,14 +49,14 @@ func (r *DarwinKB) refreshIncidents() {
 
 func (r *DarwinKB) refreshIncidentsImpl() error {
 
-	updateRequired, err := r.refreshFile(incidentXml, "https://datafeeds.nationalrail.co.uk/api/staticfeeds/5.0/incidents", 9*time.Minute)
+	updateRequired, err := r.refreshFile(incidentXml, incidentsUrl, incidentsMaxAge)
 	if err != nil {
 		return err
 	}
 
 	// If no update check to see if the bucket is empty forcing an update
 	if !updateRequired {
-		updateRequired, err = r.bucketEmpty("incidents")
+		updateRequired, err = r.bucketEmpty(incidentsBucket)
 		if err != nil {
 			return err
 		}
@@ -69,19 +69,26 @@ func (r *DarwinKB) refreshIncidentsImpl() error {
 
 	b, err := r.xml2json(incidentXml, incidentJson)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 	log.Println("Parsing JSON")
 
 	root, err := unmarshalBytes(b)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 
-	incidents, _ := GetJsonArray(root, "Incidents", "PtIncident")
-	log.Println("Found", len(incidents), "incidents")
+	// Time to mark when we want to exclude expired incidents
+	now := time.Now()
 
-	err = r.Update("incidents", func(bucket *bolt.Bucket) error {
+	count := 0
+
+	incidents, _ := GetJsonArray(root, "Incidents", "PtIncident")
+	log.Println("Found", len(incidents), incidentsBucket)
+
+	err = r.Update(incidentsBucket, func(bucket *bolt.Bucket) error {
 		err := bucketRemoveAll(bucket)
 		if err != nil {
 			return err
@@ -96,38 +103,70 @@ func (r *DarwinKB) refreshIncidentsImpl() error {
 		for _, incident := range incidents {
 			o := incident.(map[string]interface{})
 
-			indexEntry := &IncidentEntry{
-				Id:      o["IncidentNumber"].(string),
-				Summary: o["Summary"].(string),
+			// See if the incident if valid:
+			// "ClearedIncident" is not "true", e.g. "false" or absent
+			// "ValidityPeriod"."EndTime" is set and not in the past
+			valid := true
+			if clearedIncident, exists := GetJsonObjectValue(o, "ClearedIncident"); exists {
+				if s, ok := clearedIncident.(string); ok {
+					if s == "true" {
+						valid = false
+					}
+				}
 			}
-			index = append(index, indexEntry)
-
-			operators, e := GetJsonArray(o, "Affects", "Operators", "AffectedOperator")
-			if e {
-				for _, ao := range operators {
-					if aoo, ok := ao.(map[string]interface{}); ok {
-						toc, e := GetJsonObjectValue(aoo, "OperatorRef")
-						if e {
-							if s, ok := toc.(string); ok {
-								tocIdx, exists := tocIndex[s]
-								if !exists {
-									tocIdx = []*IncidentEntry{}
-								}
-								tocIndex[s] = append(tocIdx, indexEntry)
-							}
+			if valid {
+				endTime, exists := GetJsonObjectValue(o, "ValidityPeriod", "EndTime")
+				if exists {
+					if s, ok := endTime.(string); ok {
+						t, err := time.Parse(time.RFC3339, s)
+						if err == nil && !t.IsZero() {
+							valid = t.After(now)
+						} else {
+							log.Println(s, err)
 						}
 					}
 				}
 			}
 
-			// Force entries which can be arrays but not when just 1 entry into arrays
-			ForceJsonArray(o, "Affects", "Operators", "AffectedOperator")
-			ForceJsonArray(o, "Affects", "InfoLinks", "InfoLink")
+			// Valid so import it
+			if valid {
 
-			// The individual entry
-			err = bucket.PutJSON(indexEntry.Id, incident)
-			if err != nil {
-				return err
+				// Index entry so we work against toc
+				indexEntry := &IncidentEntry{
+					Id:      o["IncidentNumber"].(string),
+					Summary: o["Summary"].(string),
+				}
+				index = append(index, indexEntry)
+
+				operators, e := GetJsonArray(o, "Affects", "Operators", "AffectedOperator")
+				if e {
+					for _, ao := range operators {
+						if aoo, ok := ao.(map[string]interface{}); ok {
+							toc, e := GetJsonObjectValue(aoo, "OperatorRef")
+							if e {
+								if s, ok := toc.(string); ok {
+									tocIdx, exists := tocIndex[s]
+									if !exists {
+										tocIdx = []*IncidentEntry{}
+									}
+									tocIndex[s] = append(tocIdx, indexEntry)
+								}
+							}
+						}
+					}
+				}
+
+				// Force entries which can be arrays but not when just 1 entry into arrays
+				ForceJsonArray(o, "Affects", "Operators", "AffectedOperator")
+				ForceJsonArray(o, "Affects", "InfoLinks", "InfoLink")
+
+				// The individual entry
+				err = bucket.PutJSON(indexEntry.Id, incident)
+				if err != nil {
+					return err
+				}
+
+				count++
 			}
 		}
 
@@ -152,6 +191,6 @@ func (r *DarwinKB) refreshIncidentsImpl() error {
 		return err
 	}
 
-	log.Printf("Updated %d incidents", len(incidents))
+	log.Printf("Updated %d incidents", count)
 	return nil
 }

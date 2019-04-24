@@ -14,9 +14,9 @@ import (
 )
 
 type KBToken struct {
-	Username  string            `json:"username"`
-	Roles     map[string]string `json:"roles"`
-	Token     string            `json:"token"`
+	Username  string          `json:"username"`
+	Roles     map[string]bool `json:"roles"`
+	Token     string          `json:"token"`
 	tokenDate time.Time
 }
 
@@ -25,12 +25,12 @@ func (k *DarwinKB) setToken(mainReq *http.Request) error {
 
 	// Tokens last for an hour so if it's older than 45 minutes we'll request a new one
 	now := time.Now().UTC()
-	refresh := k.token.tokenDate.Add(45 * time.Minute)
+	refresh := k.token.tokenDate.Add(authenticateMaxAge)
 	if now.After(refresh) {
 		authString := "username=" + k.config.KB.Username + "&password=" + k.config.KB.Password
 		payload := strings.NewReader(authString)
 
-		req, err := http.NewRequest("POST", "https://datafeeds.nationalrail.co.uk/authenticate", payload)
+		req, err := http.NewRequest("POST", authenticateUrl, payload)
 		if err != nil {
 			log.Println("DarwinKB: ", err)
 			return err
@@ -53,7 +53,13 @@ func (k *DarwinKB) setToken(mainReq *http.Request) error {
 			return err
 		}
 
-		json.Unmarshal(body, &k.token)
+		log.Println(string(body))
+
+		err = json.Unmarshal(body, &k.token)
+		if err != nil {
+			log.Println("DarwinKB: ", err)
+			return err
+		}
 		log.Println("DarwinKB: Token issued")
 
 		k.token.tokenDate = now
@@ -67,7 +73,7 @@ func (k *DarwinKB) setToken(mainReq *http.Request) error {
 }
 
 func (k *DarwinKB) refreshFile(filename, url string, maxAge time.Duration) (bool, error) {
-	fname := k.config.KB.DataDir + "static/" + filename
+	fname := k.config.Database.KB + "static/" + filename
 
 	finfo, err := os.Stat(fname)
 	if err != nil {

@@ -3,7 +3,6 @@ package darwinkb
 import (
 	"github.com/peter-mount/golib/kernel/bolt"
 	"log"
-	"time"
 )
 
 const (
@@ -13,7 +12,7 @@ const (
 
 func (r *DarwinKB) GetStation(crs string) ([]byte, error) {
 	var data []byte
-	err := r.View("stations", func(bucket *bolt.Bucket) error {
+	err := r.View(stationsBucket, func(bucket *bolt.Bucket) error {
 		data = bucket.Get(crs)
 		return nil
 	})
@@ -29,14 +28,14 @@ func (r *DarwinKB) refreshStations() {
 
 func (r *DarwinKB) refreshStationsImpl() error {
 
-	updateRequired, err := r.refreshFile(stationXml, "https://datafeeds.nationalrail.co.uk/api/staticfeeds/4.0/stations", 2*time.Hour)
+	updateRequired, err := r.refreshFile(stationXml, stationsUrl, stationsMaxAge)
 	if err != nil {
 		return err
 	}
 
 	// If no update check to see if the bucket is empty forcing an update
 	if !updateRequired {
-		updateRequired, err = r.bucketEmpty("stations")
+		updateRequired, err = r.bucketEmpty(stationsBucket)
 		if err != nil {
 			return err
 		}
@@ -62,7 +61,7 @@ func (r *DarwinKB) refreshStationsImpl() error {
 	stations, _ := GetJsonArray(root, "StationList", "Station")
 	log.Printf("Found %d stations", len(stations))
 
-	err = r.Update("stations", func(bucket *bolt.Bucket) error {
+	err = r.Update(stationsBucket, func(bucket *bolt.Bucket) error {
 		err := bucketRemoveAll(bucket)
 		if err != nil {
 			return err

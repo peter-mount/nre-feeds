@@ -25,6 +25,7 @@ type Config struct {
 		DarwinD3  string `yaml:"darwind3"`
 		Reference string `yaml:"reference"`
 		Timetable string `yaml:"timetable"`
+		Ldb       string `yaml:"ldb"`
 	} `yaml:"services"`
 
 	Database struct {
@@ -37,6 +38,8 @@ type Config struct {
 		PushPort string `yaml:"pushPort"`
 		// Live Departure Boards
 		LDB string `yaml:"ldb"`
+		// Knowledge Base - this is a directory name not an individual file
+		KB string `yaml:"knowledgebase"`
 	} `yaml:"database"`
 
 	// S3 bucket used by the V16 feed
@@ -48,7 +51,6 @@ type Config struct {
 	KB struct {
 		Username string `yaml:"username"`
 		Password string `yaml:"password"`
-		DataDir  string `yaml:"datadir"`
 		// Darwin V16 Incidents feed
 		Incidents QueueDef `yaml:"incidents"`
 	}

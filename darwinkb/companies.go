@@ -5,7 +5,6 @@ import (
 	"github.com/peter-mount/sortfold"
 	"log"
 	"sort"
-	"time"
 )
 
 const (
@@ -27,7 +26,7 @@ func (r *DarwinKB) GetCompanies() ([]byte, error) {
 
 func (r *DarwinKB) GetCompany(id string) ([]byte, error) {
 	var data []byte
-	err := r.View("companies", func(bucket *bolt.Bucket) error {
+	err := r.View(tocsBucket, func(bucket *bolt.Bucket) error {
 		data = bucket.Get(id)
 		return nil
 	})
@@ -43,14 +42,14 @@ func (r *DarwinKB) refreshCompanies() {
 
 func (r *DarwinKB) refreshCompaniesImpl() error {
 
-	updateRequired, err := r.refreshFile(companiesXml, "https://datafeeds.nationalrail.co.uk/api/staticfeeds/4.0/tocs", time.Hour)
+	updateRequired, err := r.refreshFile(companiesXml, tocsUrl, tocsMaxAge)
 	if err != nil {
 		return err
 	}
 
 	// If no update check to see if the bucket is empty forcing an update
 	if !updateRequired {
-		updateRequired, err = r.bucketEmpty("companies")
+		updateRequired, err = r.bucketEmpty(tocsBucket)
 		if err != nil {
 			return err
 		}
@@ -76,9 +75,9 @@ func (r *DarwinKB) refreshCompaniesImpl() error {
 	var index []*CompanyEntry
 
 	companies, _ := GetJsonArray(root, "TrainOperatingCompanyList", "TrainOperatingCompany")
-	log.Println("Found", len(companies), "companies")
+	log.Println("Found", len(companies), tocsBucket)
 
-	err = r.Update("companies", func(bucket *bolt.Bucket) error {
+	err = r.Update(tocsBucket, func(bucket *bolt.Bucket) error {
 		err := bucketRemoveAll(bucket)
 		if err != nil {
 			return err
