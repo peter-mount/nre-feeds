@@ -34,15 +34,27 @@ func (fs *FeedStatus) loadSnapshot(ts time.Time) error {
 	// declare err here & don't use := inside the ftpClient call else the new entries slice won't be exposed to us!
 	var err error
 
+	// Get the latest TsTime minus 20 minutes (if set)
+	// We do this to reduce the amount we need to download, i.e. without this we could end up
+	// downloading up to 3 hours of data which isn't needed if we are in sync up to 20 minutes ago
+	var latestTsTime time.Time
+	err = fs.d3.GetMeta("ts", &latestTsTime)
+	if err != nil {
+		return err
+	}
+	if !latestTsTime.IsZero() {
+		latestTsTime = latestTsTime.Add(-20 * time.Minute)
+	}
+
 	err = fs.d3.ftpClient(func(con *ftp.ServerConn) error {
 		// latest full snapshot first
-		fs.entries, err = fs.resolveFiles("snapshot", con, fs.entries)
+		fs.entries, err = fs.resolveFiles(latestTsTime, "snapshot", con, fs.entries)
 		if err != nil {
 			return err
 		}
 
 		// The pushport log files next
-		fs.entries, err = fs.resolveFiles("pushport", con, fs.entries)
+		fs.entries, err = fs.resolveFiles(latestTsTime, "pushport", con, fs.entries)
 		if err != nil {
 			return err
 		}
@@ -87,12 +99,17 @@ func (fs *FeedStatus) cleanup() {
 	fs.d3.SetStatus("Normal", "green")
 }
 
-func (fs *FeedStatus) resolveFiles(dirname string, con *ftp.ServerConn, origFiles []logEntry) ([]logEntry, error) {
+func (fs *FeedStatus) resolveFiles(latestTsTime time.Time, dirname string, con *ftp.ServerConn, origFiles []logEntry) ([]logEntry, error) {
 	// The latest time we imported a file for this directory
 	var latestTime time.Time
 	err := fs.d3.GetMeta(dirname, &latestTime)
 	if err != nil {
 		return origFiles, err
+	}
+
+	// Use latestTsTime if newer
+	if !latestTsTime.IsZero() && latestTsTime.After(latestTime) {
+		latestTime = latestTsTime
 	}
 
 	if latestTime.IsZero() {
