@@ -7,13 +7,9 @@ import (
 
 // Process processes an inbound loading element containing train formation data.
 func (l *Loading) Process(tx *Transaction) error {
-	if tx.d3.cache.tx != nil {
-		return l.process(tx, tx.d3.cache.tx)
-	} else {
-		return tx.d3.Update(func(dbtx *bbolt.Tx) error {
-			return l.process(tx, dbtx)
-		})
-	}
+	return tx.d3.UpdateBulkAware(func(dbtx *bbolt.Tx) error {
+		return l.process(tx, dbtx)
+	})
 }
 
 func (l *Loading) process(tx *Transaction, dbtx *bbolt.Tx) error {

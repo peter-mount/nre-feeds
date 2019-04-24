@@ -13,11 +13,7 @@ type DeactivatedSchedule struct {
 
 // Processor interface
 func (p *DeactivatedSchedule) Process(tx *Transaction) error {
-	if tx.d3.cache.tx != nil {
-		return p.process(tx, tx.d3.cache.tx)
-	}
-
-	return tx.d3.Update(func(dbtx *bbolt.Tx) error {
+	return tx.d3.UpdateBulkAware(func(dbtx *bbolt.Tx) error {
 		return p.process(tx, dbtx)
 	})
 }

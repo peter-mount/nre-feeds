@@ -5,10 +5,7 @@ import "github.com/etcd-io/bbolt"
 // Process processes an inbound Train Status update, merging it with an existing
 // schedule in the database
 func (p *TS) Process(tx *Transaction) error {
-	if tx.d3.cache.tx != nil {
-		return p.process(tx, tx.d3.cache.tx)
-	}
-	return tx.d3.Update(func(dbtx *bbolt.Tx) error {
+	return tx.d3.UpdateBulkAware(func(dbtx *bbolt.Tx) error {
 		return p.process(tx, dbtx)
 	})
 }

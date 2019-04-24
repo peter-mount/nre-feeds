@@ -9,10 +9,7 @@ import (
 // Process processes an inbound set of TrainOrders and applies them to the
 // relevant schedules
 func (to *trainOrderWrapper) Process(tx *Transaction) error {
-	if tx.d3.cache.tx != nil {
-		return to.process(tx, tx.d3.cache.tx)
-	}
-	return tx.d3.Update(func(dbtx *bbolt.Tx) error {
+	return tx.d3.UpdateBulkAware(func(dbtx *bbolt.Tx) error {
 		return to.process(tx, dbtx)
 	})
 }

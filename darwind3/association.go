@@ -120,11 +120,11 @@ func (d3 *DarwinD3) updateAssociations(tx *bbolt.Tx, sched *Schedule) {
 					if a.Main.RID == sched.RID && (a.Category == "VV" || np) {
 						a.Main.Location = l
 						a.Main.LocInd = idx
-						d3.updateAssociation(a, &a.Assoc, np)
+						d3.updateAssociation(tx, a, &a.Assoc, np)
 					} else if a.Assoc.RID == sched.RID && (a.Category == "JJ" || np) {
 						a.Assoc.Location = l
 						a.Assoc.LocInd = idx
-						d3.updateAssociation(a, &a.Main, np)
+						d3.updateAssociation(tx, a, &a.Main, np)
 					}
 				}
 			}
@@ -132,14 +132,14 @@ func (d3 *DarwinD3) updateAssociations(tx *bbolt.Tx, sched *Schedule) {
 	}
 }
 
-func (d3 *DarwinD3) updateAssociation(a *Association, as *AssocService, np bool) {
+func (d3 *DarwinD3) updateAssociation(tx *bbolt.Tx, a *Association, as *AssocService, np bool) {
 
 	// np=true then do not resolve in the get else we could go into an infinite loop
 	var s *Schedule
 	if np {
 		s = d3.GetScheduleNoResolve(as.RID)
 	} else {
-		s = d3.GetSchedule(as.RID)
+		s = GetSchedule(tx, as.RID)
 	}
 
 	if s != nil {

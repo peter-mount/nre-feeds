@@ -111,26 +111,27 @@ func (r *DarwinD3) Update(f func(*bolt.Tx) error) error {
 	return r.cache.db.Update(f)
 }
 
-func (r *DarwinD3) BulkUpdate(f func(*bolt.Tx) error) error {
-	wrapper := func(tx *bolt.Tx) error {
-		oldTx := r.cache.tx
-		r.cache.tx = tx
+// Internal call used by the main rabbit thread only
+func (r *DarwinD3) UpdateBulkAware(f func(*bolt.Tx) error) error {
+	if r.cache.tx != nil {
+		return f(r.cache.tx)
+	}
+	return r.cache.db.Update(f)
+}
 
+func (r *DarwinD3) BulkUpdate(f func(*bolt.Tx) error) error {
+	return r.Update(func(tx *bolt.Tx) error {
+		r.cache.tx = tx
 		oldTT := r.Timetable
 		r.Timetable = ""
 
 		defer func() {
 			r.Timetable = oldTT
-			r.cache.tx = oldTx
+			r.cache.tx = nil
 		}()
 
 		return f(tx)
-	}
-
-	if r.cache.tx != nil {
-		return wrapper(r.cache.tx)
-	}
-	return r.Update(wrapper)
+	})
 }
 
 // Retrieve a schedule by it's rid
@@ -177,21 +178,6 @@ func GetSchedule(tx *bolt.Tx, rid string) *Schedule {
 	return sched
 }
 
-// Store a schedule by it's rid
-func (d *DarwinD3) PutSchedule(sched *Schedule) bool {
-	ret := false
-
-	if d.cache.tx == nil {
-		_ = d.Update(func(tx *bolt.Tx) error {
-			ret = PutSchedule(tx, sched)
-			return nil
-		})
-	} else {
-		ret = PutSchedule(d.cache.tx, sched)
-	}
-	return ret
-}
-
 func PutSchedule(tx *bolt.Tx, sched *Schedule) bool {
 	key := []byte(sched.RID)
 
@@ -217,14 +203,6 @@ func PutSchedule(tx *bolt.Tx, sched *Schedule) bool {
 	}
 
 	return true
-}
-
-// Delete a schedule
-func (d *DarwinD3) DeleteSchedule(rid string) {
-	_ = d.Update(func(tx *bolt.Tx) error {
-		DeleteSchedule(tx, []byte(rid))
-		return nil
-	})
 }
 
 func DeleteSchedule(tx *bolt.Tx, rid []byte) {

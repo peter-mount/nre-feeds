@@ -30,14 +30,10 @@ func uint64key(id int64) []byte {
 }
 
 func (sm *StationMessages) AddMotd(id int64, text string) {
-	if sm.d3.cache.tx != nil {
-		sm.addMotd(sm.d3.cache.tx, id, text)
-	} else {
-		_ = sm.d3.Update(func(tx *bbolt.Tx) error {
-			sm.addMotd(tx, id, text)
-			return nil
-		})
-	}
+	_ = sm.d3.UpdateBulkAware(func(tx *bbolt.Tx) error {
+		sm.addMotd(tx, id, text)
+		return nil
+	})
 }
 
 func (sm *StationMessages) addMotd(tx *bbolt.Tx, id int64, text string) {
@@ -148,17 +144,6 @@ func (sm *StationMessages) get(tx *bbolt.Tx, id int64) *StationMessage {
 	return nil
 }
 
-// Put stores a StationMessage or deletes it if it has no applicable stations
-func (sm *StationMessages) Put(s *StationMessage) error {
-	// Check for the snapshot transaction being open. If so then use that
-	if sm.d3.cache.tx != nil {
-		return sm.put(sm.d3.cache.tx, s)
-	}
-
-	return sm.d3.Update(func(tx *bbolt.Tx) error {
-		return sm.put(tx, s)
-	})
-}
 func (sm *StationMessages) put(tx *bbolt.Tx, s *StationMessage) error {
 	bucket := tx.Bucket([]byte(messageBucket))
 

@@ -38,10 +38,7 @@ func AlarmFromBytes(b []byte) *Alarm {
 
 func (d *DarwinD3) SetAlarm(a *Alarm) error {
 	log.Println("Set alarm", a)
-	if d.cache.tx != nil {
-		return d.setAlarm(d.cache.tx, a)
-	}
-	return d.Update(func(tx *bbolt.Tx) error {
+	return d.UpdateBulkAware(func(tx *bbolt.Tx) error {
 		return d.setAlarm(tx, a)
 	})
 }
@@ -85,10 +82,7 @@ func (d *DarwinD3) GetAlarms() []*Alarm {
 }
 
 func (d *DarwinD3) DeleteAlarm(id string) error {
-	if d.cache.tx != nil {
-		return d.deleteAlarm(d.cache.tx, id)
-	}
-	return d.Update(func(tx *bbolt.Tx) error {
+	return d.UpdateBulkAware(func(tx *bbolt.Tx) error {
 		return d.deleteAlarm(tx, id)
 	})
 }
