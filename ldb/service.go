@@ -18,6 +18,8 @@ type Service struct {
 	Origin darwind3.Location `json:"origin"`
 	// Destination Location of this service
 	Dest darwind3.Location `json:"dest"`
+	// Where this train terminates
+	Terminates darwind3.Location `json:"terminates"`
 	// Service Start Date
 	SSD util.SSD `json:"ssd"`
 	// The trainId (headcode)
@@ -146,6 +148,9 @@ func (s *Service) Update(sched *darwind3.Schedule, idx int) bool {
 		if sched.Destination != nil {
 			s.Dest = *sched.Destination
 		}
+		if sched.TerminatedAt != nil {
+			s.Terminates = *sched.TerminatedAt
+		}
 
 		// Resolve the destination
 		if s.Location.FalseDestination != "" {
@@ -178,6 +183,7 @@ func (a *Service) Clone() *Service {
 		Destination:      a.Destination,
 		Origin:           a.Origin,
 		Dest:             a.Dest,
+		Terminates:       a.Terminates,
 		SSD:              a.SSD,
 		TrainId:          a.TrainId,
 		Toc:              a.Toc,

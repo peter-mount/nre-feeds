@@ -3,9 +3,9 @@
 # Module to build & run
 #MODULE=darwinref
 #MODULE=darwintimetable
-MODULE=darwind3
+#MODULE=darwind3
 #MODULE=ldb
-#MODULE=darwinkb
+MODULE=darwinkb
 
 # db directory
 DB=/home/peter/tmp/nre

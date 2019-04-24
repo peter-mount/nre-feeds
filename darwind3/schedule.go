@@ -41,6 +41,8 @@ type Schedule struct {
 	Origin *Location `json:"originLocation"`
 	// The destination of this service
 	Destination *Location `json:"destinationLocation"`
+	// The terminating station (can be before Destination)
+	TerminatedAt *Location `json:"terminatedAt"`
 	// Associations to this schedule
 	Associations []*Association `json:"association"`
 	// Usually this is the date we insert into the db but here we use the TS time
@@ -145,26 +147,23 @@ func (s *Schedule) UpdateTime() {
 		l.UpdateTime()
 
 		// Set origin or destination.
-		// Note: OR & DT override OPOR & OPDT
 		switch l.Type {
 		case "OR":
-			if s.Origin == nil || s.Origin.Type == "OPOR" {
-				s.Origin = l
-			}
+			s.Origin = l
 
 		case "OPOR":
-			if s.Origin == nil || s.Origin.Type != "OR" {
-				s.Origin = l
-			}
+			s.Origin = l
 
 		case "DT":
-			if s.Destination == nil || s.Destination.Type == "OPDT" {
-				s.Destination = l
+			s.Destination = l
+			if s.TerminatedAt == nil {
+				s.TerminatedAt = l
 			}
 
 		case "OPDT":
-			if s.Destination == nil || s.Destination.Type != "DT" {
-				s.Destination = l
+			s.Destination = l
+			if s.TerminatedAt == nil {
+				s.TerminatedAt = l
 			}
 		}
 	}
