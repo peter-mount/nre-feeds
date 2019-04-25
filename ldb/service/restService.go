@@ -25,7 +25,7 @@ type serviceResult struct {
 	// Cancellation or Late Reasons
 	Reasons *darwinref.ReasonMap `json:"reasons"`
 	// Map of Via text by RID
-	Via *darwinref.Via `json:"via"`
+	Via map[string]*darwinref.Via `json:"via"`
 	// The date of this request
 	Date time.Time `json:"date"`
 	// The URL of this departure board
@@ -41,105 +41,184 @@ func (d *LDBService) serviceHandler(r *rest.Rest) error {
 	d3Client := &d3client.DarwinD3Client{Url: d.ldb.Darwin}
 	refClient := &refclient.DarwinRefClient{Url: d.ldb.Reference}
 
-	if service, err := d3Client.GetSchedule(rid); err != nil {
+	service, err := d3Client.GetSchedule(rid)
+	if err != nil {
 		return err
-	} else if service == nil {
-		r.Status(404)
-	} else {
-
-		res := &serviceResult{
-			RID:     rid,
-			Service: service,
-			Tiplocs: darwinref.NewLocationMap(),
-			Tocs:    darwinref.NewTocMap(),
-			Reasons: darwinref.NewReasonMap(),
-			Date:    time.Now(),
-			Self:    r.Self("/service/" + rid),
-		}
-
-		// The origin & destination are the first & last locations in the schedule
-		if len(service.Locations) > 0 {
-			res.Origin = service.Locations[0]
-			res.Destination = service.Locations[len(service.Locations)-1]
-		}
-
-		// Set of tiplocs
-		tiplocs := make(map[string]interface{})
-		for _, l := range service.Locations {
-			tiplocs[l.Tiploc] = nil
-		}
-
-		// Toc running this service
-		refClient.AddToc(res.Tocs, service.Toc)
-
-		// Tiploc in a cancel or late reason
-		if service.CancelReason.Reason > 0 {
-			if reason, _ := refClient.GetCancelledReason(service.CancelReason.Reason); reason != nil {
-				res.Reasons.AddReason(reason)
-			}
-
-			if service.CancelReason.Tiploc != "" {
-				tiplocs[service.CancelReason.Tiploc] = nil
-			}
-		}
-
-		if service.LateReason.Reason > 0 {
-			if reason, _ := refClient.GetLateReason(service.LateReason.Reason); reason != nil {
-				res.Reasons.AddReason(reason)
-			}
-
-			if service.LateReason.Tiploc != "" {
-				tiplocs[service.LateReason.Tiploc] = nil
-			}
-		}
-
-		// Tiplocs in associations
-		for _, a := range service.Associations {
-			if a.Tiploc != "" {
-				tiplocs[a.Tiploc] = nil
-			}
-		}
-
-		// Origin/Destination - should already be there but just incase
-		if service.Origin != nil && service.Origin.Tiploc != "" {
-			tiplocs[service.Origin.Tiploc] = nil
-		}
-		if service.Destination != nil && service.Destination.Tiploc != "" {
-			tiplocs[service.Destination.Tiploc] = nil
-		}
-
-		// Now resolve the tiplocs en-masse and resolve the toc's at the same time
-		if locs, _ := refClient.GetTiplocsMapKeys(tiplocs); locs != nil {
-			res.Tiplocs.AddAll(locs)
-
-			for _, l := range locs {
-				refClient.AddToc(res.Tocs, l.Toc)
-			}
-		}
-
-		// Resolve the via text. For the service this is for the origin only
-		if len(service.Locations) > 2 {
-			// We need the crs of the origin from the resolved tiploc map
-			if loc, exists := res.Tiplocs.Get(service.Locations[0].Tiploc); exists && loc.Crs != "" {
-				viaRequest := &darwinref.ViaResolveRequest{
-					Crs:         loc.Crs,
-					Destination: service.Locations[len(service.Locations)-1].Tiploc,
-				}
-				for _, loc := range service.Locations[1:] {
-					viaRequest.Tiplocs = append(viaRequest.Tiplocs, loc.Tiploc)
-				}
-				vias := make(map[string]*darwinref.ViaResolveRequest)
-				vias[rid] = viaRequest
-				if resp, _ := refClient.GetVias(vias); vias != nil {
-					res.Via = resp[rid]
-				}
-			}
-		}
-
-		r.Status(200).
-			JSON().
-			Value(res)
 	}
+
+	if service == nil {
+		r.Status(404)
+		return nil
+	}
+
+	res := &serviceResult{
+		RID:     rid,
+		Service: service,
+		Tiplocs: darwinref.NewLocationMap(),
+		Tocs:    darwinref.NewTocMap(),
+		Reasons: darwinref.NewReasonMap(),
+		Date:    time.Now(),
+		Self:    r.Self("/service/" + rid),
+	}
+
+	// The origin & destination are the first & last locations in the schedule
+	if len(service.Locations) > 0 {
+		res.Origin = service.Locations[0]
+		res.Destination = service.Locations[len(service.Locations)-1]
+	}
+
+	// Set of tiplocs
+	tiplocs := make(map[string]interface{})
+	for _, l := range service.Locations {
+		tiplocs[l.Tiploc] = nil
+	}
+
+	// Toc running this service
+	refClient.AddToc(res.Tocs, service.Toc)
+
+	// Tiploc in a cancel or late reason
+	if service.CancelReason.Reason > 0 {
+		if reason, _ := refClient.GetCancelledReason(service.CancelReason.Reason); reason != nil {
+			res.Reasons.AddReason(reason)
+		}
+
+		if service.CancelReason.Tiploc != "" {
+			tiplocs[service.CancelReason.Tiploc] = nil
+		}
+	}
+
+	if service.LateReason.Reason > 0 {
+		if reason, _ := refClient.GetLateReason(service.LateReason.Reason); reason != nil {
+			res.Reasons.AddReason(reason)
+		}
+
+		if service.LateReason.Tiploc != "" {
+			tiplocs[service.LateReason.Tiploc] = nil
+		}
+	}
+
+	// Origin/Destination - should already be there but just incase
+	if service.Origin != nil && service.Origin.Tiploc != "" {
+		tiplocs[service.Origin.Tiploc] = nil
+	}
+	if service.Destination != nil && service.Destination.Tiploc != "" {
+		tiplocs[service.Destination.Tiploc] = nil
+	}
+
+	// Resolve the via text. For the service this is for the origin only
+	vias := make(map[string]*darwinref.ViaResolveRequest)
+
+	if len(service.Locations) > 2 {
+		// We need the crs of the origin from the resolved tiploc map
+		loc, _ := refClient.GetTiploc(service.Origin.Tiploc)
+		if loc.Crs != "" {
+			viaRequest := &darwinref.ViaResolveRequest{
+				Crs:         loc.Crs,
+				Destination: service.Locations[len(service.Locations)-1].Tiploc,
+			}
+			for _, loc := range service.Locations[1:] {
+				viaRequest.Tiplocs = append(viaRequest.Tiplocs, loc.Tiploc)
+			}
+			vias[rid] = viaRequest
+		}
+	}
+
+	// The association tiplocs
+	for _, assoc := range service.Associations {
+		tiplocs[assoc.Tiploc] = nil
+		if assoc.IsJoin() || assoc.IsSplit() {
+			ar := assoc.Main.RID
+			ai := assoc.Main.LocInd
+			if ar == service.RID {
+				ar = assoc.Assoc.RID
+				ai = assoc.Assoc.LocInd
+			}
+			if ar != service.RID {
+				as := d.ldb.GetSchedule(ar)
+				if as != nil {
+					assoc.Schedule = as
+					refClient.AddToc(res.Tocs, as.Toc)
+
+					if as.Origin != nil {
+						tiplocs[as.Origin.Tiploc] = nil
+					}
+
+					if as.Destination != nil {
+						tiplocs[as.Destination.Tiploc] = nil
+					}
+
+					if ai < (len(as.Locations) - 1) {
+						loc, _ := refClient.GetTiploc(as.Origin.Tiploc)
+						if loc.Crs != "" {
+							viaRequest := &darwinref.ViaResolveRequest{
+								Crs:         loc.Crs,
+								Destination: as.Locations[len(as.Locations)-1].Tiploc,
+							}
+
+							for _, l := range as.Locations[ai:] {
+								tiplocs[l.Tiploc] = nil
+								viaRequest.Tiplocs = append(viaRequest.Tiplocs, l.Tiploc)
+							}
+
+							vias[ar] = viaRequest
+						}
+					}
+
+					// Cancellation reason
+					if as.CancelReason.Reason > 0 {
+						if reason, _ := refClient.GetCancelledReason(as.CancelReason.Reason); reason != nil {
+							res.Reasons.AddReason(reason)
+						}
+
+						if as.CancelReason.Tiploc != "" {
+							tiplocs[as.CancelReason.Tiploc] = nil
+						}
+					}
+
+					// Late reason
+					if as.LateReason.Reason > 0 {
+						if reason, _ := refClient.GetLateReason(as.LateReason.Reason); reason != nil {
+							res.Reasons.AddReason(reason)
+						}
+
+						if as.LateReason.Tiploc != "" {
+							tiplocs[as.LateReason.Tiploc] = nil
+						}
+					}
+
+				}
+			}
+		}
+	}
+
+	if len(vias) > 0 {
+		resolvedVias, _ := refClient.GetVias(vias)
+		if resolvedVias != nil {
+			res.Via = resolvedVias
+			for _, v := range res.Via {
+				tiplocs[v.Dest] = nil
+				if v.Loc1 != "" {
+					tiplocs[v.Loc1] = nil
+				}
+				if v.Loc2 != "" {
+					tiplocs[v.Loc2] = nil
+				}
+			}
+		}
+	}
+
+	// Now resolve the tiplocs en-masse and resolve the toc's at the same time
+	if locs, _ := refClient.GetTiplocsMapKeys(tiplocs); locs != nil {
+		res.Tiplocs.AddAll(locs)
+
+		for _, l := range locs {
+			refClient.AddToc(res.Tocs, l.Toc)
+		}
+	}
+
+	r.Status(200).
+		JSON().
+		Value(res)
 
 	return nil
 }
