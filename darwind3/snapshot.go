@@ -34,7 +34,7 @@ func (fs *FeedStatus) loadSnapshot(ts time.Time) error {
 	// declare err here & don't use := inside the ftpClient call else the new entries slice won't be exposed to us!
 	var err error
 
-	// Get the latest TsTime minus 20 minutes (if set)
+	// Get the latest TsTime minus 10 minutes (if set)
 	// We do this to reduce the amount we need to download, i.e. without this we could end up
 	// downloading up to 3 hours of data which isn't needed if we are in sync up to 20 minutes ago
 	var latestTsTime time.Time
@@ -43,7 +43,7 @@ func (fs *FeedStatus) loadSnapshot(ts time.Time) error {
 		return err
 	}
 	if !latestTsTime.IsZero() {
-		latestTsTime = latestTsTime.Add(-20 * time.Minute)
+		latestTsTime = latestTsTime.Add(-10 * time.Minute)
 	}
 
 	err = fs.d3.ftpClient(func(con *ftp.ServerConn) error {
