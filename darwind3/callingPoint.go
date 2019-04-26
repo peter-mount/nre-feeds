@@ -79,7 +79,7 @@ func (s *Schedule) GetCallingPoints(idx int) []CallingPoint {
 func (s *Schedule) GetLastReport() CallingPoint {
 	var cp *Location
 	for _, l := range s.Locations {
-		if l.Forecast.Arrived || l.Forecast.Departed {
+		if (l.Forecast.Arrived || l.Forecast.Departed) && !l.Cancelled {
 			cp = l
 		}
 	}

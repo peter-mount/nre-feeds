@@ -97,6 +97,7 @@ func (s *Station) removeService(tx *bbolt.Tx, rid string) bool {
 		c := bucket.Cursor()
 		for k, _ := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, _ = c.Next() {
 			_ = bucket.Delete(k)
+			updated = true
 		}
 
 	}
@@ -109,8 +110,6 @@ func (s *Station) getServices(tx *bbolt.Tx, from *util.WorkingTime, to *util.Wor
 
 	if s.Public {
 
-		// As a service can call at a station more than once, scan all and remove
-		// every instance of it.
 		prefix := []byte(s.Crs + ":")
 
 		bucket := tx.Bucket([]byte(serviceBucket))
@@ -122,6 +121,11 @@ func (s *Station) getServices(tx *bbolt.Tx, from *util.WorkingTime, to *util.Wor
 				if !service.Departed {
 					services = append(services, service)
 				}
+			}
+
+			// Limit returned size for large stations, e.g. LBG can hit over 100
+			if len(services) > 60 {
+				return services
 			}
 		}
 
