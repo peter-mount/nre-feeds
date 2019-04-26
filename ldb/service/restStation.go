@@ -113,55 +113,55 @@ func (d *LDBService) stationHandler(r *rest.Rest) error {
 						ai = assoc.Assoc.LocInd
 					}
 
-					// TODO resolve schedule if a split, join or if NP only if previous service & we are not yet running
+					// Resolve the schedule if a split, join or if NP only if previous service & we are not yet running
 					//if ar != s.RID {
-					as := d.ldb.GetSchedule(ar)
-					if as != nil {
-						assoc.Schedule = as
-						as.AddTiplocs(b.tiplocs)
+					if assoc.Category != "NP" || (s.LastReport.Tiploc == "" && assoc.Assoc.RID == s.RID) {
+						as := d.ldb.GetSchedule(ar)
+						if as != nil {
+							assoc.Schedule = as
+							as.AddTiplocs(b.tiplocs)
 
-						as.LastReport = as.GetLastReport()
+							as.LastReport = as.GetLastReport()
 
-						refClient.AddToc(res.Tocs, as.Toc)
+							refClient.AddToc(res.Tocs, as.Toc)
 
-						if ai < (len(as.Locations) - 1) {
-							viaRequest := &darwinref.ViaResolveRequest{
-								Crs:         station.Crs,
-								Destination: as.Locations[len(as.Locations)-1].Tiploc,
+							if ai < (len(as.Locations) - 1) {
+								viaRequest := &darwinref.ViaResolveRequest{
+									Crs:         station.Crs,
+									Destination: as.Locations[len(as.Locations)-1].Tiploc,
+								}
+								b.vias[ar] = viaRequest
+
+								for _, l := range as.Locations[ai:] {
+									b.tiplocs[l.Tiploc] = nil
+									viaRequest.Tiplocs = append(viaRequest.Tiplocs, l.Tiploc)
+								}
 							}
-							b.vias[ar] = viaRequest
 
-							for _, l := range as.Locations[ai:] {
-								b.tiplocs[l.Tiploc] = nil
-								viaRequest.Tiplocs = append(viaRequest.Tiplocs, l.Tiploc)
+							// Cancellation reason
+							if as.CancelReason.Reason > 0 {
+								if reason, _ := refClient.GetCancelledReason(as.CancelReason.Reason); reason != nil {
+									res.Reasons.AddReason(reason)
+								}
+
+								if as.CancelReason.Tiploc != "" {
+									b.tiplocs[as.CancelReason.Tiploc] = nil
+								}
 							}
+
+							// Late reason
+							if as.LateReason.Reason > 0 {
+								if reason, _ := refClient.GetLateReason(as.LateReason.Reason); reason != nil {
+									res.Reasons.AddReason(reason)
+								}
+
+								if as.LateReason.Tiploc != "" {
+									b.tiplocs[as.LateReason.Tiploc] = nil
+								}
+							}
+
 						}
-
-						// Cancellation reason
-						if as.CancelReason.Reason > 0 {
-							if reason, _ := refClient.GetCancelledReason(as.CancelReason.Reason); reason != nil {
-								res.Reasons.AddReason(reason)
-							}
-
-							if as.CancelReason.Tiploc != "" {
-								b.tiplocs[as.CancelReason.Tiploc] = nil
-							}
-						}
-
-						// Late reason
-						if as.LateReason.Reason > 0 {
-							if reason, _ := refClient.GetLateReason(as.LateReason.Reason); reason != nil {
-								res.Reasons.AddReason(reason)
-							}
-
-							if as.LateReason.Tiploc != "" {
-								b.tiplocs[as.LateReason.Tiploc] = nil
-							}
-						}
-
 					}
-					//}
-					//}
 
 				}
 
