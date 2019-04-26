@@ -297,3 +297,12 @@ func (dest *Location) MergeFrom(src *Location) {
 	// Mark location as updated
 	dest.updated = true
 }
+
+func (l *Location) AddTiploc(m map[string]interface{}) {
+	if l != nil {
+		m[l.Tiploc] = nil
+		if l.FalseDestination != "" {
+			m[l.FalseDestination] = nil
+		}
+	}
+}

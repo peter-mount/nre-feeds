@@ -61,17 +61,30 @@ func (d *LDBService) serviceHandler(r *rest.Rest) error {
 		Self:    r.Self("/service/" + rid),
 	}
 
-	// The origin & destination are the first & last locations in the schedule
-	if len(service.Locations) > 0 {
-		res.Origin = service.Locations[0]
-		res.Destination = service.Locations[len(service.Locations)-1]
+	// resolve the origin & destination
+	if service.Origin != nil {
+		res.Origin = service.Origin
+	}
+	if service.Destination != nil {
+		res.Destination = service.Destination
+	}
+
+	if res.Origin == nil || res.Destination == nil {
+		// Just incase, if we don't have an origin/destination then use the first & last locations in the schedule
+		if len(service.Locations) > 0 {
+			if res.Origin == nil {
+				res.Origin = service.Locations[0]
+			}
+
+			if res.Destination == nil {
+				res.Destination = service.Locations[len(service.Locations)-1]
+			}
+		}
 	}
 
 	// Set of tiplocs
 	tiplocs := make(map[string]interface{})
-	for _, l := range service.Locations {
-		tiplocs[l.Tiploc] = nil
-	}
+	service.AddTiplocs(tiplocs)
 
 	// Toc running this service
 	refClient.AddToc(res.Tocs, service.Toc)
@@ -97,14 +110,6 @@ func (d *LDBService) serviceHandler(r *rest.Rest) error {
 		}
 	}
 
-	// Origin/Destination - should already be there but just incase
-	if service.Origin != nil && service.Origin.Tiploc != "" {
-		tiplocs[service.Origin.Tiploc] = nil
-	}
-	if service.Destination != nil && service.Destination.Tiploc != "" {
-		tiplocs[service.Destination.Tiploc] = nil
-	}
-
 	// Resolve the via text. For the service this is for the origin only
 	vias := make(map[string]*darwinref.ViaResolveRequest)
 
@@ -125,27 +130,7 @@ func (d *LDBService) serviceHandler(r *rest.Rest) error {
 
 	// The association tiplocs
 	for _, assoc := range service.Associations {
-		tiplocs[assoc.Tiploc] = nil
-
-		if assoc.Assoc.Destination != nil {
-			tiplocs[assoc.Assoc.Destination.Tiploc] = nil
-		}
-		if assoc.Assoc.Location != nil {
-			tiplocs[assoc.Assoc.Location.Tiploc] = nil
-		}
-		if assoc.Assoc.Origin != nil {
-			tiplocs[assoc.Assoc.Origin.Tiploc] = nil
-		}
-
-		if assoc.Main.Destination != nil {
-			tiplocs[assoc.Main.Destination.Tiploc] = nil
-		}
-		if assoc.Main.Location != nil {
-			tiplocs[assoc.Main.Location.Tiploc] = nil
-		}
-		if assoc.Main.Origin != nil {
-			tiplocs[assoc.Main.Origin.Tiploc] = nil
-		}
+		assoc.AddTiplocs(tiplocs)
 
 		if assoc.IsJoin() || assoc.IsSplit() {
 			ar := assoc.Main.RID
@@ -159,14 +144,6 @@ func (d *LDBService) serviceHandler(r *rest.Rest) error {
 				if as != nil {
 					assoc.Schedule = as
 					refClient.AddToc(res.Tocs, as.Toc)
-
-					if as.Origin != nil {
-						tiplocs[as.Origin.Tiploc] = nil
-					}
-
-					if as.Destination != nil {
-						tiplocs[as.Destination.Tiploc] = nil
-					}
 
 					if ai < (len(as.Locations) - 1) {
 						loc, _ := refClient.GetTiploc(as.Origin.Tiploc)

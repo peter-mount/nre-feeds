@@ -52,6 +52,15 @@ type Schedule struct {
 	Self string `json:"self,omitempty" xml:"self,attr,omitempty"`
 }
 
+func (service *Schedule) AddTiplocs(tiplocs map[string]interface{}) {
+	service.Origin.AddTiploc(tiplocs)
+	service.Destination.AddTiploc(tiplocs)
+
+	for _, l := range service.Locations {
+		l.AddTiploc(tiplocs)
+	}
+}
+
 func (a *Schedule) Clone() *Schedule {
 	var b *Schedule
 

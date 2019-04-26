@@ -269,3 +269,23 @@ func (associations *Associations) putAssociations(tx *bbolt.Tx) {
 	b, _ := associations.Bytes()
 	_ = tx.Bucket([]byte(AssociationBucket)).Put([]byte(associations.RID), b)
 }
+
+func (a Association) ForEachAssocService(f func(as AssocService) error) error {
+	err := f(a.Main)
+	if err != nil {
+		return err
+	}
+	return f(a.Assoc)
+}
+
+func (a Association) AddTiplocs(m map[string]interface{}) {
+	m[a.Tiploc] = nil
+	a.Main.AddTiplocs(m)
+	a.Assoc.AddTiplocs(m)
+}
+
+func (as AssocService) AddTiplocs(m map[string]interface{}) {
+	as.Destination.AddTiploc(m)
+	as.Location.AddTiploc(m)
+	as.Origin.AddTiploc(m)
+}
