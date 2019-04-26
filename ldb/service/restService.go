@@ -126,6 +126,27 @@ func (d *LDBService) serviceHandler(r *rest.Rest) error {
 	// The association tiplocs
 	for _, assoc := range service.Associations {
 		tiplocs[assoc.Tiploc] = nil
+
+		if assoc.Assoc.Destination != nil {
+			tiplocs[assoc.Assoc.Destination.Tiploc] = nil
+		}
+		if assoc.Assoc.Location != nil {
+			tiplocs[assoc.Assoc.Location.Tiploc] = nil
+		}
+		if assoc.Assoc.Origin != nil {
+			tiplocs[assoc.Assoc.Origin.Tiploc] = nil
+		}
+
+		if assoc.Main.Destination != nil {
+			tiplocs[assoc.Main.Destination.Tiploc] = nil
+		}
+		if assoc.Main.Location != nil {
+			tiplocs[assoc.Main.Location.Tiploc] = nil
+		}
+		if assoc.Main.Origin != nil {
+			tiplocs[assoc.Main.Origin.Tiploc] = nil
+		}
+
 		if assoc.IsJoin() || assoc.IsSplit() {
 			ar := assoc.Main.RID
 			ai := assoc.Main.LocInd
