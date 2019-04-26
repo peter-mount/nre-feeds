@@ -1,8 +1,6 @@
 package darwind3
 
 import (
-	//"bytes"
-	//"encoding/json"
 	"encoding/xml"
 	"github.com/peter-mount/nre-feeds/util"
 	"strconv"
@@ -60,8 +58,9 @@ type Location struct {
 		// If true then the train has arrived or passed this location
 		Arrived bool `json:"arrived,omitempty"`
 		// If true then the train has departed or passed this location
-		Departed bool `json:"departed,omitempty"`
-		Passed   bool `json:"passed,omitempty"`
+		Departed    bool `json:"departed,omitempty"`
+		Passed      bool `json:"passed,omitempty"`
+		Approaching bool `json:"approaching,omitempty"`
 		// Forecast data for the arrival at this location
 		Arrival util.TSTime `json:"arr,omitempty"`
 		// Forecast data for the departure at this location
@@ -229,9 +228,11 @@ func (l *Location) UpdateTime() {
 		l.Loading.Times.UpdateTime()
 	}
 
-	l.Forecast.Passed = l.Forecast.Pass.AT != nil && !l.Forecast.Pass.AT.IsZero()
-	l.Forecast.Departed = (l.Forecast.Departure.AT != nil && !l.Forecast.Departure.AT.IsZero()) || l.Forecast.Passed
-	l.Forecast.Arrived = (l.Forecast.Arrival.AT != nil && !l.Forecast.Arrival.AT.IsZero()) || l.Forecast.Passed
+	passed := l.Forecast.Pass.AT != nil && !l.Forecast.Pass.AT.IsZero()
+	l.Forecast.Passed = passed
+
+	l.Forecast.Departed = (l.Forecast.Departure.AT != nil && !l.Forecast.Departure.AT.IsZero()) || passed
+	l.Forecast.Arrived = (l.Forecast.Arrival.AT != nil && !l.Forecast.Arrival.AT.IsZero()) || passed
 
 	if l.Forecast.Departure.IsSet() {
 		l.Forecast.Time = *l.Forecast.Departure.Time()
@@ -268,6 +269,15 @@ func (l *Location) UpdateTime() {
 	} else {
 		l.Delay = 0
 	}
+
+	var apt util.WorkingTime
+	if l.Forecast.Arrival.ET != nil && l.Forecast.Arrival.ET.IsZero() {
+		apt = *l.Forecast.Arrival.ET
+	} else if l.Forecast.Pass.ET != nil && l.Forecast.Pass.ET.IsZero() {
+		apt = *l.Forecast.Pass.ET
+	}
+
+	l.Forecast.Approaching = apt.IsApproaching()
 }
 
 // Clone makes a clone of a Location

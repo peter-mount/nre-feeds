@@ -2,7 +2,6 @@ package darwind3
 
 import (
 	"github.com/peter-mount/nre-feeds/util"
-	"log"
 )
 
 // A calling point of a service after a station.
@@ -85,8 +84,6 @@ func (s *Schedule) GetCallingPoints(idx int) []CallingPoint {
 // GetLastReport returns the last report as a CallingPoint
 func (s *Schedule) GetLastReport() CallingPoint {
 
-	log.Println("Now")
-	log.Println("Now", util.Now())
 	var cp *Location
 	for _, l := range s.Locations {
 		l.UpdateTime()
