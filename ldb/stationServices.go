@@ -117,10 +117,7 @@ func (s *Station) getServices(tx *bbolt.Tx, from *util.WorkingTime, to *util.Wor
 		for k, v := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, v = c.Next() {
 			t := getServiceTime(k)
 			if t != nil && t.Between(from, to) {
-				service := ServiceEntryFromBytes(v)
-				if !service.Departed {
-					services = append(services, service)
-				}
+				services = getServices(v, services)
 			}
 
 			// Limit returned size for large stations, e.g. LBG can hit over 100
@@ -129,6 +126,30 @@ func (s *Station) getServices(tx *bbolt.Tx, from *util.WorkingTime, to *util.Wor
 			}
 		}
 
+		// No services then get the next few - needed for small stations with few services
+		if len(services) == 0 {
+			for k, v := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, v = c.Next() {
+				t := getServiceTime(k)
+				if t != nil && t.After(from) {
+					services = getServices(v, services)
+				}
+
+				// Limit to 10 but usually it's lower anyhow
+				if len(services) > 10 {
+					return services
+				}
+			}
+		}
+
+	}
+
+	return services
+}
+
+func getServices(v []byte, services []ServiceEntry) []ServiceEntry {
+	service := ServiceEntryFromBytes(v)
+	if !service.Departed {
+		return append(services, service)
 	}
 
 	return services
