@@ -2,18 +2,20 @@ package darwind3
 
 import (
 	"github.com/peter-mount/nre-feeds/util"
+	"log"
 )
 
 // A calling point of a service after a station.
 type CallingPoint struct {
 	// Tiploc of this location
-	Tiploc string `json:"tpl"`
-	// Time due at this location
-	Time util.WorkingTime `json:"time"`
-	// Delay in seconds
-	Delay int `json:"delay"`
-	// Delayed at this location
-	Delayed bool `json:"delayed"`
+	Tiploc      string           `json:"tpl"`
+	Time        util.WorkingTime `json:"time"`
+	Delay       int              `json:"delay"`
+	Delayed     bool             `json:"delayed,omitempty"`
+	Approaching bool             `json:"approaching,omitempty"`
+	At          bool             `json:"at,omitempty"`
+	Departed    bool             `json:"departed,omitempty"`
+	Passed      bool             `json:"passed,omitempty"`
 }
 
 // IsCallingPoint returns true if this location is a valid CallingPoint.
@@ -37,11 +39,16 @@ func (l *Location) IsCallingPoint() bool {
 }
 
 func (l *Location) AsCallingPoint() CallingPoint {
+	l.UpdateTime()
 	return CallingPoint{
-		Tiploc:  l.Tiploc,
-		Time:    l.Time,
-		Delay:   l.Delay,
-		Delayed: l.Forecast.Delayed,
+		Tiploc:      l.Tiploc,
+		Time:        l.Time,
+		Delay:       l.Delay,
+		Delayed:     l.Forecast.Delayed,
+		At:          !l.Forecast.Passed && l.Forecast.Arrived && !l.Forecast.Departed,
+		Departed:    !l.Forecast.Passed && l.Forecast.Departed,
+		Passed:      l.Forecast.Passed,
+		Approaching: l.Forecast.Time.IsApproaching(),
 	}
 }
 
@@ -77,9 +84,13 @@ func (s *Schedule) GetCallingPoints(idx int) []CallingPoint {
 
 // GetLastReport returns the last report as a CallingPoint
 func (s *Schedule) GetLastReport() CallingPoint {
+
+	log.Println("Now")
+	log.Println("Now", util.Now())
 	var cp *Location
 	for _, l := range s.Locations {
-		if (l.Forecast.Arrived || l.Forecast.Departed) && !l.Cancelled {
+		l.UpdateTime()
+		if (l.Forecast.Arrived || l.Forecast.Departed || l.Forecast.Time.IsApproaching()) && !l.Cancelled {
 			cp = l
 		}
 	}

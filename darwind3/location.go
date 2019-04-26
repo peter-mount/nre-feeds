@@ -61,6 +61,7 @@ type Location struct {
 		Arrived bool `json:"arrived,omitempty"`
 		// If true then the train has departed or passed this location
 		Departed bool `json:"departed,omitempty"`
+		Passed   bool `json:"passed,omitempty"`
 		// Forecast data for the arrival at this location
 		Arrival util.TSTime `json:"arr,omitempty"`
 		// Forecast data for the departure at this location
@@ -228,9 +229,9 @@ func (l *Location) UpdateTime() {
 		l.Loading.Times.UpdateTime()
 	}
 
-	passed := l.Forecast.Pass.AT != nil && !l.Forecast.Pass.AT.IsZero()
-	l.Forecast.Departed = (l.Forecast.Departure.AT != nil && !l.Forecast.Departure.AT.IsZero()) || passed
-	l.Forecast.Arrived = (l.Forecast.Arrival.AT != nil && !l.Forecast.Arrival.AT.IsZero()) || passed
+	l.Forecast.Passed = l.Forecast.Pass.AT != nil && !l.Forecast.Pass.AT.IsZero()
+	l.Forecast.Departed = (l.Forecast.Departure.AT != nil && !l.Forecast.Departure.AT.IsZero()) || l.Forecast.Passed
+	l.Forecast.Arrived = (l.Forecast.Arrival.AT != nil && !l.Forecast.Arrival.AT.IsZero()) || l.Forecast.Passed
 
 	if l.Forecast.Departure.IsSet() {
 		l.Forecast.Time = *l.Forecast.Departure.Time()

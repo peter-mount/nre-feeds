@@ -181,3 +181,15 @@ func (t *WorkingTime) Between(from *WorkingTime, to *WorkingTime) bool {
 
 	return from.t <= t.t && t.t <= to.t
 }
+
+// IsApproaching returns true if the WorkingTime is in the last Minute based on the current clock
+func (wt WorkingTime) IsApproaching() bool {
+	if wt.IsZero() {
+		return false
+	}
+
+	now := Now()
+	lm := now.Add(-61 * time.Second)
+	t := wt.Time(now)
+	return t.After(lm) && !t.After(now)
+}
