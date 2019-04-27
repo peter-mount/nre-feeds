@@ -1,6 +1,7 @@
 package darwind3
 
 import (
+	"encoding/xml"
 	"github.com/peter-mount/nre-feeds/util"
 	"log"
 	"sort"
@@ -133,6 +134,28 @@ func TestLocation_SliceStable(t *testing.T) {
 			t.Errorf("Element %d not in correct place. Last %v Got %v", i, l.String(), v.Time.String())
 		}
 		l = &v.Time
+	}
+
+}
+
+const (
+	testlocationXmlparseLengthXml      = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><ns5:Location tpl=\"ELMW\" wta=\"21:00:30\" wtd=\"21:01\" pta=\"21:01\" ptd=\"21:01\"><ns5:arr et=\"21:01\" wet=\"21:00\" src=\"Darwin\"/><ns5:dep et=\"21:01\" src=\"Darwin\"/><ns5:plat>4</ns5:plat><ns5:length>8</ns5:length></ns5:Location>"
+	testlocationXmlparseLengthExpected = 8
+)
+
+// Test that the train length is parsed correctly
+func TestLocation_XMLParse_Length(t *testing.T) {
+	var loc Location
+
+	err := xml.Unmarshal([]byte(testlocationXmlparseLengthXml), &loc)
+	if err != nil {
+		t.Fatalf("Length unmarshall: %v", err)
+	}
+
+	log.Println("Train length", loc.Length)
+
+	if loc.Length != testlocationXmlparseLengthExpected {
+		t.Errorf("XML Length, expected %d got %d", testlocationXmlparseLengthExpected, loc.Length)
 	}
 
 }

@@ -92,7 +92,7 @@ type CoachLoadingData struct {
 	Src string `json:"src,omitempty" xml:"src,omitempty"`
 	// The RTTI instance ID of the src (if any).
 	// CoachLoadingData/LoadingValue only
-	// length 2
+	// Length 2
 	SrcInst string `json:"srcInst,omitempty" xml:"srcInst,omitempty"`
 	// The availability of a toilet in this coach.
 	// E.g. "Unknown", "None" , "Standard" or "Accessible".

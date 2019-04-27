@@ -124,7 +124,7 @@ func (a *Schedule) Equals(b *Schedule) bool {
 		a.Date == b.Date
 
 	if r {
-		// This works as we've already confirmed the length
+		// This works as we've already confirmed the Length
 		for i, l := range a.Locations {
 			if !l.Equals(b.Locations[i]) {
 				return false

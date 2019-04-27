@@ -71,10 +71,6 @@ type Location struct {
 		Platform Platform `json:"plat,omitempty"`
 		// The service is suppressed at this location.
 		Suppressed bool `json:"suppressed,omitempty"`
-		// The length of the service at this location on departure
-		// (or arrival at destination).
-		// The default value of zero indicates that the length is unknown.
-		Length int `json:"length,omitempty"`
 		// Indicates from which end of the train stock will be detached.
 		// The value is set to “true” if stock will be detached from the front of
 		// the train at this location. It will be set at each location where stock
@@ -87,12 +83,20 @@ type Location struct {
 		// This is the TS time from Darwin when this Forecast was updated
 		Date time.Time `json:"date,omitempty"`
 	} `json:"forecast"`
+	// The Length of the service at this location on departure
+	// (or arrival at destination).
+	// The default value of zero indicates that the Length is unknown.
+	Length int `json:"length,omitempty"`
 	// The delay in seconds calculated as difference between forecast.time and timetable.time
 	Delay int `json:"delay"`
 	// Loading data for this location.
 	Loading *Loading `json:"loading"`
 	// updated if true trigger an event
 	updated bool
+}
+
+type length struct {
+	Length int `xml:",chardata"`
 }
 
 // Compare compares two Locations by their times
@@ -123,7 +127,6 @@ func (a *Location) Equals(b *Location) bool {
 		a.Forecast.Departure.Equals(&b.Forecast.Departure) &&
 		a.Forecast.Pass.Equals(&b.Forecast.Pass) &&
 		a.Forecast.Platform.Equals(&b.Forecast.Platform) &&
-		a.Forecast.Length == b.Forecast.Length &&
 		a.Forecast.DetachFront == b.Forecast.DetachFront &&
 		a.Forecast.TrainOrder == b.Forecast.TrainOrder
 }
@@ -190,10 +193,11 @@ func (s *Location) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) er
 				}
 
 			case "length":
-				// TODO implement
-				if err := decoder.Skip(); err != nil {
+				len := length{}
+				if err := decoder.DecodeElement(&len, &tok); err != nil {
 					return err
 				}
+				s.Length = len.Length
 
 			case "detachFront":
 				// TODO implement
@@ -291,6 +295,7 @@ func (a *Location) Clone() *Location {
 		Planned:          a.Planned,
 		Forecast:         a.Forecast,
 		Loading:          a.Loading,
+		Length:           a.Length,
 	}
 	b.UpdateTime()
 	return b
@@ -304,6 +309,7 @@ func (dest *Location) MergeFrom(src *Location) {
 	trainOrder := dest.Forecast.TrainOrder
 	dest.Forecast = src.Forecast
 	dest.Forecast.TrainOrder = trainOrder
+	dest.Length = src.Length
 
 	// Mark location as updated
 	dest.updated = true
