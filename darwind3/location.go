@@ -95,10 +95,6 @@ type Location struct {
 	updated bool
 }
 
-type length struct {
-	Length int `xml:",chardata"`
-}
-
 // Compare compares two Locations by their times
 func (a *Location) Compare(b *Location) bool {
 	return b != nil && a.Times.Compare(&b.Times)
@@ -187,23 +183,25 @@ func (s *Location) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) er
 				elem = &s.Forecast.Platform
 
 			case "suppr":
-				// TODO implement
-				if err := decoder.Skip(); err != nil {
+				b, err := util.DecodeXML_Bool(decoder, &tok)
+				if err != nil {
 					return err
 				}
+				s.Forecast.Suppressed = b
 
 			case "length":
-				len := length{}
-				if err := decoder.DecodeElement(&len, &tok); err != nil {
+				l, err := util.DecodeXML_Int(decoder, &tok)
+				if err != nil {
 					return err
 				}
-				s.Length = len.Length
+				s.Length = l
 
 			case "detachFront":
-				// TODO implement
-				if err := decoder.Skip(); err != nil {
+				b, err := util.DecodeXML_Bool(decoder, &tok)
+				if err != nil {
 					return err
 				}
+				s.Forecast.DetachFront = b
 
 			default:
 				if err := decoder.Skip(); err != nil {
