@@ -16,10 +16,10 @@ type PublicTime struct {
 
 func (a *PublicTime) Equals(b *PublicTime) bool {
 	if a == nil {
-		return b == nil
+		return b == nil || b.IsZero()
 	}
 	if b == nil {
-		return false
+		return a.IsZero()
 	}
 	if a.IsZero() {
 		return b.IsZero()

@@ -46,10 +46,10 @@ func WorkingTimeFromBytes(b []byte) *WorkingTime {
 
 func (a *WorkingTime) Equals(b *WorkingTime) bool {
 	if a == nil {
-		return b == nil
+		return b == nil || b.IsZero()
 	}
 	if b == nil {
-		return false
+		return a.IsZero()
 	}
 	if a.IsZero() {
 		return b.IsZero()
