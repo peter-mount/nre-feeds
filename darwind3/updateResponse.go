@@ -64,8 +64,10 @@ func (s *UR) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error {
 			case "alarm":
 				elem = &RttiAlarm{}
 
+			case "scheduleFormations":
+				elem = &ScheduleFormation{}
+
 			// Unsupported (so far) elements:
-			// scheduleFormations
 			// trainAlert
 			default:
 				log.Println("Skipping", tok.Name.Local, tok.Name.Space)

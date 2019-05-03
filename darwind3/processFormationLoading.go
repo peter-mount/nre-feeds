@@ -13,9 +13,6 @@ func (l *Loading) Process(tx *Transaction) error {
 }
 
 func (l *Loading) process(tx *Transaction, dbtx *bbolt.Tx) error {
-	// TODO remove this once we have received loading
-	log.Println("Loading received!", l.RID)
-
 	// Retrieve the schedule to be updated
 	sched := GetSchedule(dbtx, l.RID)
 

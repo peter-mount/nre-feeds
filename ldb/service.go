@@ -44,6 +44,8 @@ type Service struct {
 	LastReport darwind3.CallingPoint `json:"lastReport,omitempty"`
 	// The associations
 	Associations []*darwind3.Association `json:"association"`
+	// Formation data
+	Formation darwind3.ScheduleFormation `json:"formation"`
 	// The latest schedule entry used for this service
 	schedule *darwind3.Schedule `json:"schedule"`
 	// The index within the schedule of this location
@@ -166,6 +168,9 @@ func (s *Service) Update(sched *darwind3.Schedule, idx int) bool {
 		// Copy associations
 		s.Associations = sched.Associations
 
+		// Formation data
+		s.Formation = sched.Formation
+
 		// Copy the date/self of the underlying schedule
 		s.Date = sched.Date
 		s.Self = sched.Self
@@ -193,6 +198,7 @@ func (a *Service) Clone() *Service {
 		LateReason:       a.LateReason,
 		Location:         a.Location,
 		Associations:     a.Associations,
+		Formation:        a.Formation,
 		schedule:         a.schedule,
 		LocationIndex:    a.LocationIndex,
 		Date:             a.Date,

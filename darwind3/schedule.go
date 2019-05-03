@@ -47,6 +47,8 @@ type Schedule struct {
 	Associations []*Association `json:"association"`
 	// The last reported location
 	LastReport CallingPoint `json:"lastReport"`
+	// The schedule formation
+	Formation ScheduleFormation `json:"formation"`
 	// Usually this is the date we insert into the db but here we use the TS time
 	// as returned from darwin
 	Date time.Time `json:"date,omitempty" xml:"date,attr,omitempty"`
