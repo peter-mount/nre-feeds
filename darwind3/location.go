@@ -309,6 +309,10 @@ func (dest *Location) MergeFrom(src *Location) {
 	dest.Forecast.TrainOrder = trainOrder
 	dest.Length = src.Length
 
+	if src.Loading != nil {
+		dest.Loading = src.Loading
+	}
+
 	// Mark location as updated
 	dest.updated = true
 }

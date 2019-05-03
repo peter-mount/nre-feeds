@@ -83,17 +83,19 @@ type CoachLoadingData struct {
 	// Data for an individual coach in a formation.
 	// The number/identifier for this coach, e.g. "A" or "12".
 	// minLength 1 maxLength 2
-	CoachNumber string `json:"coachNumber" xml:"coachNumber"`
+	CoachNumber string `json:"coachNumber" xml:"coachNumber,attr"`
+	// The loading of this coach as a percentage 0...100
+	Loading int `json:"loading" xml:",chardata"`
 	// The class of the coach, e.g. "First" or "Standard".
 	// CoachData only
-	CoachClass string `json:"coachClass,omitempty" xml:"coachClass,omitempty"`
+	CoachClass string `json:"coachClass,omitempty" xml:"coachClass,attr,omitempty"`
 	// The source of the loading data.
 	// CoachLoadingData/LoadingValue only
-	Src string `json:"src,omitempty" xml:"src,omitempty"`
+	Src string `json:"src,omitempty" xml:"src,attr,omitempty"`
 	// The RTTI instance ID of the src (if any).
 	// CoachLoadingData/LoadingValue only
 	// Length 2
-	SrcInst string `json:"srcInst,omitempty" xml:"srcInst,omitempty"`
+	SrcInst string `json:"srcInst,omitempty" xml:"srcInst,attr,omitempty"`
 	// The availability of a toilet in this coach.
 	// E.g. "Unknown", "None" , "Standard" or "Accessible".
 	// Note that other values may be supplied in the future without a schema change.

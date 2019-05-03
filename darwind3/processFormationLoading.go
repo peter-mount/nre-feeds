@@ -55,6 +55,4 @@ func (sched *Schedule) appendFormationLoading(tx *Transaction, l *Loading) {
 			return
 		}
 	}
-
-	log.Println("Unknown Loading", l)
 }
