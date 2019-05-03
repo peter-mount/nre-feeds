@@ -321,3 +321,12 @@ func (l *Location) AddTiploc(m map[string]interface{}) {
 		}
 	}
 }
+
+func LocationSliceFind(s []*Location, a *Location) *Location {
+	for _, b := range s {
+		if a.EqualInSchedule(b) {
+			return b
+		}
+	}
+	return nil
+}

@@ -35,35 +35,24 @@ func (p *TS) process(tx *Transaction, dbtx *bbolt.Tx) error {
 		return nil
 	}
 
-	// set forecast date of the new entries
-	for _, a := range p.Locations {
-		a.Forecast.Date = tx.pport.TS
-	}
-
 	// SnapshotUpdate the LateReason
 	sched.LateReason = p.LateReason
 
-	// Run through schedule locations, any that match the new ones update the forecast
-	for _, a := range sched.Locations {
-		for _, b := range p.Locations {
-			if a.EqualInSchedule(b) {
-				a.MergeFrom(b)
-			}
-		}
-	}
-
-	// Append any locations not in the schedule
 	sortRequired := false
+
+	// Merge or append the inbound locations
 	for _, a := range p.Locations {
-		f := true
-		for _, b := range sched.Locations {
-			if a.EqualInSchedule(b) {
-				f = false
-			}
-		}
-		if f {
+		// set forecast date of the new entries
+		a.Forecast.Date = tx.pport.TS
+
+		b := LocationSliceFind(sched.Locations, a)
+		if b == nil {
+			// New inbound location
 			sched.Locations = append(sched.Locations, a)
 			sortRequired = true
+		} else {
+			// Merge the new data with the old
+			b.MergeFrom(a)
 		}
 	}
 
@@ -74,9 +63,12 @@ func (p *TS) process(tx *Transaction, dbtx *bbolt.Tx) error {
 		sched.UpdateTime()
 	}
 
-	tx.d3.updateAssociations(dbtx, sched)
+	// Update schedule time
 	sched.Date = tx.pport.TS
+
 	if PutSchedule(dbtx, sched) {
+		tx.d3.updateAssociations(dbtx, sched)
+
 		tx.d3.EventManager.PostEvent(&DarwinEvent{
 			Type:     Event_ScheduleUpdated,
 			RID:      sched.RID,
