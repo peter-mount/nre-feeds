@@ -9,6 +9,7 @@ require (
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/jlaffaye/ftp v0.0.0-20181101112434-47f21d10f0ee
 	github.com/kr/pretty v0.1.0 // indirect
+	github.com/lib/pq v1.0.0
 	github.com/muesli/cache2go v0.0.0-20181026141944-493cbf51ac21
 	github.com/peter-mount/golib v0.0.0-20181214134500-eb1182399956
 	github.com/peter-mount/goxml2json v1.1.0
