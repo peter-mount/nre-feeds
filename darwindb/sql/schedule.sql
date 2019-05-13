@@ -4,11 +4,12 @@
 create table if not exists darwin.schedule
 (
     rid  bigint not null,
-    data text   not null,
+    data json   not null,
     date timestamp with time zone,
     primary key (rid)
 ) partition by range (rid);
 create index if not exists schedule_dt on darwin.schedule (date);
+create index if not exists schedule_rdt on darwin.schedule (rid, date);
 
 -- Called by updateschedule when it attempts to insert into an unknown partition.
 -- This will create a partition schedule_YYYYMMDD where YYYYMM is the month and DD is the date at the
@@ -41,34 +42,50 @@ $$
 
 -- Insert/Update a schedule entry
 -- drop function darwin.updateschedule(json)
+--
+-- Note: we can't use an upset (insert on conflict(rid) as it doesn't
+--       work fully with partitions just yet, so if we get a:
+--          unique violation then do an update
+--          check_violation then ensure we have the partition table,
+--              then do the insert/update again.
+--
+-- Also we check the schedule date so if we do an update then only do it
+-- if the schedule date is later than the one in the db - to reduce
+-- the number of updates, especially if we are doing a resync!
+--
 create or replace function darwin.updateschedule(pmsg json)
     returns void
 as
 $$
 declare
-    prid      bigint = (pmsg ->> 'RID')::bigint;
-    pschedule json   = pmsg -> 'Schedule';
+    prid      bigint                   = (pmsg ->> 'RID')::bigint;
+    pschedule json                     = pmsg -> 'Schedule';
+    pdate     timestamp with time zone = (pschedule ->> 'date')::timestamp with time zone;
 begin
-    raise notice 'rid %', prid;
     insert into darwin.schedule (rid, data, date)
-    values (prid,
-            pschedule,
-            now());
+    values (prid, pschedule, pdate);
 exception
     when unique_violation then
-        raise notice 'update rid %', prid;
         update darwin.schedule
-        set data = data,
-            date = now()
-        where rid = prid;
+        set data = pschedule,
+            date = pdate
+        where rid = prid
+          and date < pdate;
 
     when check_violation then
         execute darwin.scheduleCreateTable(prid);
 
-        insert into darwin.schedule (rid, data, date)
-        values (prid,
-                pschedule,
-                now());
+        begin
+            insert into darwin.schedule (rid, data, date)
+            values (prid, pschedule, pdate);
+        exception
+            when unique_violation then
+                update darwin.schedule
+                set data = pschedule,
+                    date = pdate
+                where rid = prid
+                  and date < pdate;
+        end;
 end;
 $$
     language plpgsql;
