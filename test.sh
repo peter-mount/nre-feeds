@@ -5,7 +5,8 @@
 #MODULE=darwintimetable
 #MODULE=darwind3
 #MODULE=ldb
-MODULE=darwinkb
+#MODULE=darwinkb
+MODULE=darwindb
 
 # db directory
 DB=/home/peter/tmp/nre
@@ -15,6 +16,9 @@ docker run \
   -it \
   --rm \
   --name ${MODULE} \
+  --hostname darwin-db \
   -v ${DB}:/database \
   -v $(pwd)/config.yaml:/config.yaml:ro \
+  --link postgres \
+  -e POSTGRESDB='postgres://postgres:temppass@postgres/postgres?sslmode=disable&connect_timeout=3' \
   test:${MODULE}-amd64-latest

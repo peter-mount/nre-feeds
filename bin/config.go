@@ -20,7 +20,7 @@ type QueueDef struct {
 
 // Common configuration used to read config.yaml
 type Config struct {
-	// URL prefixes for lookups to the reference microservices
+	// PostgresUri prefixes for lookups to the reference microservices
 	Services struct {
 		DarwinD3  string `yaml:"darwind3"`
 		Reference string `yaml:"reference"`
@@ -74,6 +74,11 @@ type Config struct {
 			Password string `yaml:"password"`
 		} `yaml:"ftp"`
 	} `yaml:"d3"`
+
+	DB struct {
+		// PostgreSQL connection url
+		PostgresUri string `yaml:"url"`
+	} `yaml:"db"`
 
 	Server struct {
 		// Root context path, defaults to ""
