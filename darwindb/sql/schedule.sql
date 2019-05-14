@@ -70,6 +70,12 @@ declare
     pschedule json                     = pmsg -> 'Schedule';
     pdate     timestamp with time zone = (pschedule ->> 'date')::timestamp with time zone;
 begin
+
+    -- Ensure we have a date, don't know why we can have a null date inbound
+    if pdate is null then
+        pdate = now();
+    end if;
+
     insert into darwin.scheduleUpdate (rid, date)
     values (prid, pdate)
     on conflict (rid)
