@@ -3,15 +3,16 @@ package darwindb
 import (
 	"database/sql"
 	_ "github.com/lib/pq"
+	"github.com/peter-mount/golib/rabbitmq"
 	"github.com/peter-mount/golib/statistics"
 	"github.com/peter-mount/nre-feeds/bin"
+	"log"
+	"os"
 )
 
 type DarwinDB struct {
 	db                *sql.DB
 	scheduleStatement *sql.Stmt
-
-	updateChannel chan []byte
 }
 
 func (d *DarwinDB) Init(cfg *bin.Config) error {
@@ -27,20 +28,6 @@ func (d *DarwinDB) Init(cfg *bin.Config) error {
 	}
 	d.scheduleStatement = stmt
 
-	// The update channel so all calls to scheduleStatement are done in sequence
-	d.updateChannel = make(chan []byte, 1)
-	go func() {
-		for {
-			msg := <-d.updateChannel
-			_, err := d.scheduleStatement.Exec(string(msg))
-			if err == nil {
-				statistics.Incr("darwin.db.updated.success")
-			} else {
-				statistics.Incr("darwin.db.updated.error")
-			}
-		}
-	}()
-
 	return nil
 }
 
@@ -51,15 +38,54 @@ func (d *DarwinDB) Stop() {
 	}
 }
 
-// Deactivated simply updates the schedule.
-// It's a separate hook in case we need to do anything else
-func (d *DarwinDB) Deactivated(msg []byte) {
-	statistics.Incr("darwin.db.deactivated")
-	d.updateChannel <- msg
+func (d *DarwinDB) Subscribe(mq *rabbitmq.RabbitMQ, prefix, queueName string, f func([]byte), eventTypes ...string) error {
+
+	// Queue prefix, try to use the local hostname (e.g. of the container)
+	hostname, err := os.Hostname()
+	if err != nil {
+		hostname = "error"
+	} else {
+		hostname = hostname
+	}
+
+	queueName = hostname + "." + prefix + "." + queueName
+
+	if channel, err := mq.NewChannel(); err != nil {
+		log.Println(err)
+		return err
+	} else {
+
+		// Force prefetchCount to 1 so we don't get everything in one go
+		_ = channel.Qos(1, 0, false)
+
+		// non-durable auto-delete queue
+		_, _ = mq.QueueDeclare(channel, queueName, false, true, false, false, nil)
+
+		for _, eventType := range eventTypes {
+			routingKey := prefix + ".d3.event." + eventType
+			_ = mq.QueueBind(channel, queueName, routingKey, "amq.topic", false, nil)
+		}
+
+		ch, _ := mq.Consume(channel, queueName, "DB Consumer "+queueName, true, true, false, false, nil)
+
+		go func() {
+			for {
+				msg := <-ch
+				f(msg.Body)
+			}
+		}()
+
+		return nil
+	}
 }
 
 // Store schedule updates in the db
 func (d *DarwinDB) ScheduleUpdated(msg []byte) {
 	statistics.Incr("darwin.db.schedule")
-	d.updateChannel <- msg
+	_, err := d.scheduleStatement.Exec(string(msg))
+	if err == nil {
+		statistics.Incr("darwin.db.updated.success")
+	} else {
+		statistics.Incr("darwin.db.updated.error")
+	}
 }

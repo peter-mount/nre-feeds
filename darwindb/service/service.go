@@ -13,7 +13,6 @@ type DarwinDBService struct {
 	config      *bin.Config
 	cron        *cron.CronService
 	db          darwindb.DarwinDB
-	em          *darwind3.DarwinEventManager
 	restService *rest.Server
 }
 
@@ -61,16 +60,14 @@ func (a *DarwinDBService) Start() error {
 		return err
 	}
 
-	a.em = darwind3.NewDarwinEventManager(&a.config.RabbitMQ, a.config.D3.EventKeyPrefix)
-
-	// Listen for deactivation messages
-	err = a.em.RawListenToEvents(darwind3.Event_Deactivated, a.db.Deactivated)
-	if err != nil {
-		return err
-	}
-
-	// Schedule updates
-	err = a.em.RawListenToEvents(darwind3.Event_ScheduleUpdated, a.db.ScheduleUpdated)
+	err = a.db.Subscribe(
+		&a.config.RabbitMQ,
+		a.config.D3.EventKeyPrefix,
+		"schedules",
+		a.db.ScheduleUpdated,
+		darwind3.Event_ScheduleUpdated,
+		darwind3.Event_Deactivated,
+	)
 	if err != nil {
 		return err
 	}
