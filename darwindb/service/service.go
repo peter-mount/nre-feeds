@@ -66,8 +66,15 @@ func (a *DarwinDBService) Start() error {
 		"schedules",
 		a.db.ScheduleUpdated,
 		darwind3.Event_ScheduleUpdated,
-		darwind3.Event_Deactivated,
+		// Don't include deactivated schedules as we already have them & this removes data
+		//darwind3.Event_Deactivated,
 	)
+	if err != nil {
+		return err
+	}
+
+	// Run the index job every minute
+	_, err = a.cron.AddFunc("0/20 * * * * *", a.db.IndexSchedules)
 	if err != nil {
 		return err
 	}

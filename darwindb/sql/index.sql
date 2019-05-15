@@ -5,7 +5,7 @@
 
 -- service entries by tiploc, rid and ts (time at a tiploc)
 -- Note this only contains those scheduled to arrive or depart at the tiploc
-drop table darwin.service cascade;
+--drop table darwin.service cascade;
 
 create table if not exists darwin.service
 (
@@ -23,8 +23,7 @@ create table if not exists darwin.service
     falsedest   varchar(7),
     cancelled   boolean                     not null default false,
     cancreason  int                         not null default 0,
-    delayreason int                         not null default 0,
-    delay       interval
+    delayreason int                         not null default 0
 ) partition by range (ts);
 
 create unique index if not exists service_ttr on darwin.service (ts, tiploc, rid);
@@ -63,10 +62,10 @@ declare
 begin
     insert into darwin.service (tiploc, rid, ts, pta, ptd, plat, arrive, depart, destination, falsedest, type,
                                 cancelled, cancreason,
-                                delayreason, delay, activity)
+                                delayreason, activity)
     values (prow.tiploc, prow.rid, prow.ts, prow.pta, prow.ptd, prow.plat, prow.arrive, prow.depart, prow.destination,
             prow.falsedest, prow.type,
-            prow.cancelled, prow.cancreason, prow.delayreason, prow.delay, prow.activity);
+            prow.cancelled, prow.cancreason, prow.delayreason, prow.activity);
 exception
     when unique_violation then
         update darwin.service
@@ -75,7 +74,6 @@ exception
             cancelled   = prow.cancelled,
             cancreason  = prow.cancreason,
             delayreason = prow.delayreason,
-            delay       = prow.delay,
             activity    = prow.activity,
             plat        = prow.plat,
             arrive      = prow.arrive,
@@ -90,11 +88,11 @@ exception
         begin
             insert into darwin.service (tiploc, rid, ts, pta, ptd, plat, arrive, depart, destination, falsedest, type,
                                         cancelled, cancreason,
-                                        delayreason, delay, activity)
+                                        delayreason, activity)
             values (prow.tiploc, prow.rid, prow.ts, prow.pta, prow.ptd, prow.plat, prow.arrive, prow.depart,
                     prow.destination,
                     prow.falsedest, prow.type,
-                    prow.cancelled, prow.cancreason, prow.delayreason, prow.delay, prow.activity);
+                    prow.cancelled, prow.cancreason, prow.delayreason, prow.activity);
         exception
             when unique_violation then
                 update darwin.service
@@ -103,7 +101,6 @@ exception
                     cancelled   = prow.cancelled,
                     cancreason  = prow.cancreason,
                     delayreason = prow.delayreason,
-                    delay       = prow.delay,
                     activity    = prow.activity,
                     plat        = prow.plat,
                     arrive      = prow.arrive,
@@ -171,15 +168,9 @@ begin
 
                 prow.plat = i -> 'forecast' -> 'plat' ->> 'plat';
 
+                -- The recorded at times for arr & dep. Don't use et else it appears the service has run in the future!
                 prow.arrive = (i -> 'forecast' -> 'arr' ->> 'at')::TIME;
-                if prow.arrive is null then
-                    prow.arrive = (i -> 'forecast' -> 'arr' ->> 'et')::TIME;
-                end if;
-
                 prow.depart = (i -> 'forecast' -> 'dep' ->> 'at')::TIME;
-                if prow.depart is null then
-                    prow.depart = (i -> 'forecast' -> 'dep' ->> 'et')::TIME;
-                end if;
 
                 prow.activity = i -> 'planned' ->> 'activity';
 
@@ -187,8 +178,6 @@ begin
                 prow.falsedest = i ->> 'falsedest';
 
                 prow.cancelled = i ->> 'canc' is not null;
-
-                prow.delay = (i ->> 'delay' || ' seconds')::interval;
 
                 execute darwin.addservice(prow);
             end if;

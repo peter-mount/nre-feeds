@@ -68,7 +68,9 @@ $$
 declare
     prid      bigint                   = (pmsg ->> 'RID')::bigint;
     pschedule json                     = pmsg -> 'Schedule';
-    pdate     timestamp with time zone = (pschedule ->> 'date')::timestamp with time zone;
+    --pdate     timestamp with time zone = (pschedule ->> 'date')::timestamp with time zone;
+    pdate     timestamp with time zone = ((pschedule ->> 'ssd')::date +
+                                          (pschedule -> 'locations' -> 0 -> 'timetable' ->> 'time')::time)::timestamp with time zone;
 begin
 
     -- Ensure we have a date, don't know why we can have a null date inbound
@@ -76,8 +78,9 @@ begin
         pdate = now();
     end if;
 
+    -- Mark the rid as requiring updating
     insert into darwin.scheduleUpdate (rid, date)
-    values (prid, pdate)
+    values (prid, now())
     on conflict (rid)
         do update
         set date = excluded.date;
@@ -90,8 +93,7 @@ begin
             update darwin.schedule
             set data = pschedule,
                 date = pdate
-            where rid = prid
-              and date < pdate;
+            where rid = prid;
 
         when check_violation then
             execute darwin.scheduleCreateTable(prid);
@@ -104,16 +106,15 @@ begin
                     update darwin.schedule
                     set data = pschedule,
                         date = pdate
-                    where rid = prid
-                      and date < pdate;
+                    where rid = prid;
             end;
     end;
 end;
 $$
     language plpgsql;
 
-create or replace function darwin.getschedule(prid varchar(16))
-    returns text
+create or replace function darwin.getschedule(prid bigint)
+    returns json
 as
 $$
 select data
