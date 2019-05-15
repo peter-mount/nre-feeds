@@ -14,8 +14,8 @@ create or replace function darwin.getservices(pcrs char(3), pts timestamp with t
                 arrive time,
                 depart time,
                 activity text,
-                destination name,
-                falsedest name,
+                destination varchar(26),
+                falsedest varchar(26),
                 cancelled boolean,
                 cancreason int,
                 delayreason int,
@@ -41,9 +41,15 @@ select s.tiploc,
        s.depart,
        s.activity,
        --s.destination,
-       td.stationname,
+       case
+           when td.name is not null then td.name
+           else s.destination
+           end,
        --s.falsedest,
-       tf.stationname,
+       case
+           when tf.name is not null then tf.name
+           else s.falsedest
+           end,
        s.cancelled,
        s.cancreason,
        s.delayreason,
@@ -55,8 +61,8 @@ select s.tiploc,
 from darwin.service s
          inner join naptan.railreferences t on s.tiploc = t.tiploccode
          inner join darwin.schedule sh on s.rid = sh.rid
-         left outer join naptan.railreferences td on s.destination = td.tiploccode
-         left outer join naptan.railreferences tf on s.falsedest = tf.tiploccode
+         left outer join timetable.tiploc td on s.destination = td.tiploc
+         left outer join timetable.tiploc tf on s.falsedest = tf.tiploc
 where t.crscode = pcrs
   and s.ts between fts and fts + '1 hour'::interval
 order by ts;
