@@ -15,7 +15,8 @@ create or replace function darwin.getservices(pcrs char(3), pts timestamp with t
                 status text,
                 trainid text,
                 passengerservice bool,
-                charterservice bool
+                charterservice bool,
+                toc text
             )
 as
 $$
@@ -41,11 +42,12 @@ select s.tiploc,
        s.cancelled,
        cr.cancel,
        dr.late,
-       sh.data ->> 'uid'                                  as uid,
-       sh.data ->> 'status'                               as status,
-       sh.data ->> 'trainId'                              as trainid,
-       (sh.data ->> 'passengerService')::bool is not null as passengerService,
-       (sh.data ->> 'charterService')::bool is not null   as charterService
+       sh.data ->> 'uid',
+       sh.data ->> 'status',
+       sh.data ->> 'trainId',
+       (sh.data ->> 'passengerService')::bool is not null,
+       (sh.data ->> 'charterService')::bool is not null,
+       sh.data ->> 'toc'
 from darwin.service s
          inner join naptan.railreferences t on s.tiploc = t.tiploccode
          inner join darwin.schedule sh on s.rid = sh.rid
