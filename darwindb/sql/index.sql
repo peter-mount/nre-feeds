@@ -26,7 +26,8 @@ create table if not exists darwin.service
     delayreason int                         not null default 0
 ) partition by range (ts);
 
-create unique index if not exists service_ttr on darwin.service (ts, tiploc, rid);
+drop index darwin.service_ttr;
+create unique index if not exists service_ttr on darwin.service (ts, tiploc, rid, type);
 create index if not exists service_tt on darwin.service (ts, tiploc);
 create index if not exists service_r on darwin.service (rid);
 
@@ -80,7 +81,8 @@ exception
             depart      = prow.depart
         where tiploc = prow.tiploc
           and rid = prow.rid
-          and ts = prow.ts;
+          and ts = prow.ts
+          and type = prow.type;
 
     when check_violation then
         execute darwin.serviceCreateTable(prow.ts);
@@ -107,7 +109,8 @@ exception
                     depart      = prow.depart
                 where tiploc = prow.tiploc
                   and rid = prow.rid
-                  and ts = prow.ts;
+                  and ts = prow.ts
+                  and type = prow.type;
         end;
 end;
 $$
@@ -175,9 +178,9 @@ begin
                 prow.activity = i -> 'planned' ->> 'activity';
 
                 prow.tiploc = i ->> 'tiploc';
-                prow.falsedest = i ->> 'falsedest';
+                prow.falsedest = i ->> 'falseDestination';
 
-                prow.cancelled = i ->> 'canc' is not null;
+                prow.cancelled = i ->> 'cancelled' is not null;
 
                 execute darwin.addservice(prow);
             end if;
@@ -199,8 +202,8 @@ create table if not exists darwin.indexerrors
 );
 truncate darwin.indexerrors;
 
--- Indexes the first 500 entries in the scheduleupdate table.
--- It takes them in order, oldest first.
+-- Indexes the first 1000 entries in the scheduleupdate table which have not been updated for at least 10 minutes,
+-- oldest entries first.
 create or replace function darwin.indexservices()
     returns int
 as
@@ -219,7 +222,7 @@ begin
                where date is null
                   or date < now() - '10 minutes'::interval
                order by date
-               limit 500
+               limit 1000
         loop
             begin
                 execute darwin.indexservice(rec.rid);

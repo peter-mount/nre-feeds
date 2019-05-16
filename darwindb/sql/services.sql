@@ -6,19 +6,11 @@ create or replace function darwin.getservices(pcrs char(3), pts timestamp with t
             (
                 tiploc varchar(7),
                 rid bigint,
-                ts timestamp without time zone,
-                type varchar(4),
-                pta time,
-                ptd time,
-                plat varchar(16),
-                arrive time,
-                depart time,
-                activity text,
+                location json,
                 destination varchar(26),
-                falsedest varchar(26),
                 cancelled boolean,
-                cancreason int,
-                delayreason int,
+                cancreason text,
+                delayreason text,
                 uid text,
                 status text,
                 trainid text,
@@ -32,27 +24,23 @@ declare
     begin return query
 select s.tiploc,
        s.rid,
-       s.ts,
-       s.type,
-       s.pta,
-       s.ptd,
-       s.plat,
-       s.arrive,
-       s.depart,
-       s.activity,
-       --s.destination,
-       case
-           when td.name is not null then td.name
-           else s.destination
-           end,
-       --s.falsedest,
+       -- The JSON for this entry
+       (select j.*
+        from json_array_elements(sh.data -> 'locations') j
+        where j ->> 'tiploc' = s.tiploc
+          and (j -> 'timetable' ->> 'time')::time = s.ts::time
+          and j ->> 'type' = s.type
+       ),
+       -- destination as text, falsedest overrides it if provided
        case
            when tf.name is not null then tf.name
-           else s.falsedest
+           when td.name is not null then td.name
+           when s.falsedest is not null then s.falsedest
+           else s.destination
            end,
        s.cancelled,
-       s.cancreason,
-       s.delayreason,
+       cr.cancel,
+       dr.late,
        sh.data ->> 'uid'                                  as uid,
        sh.data ->> 'status'                               as status,
        sh.data ->> 'trainId'                              as trainid,
@@ -63,6 +51,8 @@ from darwin.service s
          inner join darwin.schedule sh on s.rid = sh.rid
          left outer join timetable.tiploc td on s.destination = td.tiploc
          left outer join timetable.tiploc tf on s.falsedest = tf.tiploc
+         left outer join darwin.reason cr on cr.id = s.cancreason
+         left outer join darwin.reason dr on dr.id = s.delayreason
 where t.crscode = pcrs
   and s.ts between fts and fts + '1 hour'::interval
 order by ts;
