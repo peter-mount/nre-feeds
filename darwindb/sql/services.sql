@@ -56,7 +56,7 @@ from darwin.service s
          left outer join darwin.reason cr on cr.id = s.cancreason
          left outer join darwin.reason dr on dr.id = s.delayreason
 where t.crscode = pcrs
-  and s.ts between fts and fts + '1 hour'::interval
+  and s.ts between fts and fts + '59 minutes 59 seconds'::interval
 order by ts;
 
 end;
