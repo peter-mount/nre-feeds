@@ -62,3 +62,40 @@ order by ts;
 end;
 $$
     language plpgsql;
+
+-- Retrieves all details about a service
+create or replace function darwin.getservice(prid bigint)
+    returns json
+as
+$$
+declare
+    schedule json;
+    tiplocs  json;
+begin
+    select into schedule data from darwin.schedule where rid = prid;
+    if not found then
+        return null;
+    end if;
+
+    select into tiplocs json_object_agg(tiploc, obj)
+    from (
+             select tiploc,
+                    json_build_object(
+                            'tiploc', tiploc,
+                            'crs', trim(crs),
+                            'name', name
+                        ) as obj
+             from timetable.tiploc
+             where tiploc in (
+                 select distinct l ->> 'tiploc'
+                 from json_array_elements(schedule -> 'locations') l
+             )) t;
+
+    return json_build_object(
+            'rid', prid,
+            'schedule', schedule,
+            'tiploc', tiplocs
+        );
+end ;
+$$
+    language plpgsql;
