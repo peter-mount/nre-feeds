@@ -8,10 +8,10 @@ import (
 )
 
 type StationServices struct {
-	Station  []string                    `json:"station"`
-	Services []StationService            `json:"services"`
-	Reason   []darwind3.DisruptionReason `json:"reason"`
-	Tiploc   map[string]Tiploc           `json:"tiploc"`
+	Station  []string          `json:"station"`
+	Services []StationService  `json:"services"`
+	Reason   map[string]Reason `json:"reason"`
+	Tiploc   map[string]Tiploc `json:"tiploc"`
 }
 
 type StationService struct {
@@ -30,6 +30,13 @@ type StationService struct {
 	Association      []darwind3.Association     `json:"association"`
 	Formation        darwind3.ScheduleFormation `json:"formation"`
 	Delay            time.Duration              `json:"delay"`
+}
+
+// Reason text lookup as returned by the proc
+type Reason struct {
+	Id     int    `json:"id"`
+	Cancel string `json:"cancel"`
+	Late   string `json:"late"`
 }
 
 func (s *DarwinDB) GetServices(crs string, ts time.Time) (StationServices, error) {

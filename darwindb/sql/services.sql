@@ -113,7 +113,7 @@ begin
     -- final result
     return json_build_object(
             'station', jstation,
-            'services', jservices,
+            --'services', jservices,
             'reason', jreason,
             'tiploc', jtiplocs
         );
