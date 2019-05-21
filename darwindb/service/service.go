@@ -48,6 +48,9 @@ func (a *DarwinDBService) PostInit() error {
 		return err
 	}
 
+	a.restService.Handle("/service/{rid}", a.getService).Methods("GET")
+	a.restService.Handle("/services/{crs}/{date}/{hour}", a.getStationServices).Methods("GET")
+
 	return nil
 }
 
