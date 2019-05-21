@@ -15,20 +15,21 @@ type StationServices struct {
 }
 
 type StationService struct {
-	Rid              int64                     `json:"rid"`
-	Location         darwind3.Location         `json:"location"`
-	Destination      string                    `json:"destination"`
-	Cancelled        bool                      `json:"cancelled"`
-	CancelReason     darwind3.DisruptionReason `json:"cancelReason"`
-	DelayReason      darwind3.DisruptionReason `json:"delayReason"`
-	Uid              string                    `json:"uid"`
-	Status           string                    `json:"status"`
-	Headcode         string                    `json:"trainId"`
-	PassengerService bool                      `json:"passengerService"`
-	CharterService   bool                      `json:"charterService"`
-	Toc              string                    `json:"toc"`
-	Association      []darwind3.Association    `json:"association"`
-	Delay            time.Duration             `json:"delay"`
+	Rid              int64                      `json:"rid"`
+	Location         darwind3.Location          `json:"location"`
+	Destination      string                     `json:"destination"`
+	Cancelled        bool                       `json:"cancelled"`
+	CancelReason     darwind3.DisruptionReason  `json:"cancelReason"`
+	DelayReason      darwind3.DisruptionReason  `json:"delayReason"`
+	Uid              string                     `json:"uid"`
+	Status           string                     `json:"status"`
+	Headcode         string                     `json:"trainId"`
+	PassengerService bool                       `json:"passengerService"`
+	CharterService   bool                       `json:"charterService"`
+	Toc              string                     `json:"toc"`
+	Association      []darwind3.Association     `json:"association"`
+	Formation        darwind3.ScheduleFormation `json:"formation"`
+	Delay            time.Duration              `json:"delay"`
 }
 
 func (s *DarwinDB) GetServices(crs string, ts time.Time) (StationServices, error) {

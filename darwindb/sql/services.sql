@@ -51,7 +51,8 @@ begin
                          'passengerService', (sh.data ->> 'passengerService')::bool is not null,
                          'charterService', (sh.data ->> 'charterService')::bool is not null,
                          'toc', sh.data ->> 'toc',
-                         'association', sh.data -> 'association'
+                         'association', sh.data -> 'association',
+                         'formation', sh.data -> 'formation'
                      ) as service
           from darwin.service s
                    inner join timetable.tiploc t on s.tiploc = t.tiploc
