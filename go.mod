@@ -13,7 +13,7 @@ require (
 	github.com/muesli/cache2go v0.0.0-20181026141944-493cbf51ac21
 	github.com/peter-mount/golib v0.0.0-20181214134500-eb1182399956
 	github.com/peter-mount/goxml2json v1.1.0
-	github.com/peter-mount/nrod-cif v0.0.0-20181217160052-f3da464b9ac1
+	github.com/peter-mount/nrod-cif v0.0.0-20190522172504-e919ea7e16a6
 	github.com/peter-mount/sortfold v0.2.1
 	github.com/streadway/amqp v0.0.0-20181205114330-a314942b2fd9
 	github.com/stretchr/testify v1.3.0 // indirect
