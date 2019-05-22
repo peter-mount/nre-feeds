@@ -11,12 +11,17 @@ import (
 )
 
 type DarwinDB struct {
-	db                          *sql.DB
-	scheduleStatement           *sql.Stmt
-	indexStatement              *sql.Stmt
-	getServiceStatement         *sql.Stmt
-	getStationServicesStatement *sql.Stmt
+	db         *sql.DB
+	statements []*sql.Stmt
 }
+
+// The prepared statements
+const (
+	scheduleStatement = iota
+	indexStatement
+	getServiceStatement
+	getStationServicesStatement
+)
 
 func (d *DarwinDB) Init(cfg *bin.Config) error {
 	db, err := sql.Open("postgres", cfg.DB.PostgresUri)
@@ -25,29 +30,23 @@ func (d *DarwinDB) Init(cfg *bin.Config) error {
 	}
 	d.db = db
 
-	stmt, err := db.Prepare("select darwin.updateschedule( $1 )")
-	if err != nil {
-		return err
+	// Prepare our query statements. Order is defined by the enum above
+	for _, query := range []string{
+		// scheduleStatement
+		"select darwin.updateschedule( $1 )",
+		// indexStatement
+		"select darwin.indexservices() as processed",
+		// getServiceStatement
+		"select darwin.getservice( $1 )",
+		// getStationServicesStatement
+		"select * from darwin.getservices($1,date_trunc('hour',$2::timestamp with time zone))",
+	} {
+		stmt, err := db.Prepare(query)
+		if err != nil {
+			return err
+		}
+		d.statements = append(d.statements, stmt)
 	}
-	d.scheduleStatement = stmt
-
-	stmt, err = db.Prepare("select darwin.indexservices() as processed")
-	if err != nil {
-		return err
-	}
-	d.indexStatement = stmt
-
-	stmt, err = db.Prepare("select darwin.getservice( $1 )")
-	if err != nil {
-		return err
-	}
-	d.getServiceStatement = stmt
-
-	stmt, err = db.Prepare("select * from darwin.getservices($1,date_trunc('hour',$2::timestamp with time zone))")
-	if err != nil {
-		return err
-	}
-	d.getStationServicesStatement = stmt
 
 	return nil
 }
@@ -103,7 +102,7 @@ func (d *DarwinDB) Subscribe(mq *rabbitmq.RabbitMQ, prefix, queueName string, f 
 // Store schedule updates in the db
 func (d *DarwinDB) ScheduleUpdated(msg []byte) {
 	statistics.Incr("darwin.db.schedule")
-	_, err := d.scheduleStatement.Exec(string(msg))
+	_, err := d.statements[scheduleStatement].Exec(string(msg))
 	if err == nil {
 		statistics.Incr("darwin.db.updated.success")
 	} else {
@@ -115,7 +114,7 @@ func (d *DarwinDB) ScheduleUpdated(msg []byte) {
 func (d *DarwinDB) IndexSchedules() {
 	processedCount := 0
 
-	err := d.indexStatement.QueryRow().Scan(&processedCount)
+	err := d.statements[indexStatement].QueryRow().Scan(&processedCount)
 	if err != nil {
 		log.Println(err)
 	} else {

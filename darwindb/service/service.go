@@ -76,8 +76,8 @@ func (a *DarwinDBService) Start() error {
 		return err
 	}
 
-	// Run the index job every minute
-	_, err = a.cron.AddFunc("0/20 * * * * *", a.db.IndexSchedules)
+	// Run the index job every 10 seconds
+	_, err = a.cron.AddFunc("1/10 * * * * *", a.db.IndexSchedules)
 	if err != nil {
 		return err
 	}

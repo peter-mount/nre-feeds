@@ -4,14 +4,15 @@ import (
 	"database/sql"
 	"encoding/json"
 	"github.com/peter-mount/nre-feeds/darwind3"
+	"github.com/peter-mount/nrod-cif/cif"
 )
 
 // The json structure returned by darwin.getservice()
 type ServiceDetail struct {
-	Rid       int               `json:"rid"`
-	Schedule  darwind3.Schedule `json:"schedule"`
-	Tiploc    map[string]Tiploc `json:"tiploc"`
-	Formation []Coach           `json:"formation"`
+	Rid       int                   `json:"rid"`
+	Schedule  darwind3.Schedule     `json:"schedule"`
+	Tiploc    map[string]cif.Tiploc `json:"tiploc"`
+	Formation []Coach               `json:"formation"`
 }
 
 // Used to aggregate the formation coaches
@@ -25,7 +26,7 @@ func (s *DarwinDB) GetService(rid string) (ServiceDetail, error) {
 	var service ServiceDetail
 	var data sql.NullString
 
-	err := s.getServiceStatement.QueryRow(rid).Scan(&data)
+	err := s.statements[getServiceStatement].QueryRow(rid).Scan(&data)
 
 	if err == nil && data.Valid {
 		err = json.Unmarshal([]byte(data.String), &service)

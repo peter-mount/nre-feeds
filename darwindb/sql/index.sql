@@ -13,6 +13,7 @@ create table if not exists darwin.service
     rid         bigint                      not null,
     ts          timestamp without time zone not null,
     type        varchar(4)                  not null,
+    uid         char(6),
     pta         time,
     ptd         time,
     plat        varchar(16),
@@ -26,11 +27,12 @@ create table if not exists darwin.service
     delayreason int                         not null default 0
 ) partition by range (ts);
 
-drop index darwin.service_ttr;
 create unique index if not exists service_ttr on darwin.service (ts, tiploc, rid, type);
 create index if not exists service_tt on darwin.service (ts, tiploc);
 create index if not exists service_r on darwin.service (rid);
-
+create index if not exists service_u on darwin.service (uid);
+create index if not exists service_tu on darwin.service (tiploc, uid);
+create index if not exists service_ttu on darwin.service (ts, tiploc, uid);
 
 -- Called by addservice when inserting an entry into the darwin.service table to create a partition
 -- if one doesn't exist.
@@ -61,10 +63,16 @@ as
 $$
 declare
 begin
-    insert into darwin.service (tiploc, rid, ts, pta, ptd, plat, arrive, depart, destination, falsedest, type,
+    -- this is required
+    if prow.ts is null then
+        return;
+    end if;
+
+    insert into darwin.service (tiploc, rid, ts, uid, pta, ptd, plat, arrive, depart, destination, falsedest, type,
                                 cancelled, cancreason,
                                 delayreason, activity)
-    values (prow.tiploc, prow.rid, prow.ts, prow.pta, prow.ptd, prow.plat, prow.arrive, prow.depart, prow.destination,
+    values (prow.tiploc, prow.rid, prow.ts, prow.uid, prow.pta, prow.ptd, prow.plat, prow.arrive, prow.depart,
+            prow.destination,
             prow.falsedest, prow.type,
             prow.cancelled, prow.cancreason, prow.delayreason, prow.activity);
 exception
@@ -72,6 +80,7 @@ exception
         update darwin.service
         set falsedest   = prow.falsedest,
             type        = prow.type,
+            uid         = prow.uid,
             cancelled   = prow.cancelled,
             cancreason  = prow.cancreason,
             delayreason = prow.delayreason,
@@ -88,10 +97,11 @@ exception
         execute darwin.serviceCreateTable(prow.ts);
 
         begin
-            insert into darwin.service (tiploc, rid, ts, pta, ptd, plat, arrive, depart, destination, falsedest, type,
+            insert into darwin.service (tiploc, rid, ts, uid, pta, ptd, plat, arrive, depart, destination, falsedest,
+                                        type,
                                         cancelled, cancreason,
                                         delayreason, activity)
-            values (prow.tiploc, prow.rid, prow.ts, prow.pta, prow.ptd, prow.plat, prow.arrive, prow.depart,
+            values (prow.tiploc, prow.rid, prow.ts, prow.uid, prow.pta, prow.ptd, prow.plat, prow.arrive, prow.depart,
                     prow.destination,
                     prow.falsedest, prow.type,
                     prow.cancelled, prow.cancreason, prow.delayreason, prow.activity);
@@ -100,6 +110,7 @@ exception
                 update darwin.service
                 set falsedest   = prow.falsedest,
                     type        = prow.type,
+                    uid         = prow.uid,
                     cancelled   = prow.cancelled,
                     cancreason  = prow.cancreason,
                     delayreason = prow.delayreason,
@@ -136,8 +147,13 @@ begin
     end if;
 
     ts = (j ->> 'ssd')::date::timestamp with time zone;
+    -- If no SSD then we cannot index a service
+    if ts is null then
+        return;
+    end if;
 
     prow.rid = (j ->> 'rid')::bigint;
+    prow.uid = j ->> 'uid';
     prow.cancreason = (j -> 'cancelReason' ->> 'reason')::int;
     prow.delayreason = (j -> 'lateReason' ->> 'reason')::int;
     prow.destination = j -> 'destinationLocation' ->> 'tiploc';
@@ -202,7 +218,7 @@ create table if not exists darwin.indexerrors
 );
 truncate darwin.indexerrors;
 
--- Indexes the first 1000 entries in the scheduleupdate table which have not been updated for at least 10 minutes,
+-- Indexes the first 500 entries in the scheduleupdate table which have not been updated for at least 10 minutes,
 -- oldest entries first.
 create or replace function darwin.indexservices()
     returns int
@@ -222,7 +238,7 @@ begin
                where date is null
                   or date < now() - '10 minutes'::interval
                order by date
-               limit 1000
+               limit 500
         loop
             begin
                 execute darwin.indexservice(rec.rid);

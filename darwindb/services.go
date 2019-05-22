@@ -4,14 +4,15 @@ import (
 	"database/sql"
 	"encoding/json"
 	"github.com/peter-mount/nre-feeds/darwind3"
+	"github.com/peter-mount/nrod-cif/cif"
 	"time"
 )
 
 type StationServices struct {
-	Station  []string          `json:"station"`
-	Services []StationService  `json:"services"`
-	Reason   map[string]Reason `json:"reason"`
-	Tiploc   map[string]Tiploc `json:"tiploc"`
+	Station  []string              `json:"station"`
+	Services []StationService      `json:"services"`
+	Reason   map[string]Reason     `json:"reason"`
+	Tiploc   map[string]cif.Tiploc `json:"tiploc"`
 }
 
 type StationService struct {
@@ -44,7 +45,7 @@ func (s *DarwinDB) GetServices(crs string, ts time.Time) (StationServices, error
 	var services StationServices
 	var data sql.NullString
 
-	err := s.getStationServicesStatement.QueryRow(crs, ts).Scan(&data)
+	err := s.statements[getStationServicesStatement].QueryRow(crs, ts).Scan(&data)
 
 	if err == nil && data.Valid {
 		err = json.Unmarshal([]byte(data.String), &services)
