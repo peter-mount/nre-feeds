@@ -103,8 +103,11 @@ func (d *LDB) createStation(tx *bbolt.Tx, locations []*darwinref.Location) *Stat
 	}
 
 	// Mark Public if we have a CRS & it doesn't start with X or Z
+	// 2019 June 10 Enable Z for now as Farringdon is known as Farringdon Underground.
+	// This will expose the underground but better than leave a major station. Hopefully with Crossrail this will revert
+	// back to the single station.
 	crs := locations[0].Crs
-	public := crs != "" && crs[0] != 'X' && crs[0] != 'Z'
+	public := crs != "" && crs[0] != 'X' // && crs[0] != 'Z'
 	if !public {
 		return nil
 	}

@@ -15,10 +15,8 @@ import (
 // Also we use darwind3.ScheduleBucket & darwind3.TsBucket so we share the same mechanism's to keep
 // schedules
 const (
-	crsBucket = "crs"
-	//messageBucket = "message"
+	crsBucket     = "crs"
 	serviceBucket = "service"
-	//tiplocBucket  = "tiploc"
 )
 
 type LDB struct {
@@ -66,9 +64,20 @@ func (d *LDB) Init(dbFile string) error {
 	d.db = db
 
 	// Add listeners
-	d.EventManager.ListenToEvents(darwind3.Event_ScheduleUpdated, d.locationListener)
-	d.EventManager.ListenToEvents(darwind3.Event_Deactivated, d.deactivationListener)
-	d.EventManager.ListenToEvents(darwind3.Event_StationMessage, d.stationMessageListener)
+	err = d.EventManager.ListenToEvents(darwind3.Event_ScheduleUpdated, d.locationListener)
+	if err != nil {
+		return err
+	}
+
+	err = d.EventManager.ListenToEvents(darwind3.Event_Deactivated, d.deactivationListener)
+	if err != nil {
+		return err
+	}
+
+	err = d.EventManager.ListenToEvents(darwind3.Event_StationMessage, d.stationMessageListener)
+	if err != nil {
+		return err
+	}
 
 	// Ensure we have our stations loaded on startup, current messages & run the maintenance tasks
 	d.RefreshStations()

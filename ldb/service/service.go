@@ -11,8 +11,7 @@ import (
 )
 
 type LDBService struct {
-	ldb ldb.LDB
-
+	ldb         ldb.LDB
 	config      *bin.Config
 	cron        *cron.CronService
 	restService *rest.Server
@@ -60,13 +59,16 @@ func (a *LDBService) Start() error {
 
 	// Connect to Rabbit & name the connection so its easier to debug
 	a.config.RabbitMQ.ConnectionName = "darwin ldb"
-	a.config.RabbitMQ.Connect()
+	err := a.config.RabbitMQ.Connect()
+	if err != nil {
+		return err
+	}
 
 	a.ldb.EventManager = darwind3.NewDarwinEventManager(&a.config.RabbitMQ, a.config.D3.EventKeyPrefix)
 
 	a.config.DbPath(&a.config.Database.LDB, "ldb.db")
 
-	err := a.ldb.Init(a.config.Database.LDB)
+	err = a.ldb.Init(a.config.Database.LDB)
 	if err != nil {
 		return err
 	}
@@ -104,12 +106,9 @@ func (a *LDBService) Start() error {
 	}
 
 	_, err = a.cron.AddFunc("0 0/5 * * * *", debug.FreeOSMemory)
-	/*
-		_, err = a.cron.AddFunc("0 * * * * *", darwind3.GC)
-		if err != nil {
-			return err
-		}
-	*/
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
