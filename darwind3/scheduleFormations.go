@@ -1,7 +1,6 @@
 package darwind3
 
 import (
-	"github.com/etcd-io/bbolt"
 	"log"
 	"time"
 )
@@ -32,19 +31,8 @@ type CoachFormation struct {
 
 // Process processes an inbound loading element containing train formation data.
 func (l *ScheduleFormation) Process(tx *Transaction) error {
-	return tx.d3.UpdateBulkAware(func(dbtx *bbolt.Tx) error {
-		return l.process(tx, dbtx)
-	})
-}
-
-func (l *ScheduleFormation) process(tx *Transaction, dbtx *bbolt.Tx) error {
 	// Retrieve the schedule to be updated
-	sched := GetSchedule(dbtx, l.RID)
-
-	// No schedule then try to fetch it from the timetable
-	if sched == nil {
-		sched = tx.ResolveSchedule(l.RID)
-	}
+	sched := tx.d3.GetSchedule(l.RID)
 
 	// If no schedule then warn as we need UID & SSD but don't have it in the
 	// Loading message
@@ -57,12 +45,13 @@ func (l *ScheduleFormation) process(tx *Transaction, dbtx *bbolt.Tx) error {
 	sched.Formation.Date = tx.pport.TS
 	sched.Date = tx.pport.TS
 
-	if PutSchedule(dbtx, sched) {
-		tx.d3.EventManager.PostEvent(&DarwinEvent{
-			Type:     Event_ScheduleUpdated,
-			RID:      sched.RID,
-			Schedule: sched,
-		})
-	}
+	tx.d3.PutSchedule(sched)
+
+	tx.d3.EventManager.PostEvent(&DarwinEvent{
+		Type:     Event_ScheduleUpdated,
+		RID:      sched.RID,
+		Schedule: sched,
+	})
+
 	return nil
 }

@@ -11,6 +11,7 @@ require (
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/lib/pq v1.0.0
 	github.com/muesli/cache2go v0.0.0-20181026141944-493cbf51ac21
+	github.com/peter-mount/filecache v0.0.0-20190610173925-76db2d37a743
 	github.com/peter-mount/golib v0.0.0-20181214134500-eb1182399956
 	github.com/peter-mount/goxml2json v1.1.0
 	github.com/peter-mount/nrod-cif v0.0.0-20190522172504-e919ea7e16a6
@@ -19,5 +20,6 @@ require (
 	github.com/stretchr/testify v1.3.0 // indirect
 	go.etcd.io/bbolt v1.3.2 // indirect
 	golang.org/x/sys v0.0.0-20190322080309-f49334f85ddc // indirect
+	gopkg.in/robfig/cron.v2 v2.0.0-20150107220207-be2e0b0deed5
 	gopkg.in/yaml.v2 v2.2.2
 )

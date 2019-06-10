@@ -60,7 +60,7 @@ func (g *Graphite) Start() error {
 
 // PublishStatistic Handles publishing statistics to Graphite over RabbitMQ
 func (g *Graphite) PublishStatistic(name string, s *statistics.Statistic) {
-	// Value will be the latency
+	// Get will be the latency
 	g.publish(name+".value", s.Value, s.Timestamp)
 	// Count the number of messages
 	g.publish(name+".count", s.Count, s.Timestamp)

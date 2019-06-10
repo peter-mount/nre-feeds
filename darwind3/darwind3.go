@@ -2,27 +2,31 @@
 package darwind3
 
 import (
+	"github.com/peter-mount/filecache"
 	"github.com/peter-mount/nre-feeds/bin"
 )
 
 type DarwinD3 struct {
 	Timetable    string
 	EventManager *DarwinEventManager
-	cache        cache
 	Messages     StationMessages
 	FeedStatus   FeedStatus
 	Config       *bin.Config
 	status       string
 	colour       string
+
+	Alarms          *filecache.CacheTable
+	Associations    *filecache.CacheTable
+	Meta            *filecache.CacheTable
+	Schedules       *filecache.CacheTable
+	StationMessages *filecache.CacheTable
 }
 
-// OpenDB opens a DarwinReference database.
-func (r *DarwinD3) OpenDB(dbFile string, em *DarwinEventManager) error {
+// Init opens a DarwinReference database.
+func (r *DarwinD3) Init(em *DarwinEventManager) {
 	r.EventManager = em
 	r.FeedStatus.d3 = r
 	r.Messages.d3 = r
-
-	return r.cache.initCache(dbFile)
 }
 
 func (r *DarwinD3) SetStatus(status, colour string) {

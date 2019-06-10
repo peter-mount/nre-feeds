@@ -1,9 +1,10 @@
 package darwind3
 
 import (
-	"encoding/binary"
-	"github.com/etcd-io/bbolt"
+	"fmt"
+	"github.com/peter-mount/filecache"
 	"log"
+	"strconv"
 	"time"
 )
 
@@ -19,24 +20,11 @@ const (
 	StationmessageResynchronisation = -1000
 )
 
-func uint64key(id int64) []byte {
-	key := make([]byte, 8)
-
-	// See https://groups.google.com/d/msg/golang-nuts/AMfYtFXZTRM/ldDCmpHfmR8J for this voodoo
-	v := uint64(id)
-
-	binary.LittleEndian.PutUint64(key, v)
-	return key
+func uint64key(id int64) string {
+	return fmt.Sprintf("%d", id)
 }
 
 func (sm *StationMessages) AddMotd(id int64, text string) {
-	_ = sm.d3.UpdateBulkAware(func(tx *bbolt.Tx) error {
-		sm.addMotd(tx, id, text)
-		return nil
-	})
-}
-
-func (sm *StationMessages) addMotd(tx *bbolt.Tx, id int64, text string) {
 	if id == 0 {
 		return
 	}
@@ -56,19 +44,7 @@ func (sm *StationMessages) addMotd(tx *bbolt.Tx, id int64, text string) {
 		Active:   true,
 	}
 
-	bucket := tx.Bucket([]byte(messageBucket))
-
-	key := uint64key(message.ID)
-
-	b, err := message.Bytes()
-	if err != nil {
-		return
-	}
-
-	err = bucket.Put(key, b)
-	if err != nil {
-		return
-	}
+	sm.d3.StationMessages.Add(uint64key(message.ID), message)
 
 	sm.d3.EventManager.PostEvent(&DarwinEvent{
 		Type:              Event_StationMessage,
@@ -85,78 +61,41 @@ func (sm *StationMessages) RemoveMotd(id int64) {
 		id = -id
 	}
 
-	_ = sm.d3.Update(func(tx *bbolt.Tx) error {
-		bucket := tx.Bucket([]byte(messageBucket))
+	message := sm.Get(id)
 
-		key := uint64key(id)
+	sm.d3.StationMessages.DeleteFromMemoryAndDisk(uint64key(id))
 
-		_ = bucket.Delete(key)
-
-		message := sm.get(tx, id)
-
-		// Simulate a delete from Darwin as a message with no stations
-		sm.d3.EventManager.PostEvent(&DarwinEvent{
-			Type:                   Event_StationMessage,
-			ExistingStationMessage: message,
-			NewStationMessage:      &StationMessage{ID: id},
-		})
-		return nil
+	// Simulate a delete from Darwin as a message with no stations
+	sm.d3.EventManager.PostEvent(&DarwinEvent{
+		Type:                   Event_StationMessage,
+		ExistingStationMessage: message,
+		NewStationMessage:      &StationMessage{ID: id},
 	})
+
 }
 
-func (sm *StationMessages) ForEach(f func(*StationMessage) error) error {
-	return sm.d3.View(func(tx *bbolt.Tx) error {
-		bucket := tx.Bucket([]byte(messageBucket))
-		return bucket.ForEach(func(k, v []byte) error {
-			message := StationMessageFromBytes(v)
-			if message == nil {
-				_ = bucket.Delete(k)
-			} else {
-				err := f(message)
-				if err != nil {
-					return err
-				}
-			}
-			return nil
-		})
+func (sm *StationMessages) ForEach(f func(*StationMessage) error) {
+	sm.d3.StationMessages.Foreach(func(key string, item *filecache.CacheItem) {
+		if item != nil {
+			_ = f(item.Data().(*StationMessage))
+		}
 	})
 }
 
 // Get returns the specified StationMessage or nil if none
 func (sm *StationMessages) Get(id int64) *StationMessage {
-	var s *StationMessage
-
-	_ = sm.d3.View(func(tx *bbolt.Tx) error {
-		s = sm.get(tx, id)
-		return nil
-	})
-
-	return s
-}
-
-func (sm *StationMessages) get(tx *bbolt.Tx, id int64) *StationMessage {
-	bucket := tx.Bucket([]byte(messageBucket))
-
-	b := bucket.Get(uint64key(id))
-	if b != nil {
-		return StationMessageFromBytes(b)
+	v, _ := sm.d3.StationMessages.Get(strconv.FormatUint(uint64(id), 10))
+	if v != nil {
+		return v.Data().(*StationMessage)
 	}
 	return nil
 }
 
-func (sm *StationMessages) put(tx *bbolt.Tx, s *StationMessage) error {
-	bucket := tx.Bucket([]byte(messageBucket))
-
-	key := uint64key(s.ID)
-
+func (sm *StationMessages) put(s *StationMessage) {
 	if len(s.Station) > 0 {
-		b, err := s.Bytes()
-		if err != nil {
-			return err
-		}
-		return bucket.Put(key, b)
+		sm.d3.StationMessages.Add(uint64key(s.ID), s)
 	} else {
-		return bucket.Delete(key)
+		sm.d3.StationMessages.DeleteFromMemoryAndDisk(uint64key(s.ID))
 	}
 }
 
@@ -164,7 +103,7 @@ func (sm *StationMessages) put(tx *bbolt.Tx, s *StationMessage) error {
 // just been received.
 func (d *DarwinD3) BroadcastStationMessages(e *DarwinEvent) {
 	cnt := 0
-	_ = d.Messages.ForEach(func(message *StationMessage) error {
+	d.Messages.ForEach(func(message *StationMessage) error {
 		d.EventManager.PostEvent(&DarwinEvent{
 			Type:              Event_StationMessage,
 			NewStationMessage: message,
@@ -180,43 +119,46 @@ func (d *DarwinD3) BroadcastStationMessages(e *DarwinEvent) {
 
 // ExpireStationMessages expires any old (>24 hours) station messages
 // Note: this is only to keep the DB size down, they should delete automatically now
+/*
 func (d *DarwinD3) ExpireStationMessages() {
-	cutoff := time.Now().Add(-24 * time.Hour)
-	cnt := 0
+  cutoff := time.Now().Add(-24 * time.Hour)
+  cnt := 0
 
-	_ = d.Update(func(tx *bbolt.Tx) error {
-		bucket := tx.Bucket([]byte(messageBucket))
+  _ = d.Update(func(tx *bbolt.Tx) error {
+    bucket := tx.Bucket([]byte(messageBucket))
 
-		return bucket.ForEach(func(k, v []byte) error {
-			message := StationMessageFromBytes(v)
-			if message == nil {
-				// Damaged message
-				cnt++
-				_ = bucket.Delete(k)
-			} else if message.Date.Before(cutoff) {
-				// Expired message
-				cnt++
-				_ = bucket.Delete(k)
+    return bucket.ForEach(func(k, v []byte) error {
+      message := StationMessageFromBytes(v)
+      if message == nil {
+        // Damaged message
+        cnt++
+        _ = bucket.Delete(k)
+      } else if message.Date.Before(cutoff) {
+        // Expired message
+        cnt++
+        _ = bucket.Delete(k)
 
-				// Simulate a delete from Darwin as a message with no stations
-				d.EventManager.PostEvent(&DarwinEvent{
-					Type:                   Event_StationMessage,
-					ExistingStationMessage: message,
-					NewStationMessage: &StationMessage{
-						ID:       message.ID,
-						Message:  message.Message,
-						Category: message.Category,
-						Severity: message.Severity,
-						Suppress: message.Suppress,
-						Date:     message.Date,
-					},
-				})
-			}
-			return nil
-		})
-	})
+        // Simulate a delete from Darwin as a message with no stations
+        d.EventManager.PostEvent(&DarwinEvent{
+          Type:                   Event_StationMessage,
+          ExistingStationMessage: message,
+          NewStationMessage: &StationMessage{
+            ID:       message.ID,
+            Message:  message.Message,
+            Category: message.Category,
+            Severity: message.Severity,
+            Suppress: message.Suppress,
+            Date:     message.Date,
+          },
+        })
+      }
+      return nil
+    })
+  })
 
-	if cnt > 0 {
-		log.Println("Expired", cnt, "StationMessage's")
-	}
+  if cnt > 0 {
+    log.Println("Expired", cnt, "StationMessage's")
+  }
 }
+
+*/

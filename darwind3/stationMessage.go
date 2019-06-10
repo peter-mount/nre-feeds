@@ -30,13 +30,16 @@ type StationMessage struct {
 }
 
 // Bytes returns the message as an encoded byte slice
-func (s *StationMessage) Bytes() ([]byte, error) {
-	b, err := json.Marshal(s)
-	return b, err
+func StationMessageToBytes(v interface{}) []byte {
+	b, err := json.Marshal(v)
+	if err == nil {
+		return b
+	}
+	return nil
 }
 
 // ScheduleFromBytes returns a schedule based on a slice or nil if none
-func StationMessageFromBytes(b []byte) *StationMessage {
+func StationMessageFromBytes(b []byte) interface{} {
 	if b == nil {
 		return nil
 	}

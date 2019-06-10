@@ -1,12 +1,15 @@
 package service
 
 import (
+	"github.com/peter-mount/filecache"
+	fcsve "github.com/peter-mount/filecache/service"
 	"github.com/peter-mount/golib/kernel"
 	"github.com/peter-mount/golib/kernel/cron"
 	"github.com/peter-mount/golib/rest"
 	"github.com/peter-mount/nre-feeds/bin"
 	"github.com/peter-mount/nre-feeds/darwind3"
 	"runtime/debug"
+	"time"
 )
 
 type DarwinD3Service struct {
@@ -14,7 +17,14 @@ type DarwinD3Service struct {
 	config      *bin.Config
 	cron        *cron.CronService
 	restService *rest.Server
+	fileCache   *fcsve.FileCacheService
 }
+
+const (
+	metaExpiry            = 24 * time.Hour
+	stationMessagesExpiry = 12 * time.Hour
+	scheduleDiskExpiry    = 4 * 24 * time.Hour
+)
 
 func (a *DarwinD3Service) Name() string {
 	return "DarwinD3Service"
@@ -39,7 +49,12 @@ func (a *DarwinD3Service) Init(k *kernel.Kernel) error {
 	}
 	a.restService = (service).(*rest.Server)
 
-	// ReferenceUpdate
+	service, err = k.AddService(&fcsve.FileCacheService{})
+	if err != nil {
+		return err
+	}
+	a.fileCache = (service).(*fcsve.FileCacheService)
+
 	return nil
 }
 
@@ -63,6 +78,70 @@ func (a *DarwinD3Service) PostInit() error {
 	a.restService.Handle("/schedule/{rid}", a.ScheduleHandler).Methods("GET")
 
 	a.restService.Handle("/status", a.StatusHandler).Methods("GET")
+
+	var err error
+	cache := a.fileCache.Cache()
+
+	a.darwind3.Alarms, err = cache.AddCache(filecache.CacheTableConfig{
+		Name:           "alarms",
+		ExpiryTime:     time.Hour,
+		FromBytes:      darwind3.AlarmFromBytes,
+		ToBytes:        filecache.ToJsonBytes,
+		StartupOptions: filecache.ExpireCacheOnStart,
+		DiskExpiryTime: metaExpiry,
+	})
+	if err != nil {
+		return err
+	}
+
+	a.darwind3.Associations, err = cache.AddCache(filecache.CacheTableConfig{
+		Name:           "associations",
+		ExpiryTime:     10 * time.Minute,
+		FromBytes:      darwind3.AssociationsFromBytes,
+		ToBytes:        filecache.ToJsonBytes,
+		StartupOptions: filecache.ExpireCacheOnStart,
+		DiskExpiryTime: scheduleDiskExpiry,
+	})
+	if err != nil {
+		return err
+	}
+
+	a.darwind3.Meta, err = cache.AddCache(filecache.CacheTableConfig{
+		Name:           "meta",
+		ExpiryTime:     24 * time.Hour,
+		FromBytes:      filecache.TimeFromBytes,
+		ToBytes:        filecache.ToJsonBytes,
+		StartupOptions: filecache.ExpireCacheOnStart,
+		DiskExpiryTime: metaExpiry,
+	})
+	if err != nil {
+		return err
+	}
+
+	a.darwind3.Schedules, err = cache.AddCache(filecache.CacheTableConfig{
+		Name:           "schedules",
+		ExpiryTime:     120 * time.Second,
+		FromBytes:      darwind3.FromBytesSchedule,
+		ToBytes:        filecache.ToJsonBytes,
+		StartupOptions: filecache.ExpireCacheOnStart,
+		DiskExpiryTime: scheduleDiskExpiry,
+	})
+	if err != nil {
+		return err
+	}
+
+	a.darwind3.StationMessages, err = cache.AddCache(filecache.CacheTableConfig{
+		Name:           "stationMessages",
+		ExpiryTime:     24 * time.Hour,
+		FromBytes:      darwind3.StationMessageFromBytes,
+		ToBytes:        filecache.ToJsonBytes,
+		StartupOptions: filecache.ExpireCacheOnStart,
+		DiskExpiryTime: stationMessagesExpiry,
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -78,39 +157,7 @@ func (a *DarwinD3Service) Start() error {
 	em := darwind3.NewDarwinEventManager(&a.config.RabbitMQ, a.config.D3.EventKeyPrefix)
 
 	a.config.DbPath(&a.config.Database.PushPort, "dwd3.db")
-	if err := a.darwind3.OpenDB(a.config.Database.PushPort, em); err != nil {
-		return err
-	}
-
-	// Expire old station messages every 15 minutes
-	_, err = a.cron.AddFunc("0 0/15 * * * *", a.darwind3.ExpireStationMessages)
-	if err != nil {
-		return err
-	}
-
-	// Check for old alarms every 6 hours
-	_, err = a.cron.AddFunc("0 0 0/6 * * *", a.darwind3.ExpireAlarms)
-	if err != nil {
-		return err
-	}
-
-	// Purge old schedules every hour
-	_, err = a.cron.AddFunc("0 5 0 * * *", a.darwind3.PurgeSchedules)
-	if err != nil {
-		return err
-	}
-
-	// Check for any orphans once every 6 hours
-	_, err = a.cron.AddFunc("0 15 0/6 * * *", a.darwind3.PurgeOrphans)
-	if err != nil {
-		return err
-	}
-
-	// Log DB status every hour
-	_, err = a.cron.AddFunc("0 10 * * * *", a.darwind3.DBStatus)
-	if err != nil {
-		return err
-	}
+	a.darwind3.Init(em)
 
 	// Memory
 	_, err = a.cron.AddFunc("9/10 * * * * *", func() {
@@ -121,6 +168,9 @@ func (a *DarwinD3Service) Start() error {
 	}
 
 	_, err = a.cron.AddFunc("0 0/5 * * * *", debug.FreeOSMemory)
+	if err != nil {
+		return err
+	}
 	/*
 	   _, err = a.cron.AddFunc("0 * * * * *", darwind3.GC)
 	   if err != nil {

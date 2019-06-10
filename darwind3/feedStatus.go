@@ -32,9 +32,6 @@ func (fs *FeedStatus) process(p *Pport) {
 		return
 	}
 
-	//fs.mutex.Lock()
-	//defer fs.mutex.Unlock()
-
 	if fs.snapshotRequired(p) {
 		log.Println("Sequence Mismatch", p.FeedHeaders.SequenceNumber, fs.SequenceNumber)
 		err := fs.loadSnapshot(p.TS)

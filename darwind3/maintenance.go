@@ -10,15 +10,6 @@ import (
 	"time"
 )
 
-// Expire old schedules after 3 days
-const scheduleExpiry = time.Hour * 24 * 3
-
-// PurgeSchedules purges all old schedules from the database, freeing up disk space
-func (d *DarwinD3) PurgeSchedules() {
-	// Run through the ts bucket and delete any entry older than our expiry time
-	PurgeSchedules(d.cache.db, scheduleExpiry, DeleteSchedule)
-}
-
 func PurgeSchedules(db *bbolt.DB, maxAge time.Duration, del func(tx *bbolt.Tx, rid []byte)) {
 	_ = db.Update(func(tx *bbolt.Tx) error {
 		limit := time.Now().Add(-maxAge)
@@ -41,12 +32,6 @@ func PurgeSchedules(db *bbolt.DB, maxAge time.Duration, del func(tx *bbolt.Tx, r
 		log.Printf("Expired %d/%d schedules\n", dc, ec)
 		return nil
 	})
-}
-
-// PurgeOrphans removes any schedules or ts entries which do not have a corresponding entry in the
-// other bucket.
-func (d *DarwinD3) PurgeOrphans() {
-	PurgeOrphans(d.cache.db, DeleteSchedule)
 }
 
 func PurgeOrphans(db *bbolt.DB, del func(tx *bbolt.Tx, rid []byte)) {

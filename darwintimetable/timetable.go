@@ -22,7 +22,7 @@ type DarwinTimetable struct {
 	journeys *bolt.Bucket
 }
 
-// OpenDB opens a DarwinReference database.
+// Init opens a DarwinReference database.
 func (r *DarwinTimetable) OpenDB(dbFile string) error {
 	if r.db != nil {
 		return errors.New("Timetable Already attached to a Database")
@@ -48,7 +48,7 @@ func (r *DarwinTimetable) UseDB(db *bolt.DB) error {
 	return r.useDB(db)
 }
 
-// common to OpenDB() && UseDB()
+// common to Init() && UseDB()
 func (r *DarwinTimetable) useDB(db *bolt.DB) error {
 	r.db = db
 
@@ -78,11 +78,11 @@ func (r *DarwinTimetable) useDB(db *bolt.DB) error {
 }
 
 // Close the database.
-// If OpenDB() was used to open the db then that db is closed.
+// If Init() was used to open the db then that db is closed.
 // If UseDB() was used this simply detaches the DarwinReference from that DB. The DB is not closed()
 func (r *DarwinTimetable) Close() {
 
-	// Only close if we own the DB, e.g. via OpenDB()
+	// Only close if we own the DB, e.g. via Init()
 	if r.allowClose && r.db != nil {
 		r.db.Close()
 	}

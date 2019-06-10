@@ -36,7 +36,7 @@ func (d *DarwinD3Service) BroadcastStationMessagesHandler(r *rest.Rest) error {
 func (d *DarwinD3Service) AllMessageHandler(r *rest.Rest) error {
 	var messages []*darwind3.StationMessage
 
-	_ = d.darwind3.Messages.ForEach(func(s *darwind3.StationMessage) error {
+	d.darwind3.Messages.ForEach(func(s *darwind3.StationMessage) error {
 		messages = append(messages, s)
 		return nil
 	})
@@ -54,7 +54,7 @@ func (d *DarwinD3Service) CrsMessageHandler(r *rest.Rest) error {
 
 	var messages []*darwind3.StationMessage
 
-	_ = d.darwind3.Messages.ForEach(func(s *darwind3.StationMessage) error {
+	d.darwind3.Messages.ForEach(func(s *darwind3.StationMessage) error {
 		for _, c := range s.Station {
 			if c == crs {
 				messages = append(messages, s)

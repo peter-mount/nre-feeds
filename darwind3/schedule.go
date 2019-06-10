@@ -193,6 +193,10 @@ func (s *Schedule) Bytes() ([]byte, error) {
 	return b, err
 }
 
+func FromBytesSchedule(b []byte) interface{} {
+	return ScheduleFromBytes(b)
+}
+
 // Defaults sets the default values for a schedule
 func (s *Schedule) Defaults() {
 	s.Status = "P"

@@ -1,7 +1,5 @@
 package darwind3
 
-import "github.com/etcd-io/bbolt"
-
 type Transaction struct {
 	// The root
 	pport *Pport
@@ -30,8 +28,8 @@ func (d *DarwinD3) ProcessUpdate(p *Pport, f func(*Transaction) error) error {
 
 func (t *Transaction) close() {
 	if !t.pport.TS.IsZero() {
-		_ = t.d3.UpdateBulkAware(func(tx *bbolt.Tx) error {
-			return PutMeta(tx, "ts", t.pport.TS)
-		})
+		//_ = t.d3.Update(func(tx *bbolt.Tx) error {
+		//	return PutMeta(tx, "ts", t.pport.TS)
+		//})
 	}
 }

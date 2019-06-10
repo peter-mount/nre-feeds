@@ -92,3 +92,34 @@ func (d *LDB) Update(f func(tx *bolt.Tx) error) error {
 func (d *LDB) View(f func(tx *bolt.Tx) error) error {
 	return d.db.View(f)
 }
+
+func GetSchedule(tx *bolt.Tx, rid string) *darwind3.Schedule {
+	sb := tx.Bucket([]byte("schedule"))
+	b := sb.Get([]byte(rid))
+	if b == nil {
+		return nil
+	}
+
+	sched := darwind3.ScheduleFromBytes(b)
+	if sched == nil || sched.RID == "" {
+		return nil
+	}
+
+	return sched
+}
+
+func PutSchedule(tx *bolt.Tx, sched *darwind3.Schedule) bool {
+	key := []byte(sched.RID)
+
+	sb := tx.Bucket([]byte(darwind3.ScheduleBucket))
+
+	b, _ := sched.Bytes()
+	_ = sb.Put(key, b)
+
+	b, err := sched.Date.MarshalBinary()
+	if err == nil {
+		_ = tx.Bucket([]byte(darwind3.TsBucket)).Put(key, b)
+	}
+
+	return true
+}

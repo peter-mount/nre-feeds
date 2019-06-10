@@ -2,6 +2,7 @@ package darwind3
 
 import (
 	"encoding/xml"
+	"github.com/peter-mount/filecache"
 	"log"
 	"testing"
 	"time"
@@ -51,7 +52,7 @@ func Test_Alarm_Unmarshal_Set_TS(t *testing.T) {
 	alarm.Date = wrapper.TS
 
 	// Marshal to Bytes
-	b, err := alarm.Bytes()
+	b := filecache.ToJsonBytes(&alarm)
 	if err != nil {
 		t.Errorf("Bytes Failed: %v", err)
 		return

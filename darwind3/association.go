@@ -3,7 +3,6 @@ package darwind3
 import (
 	"encoding/json"
 	"encoding/xml"
-	"github.com/etcd-io/bbolt"
 	"github.com/peter-mount/nre-feeds/util"
 	"time"
 )
@@ -97,34 +96,38 @@ func (a *Association) Clone() *Association {
 }
 
 func (d3 *DarwinD3) UpdateAssociations(sched *Schedule) {
-	if d3.cache.tx != nil {
-		d3.updateAssociations(d3.cache.tx, sched)
-	} else {
-		_ = d3.View(func(tx *bbolt.Tx) error {
-			d3.updateAssociations(tx, sched)
-			return nil
-		})
-	}
-}
-
-func (d3 *DarwinD3) updateAssociations(tx *bbolt.Tx, sched *Schedule) {
-	assocs := getAssociations(tx, sched.RID)
+	assocs := d3.GetAssociations(sched.RID)
 
 	if assocs != nil {
-		sched.Associations = assocs.Associations
+		// See if we already have them
+		updateRequired := false
 
-		for _, a := range assocs.Associations {
-			for idx, l := range sched.Locations {
-				if a.Tiploc == l.Tiploc {
-					np := a.Category == "NP"
-					if a.Main.RID == sched.RID && (a.Category == "VV" || np) {
-						a.Main.Location = l
-						a.Main.LocInd = idx
-						d3.updateAssociation(tx, a, &a.Assoc, np)
-					} else if a.Assoc.RID == sched.RID && (a.Category == "JJ" || np) {
-						a.Assoc.Location = l
-						a.Assoc.LocInd = idx
-						d3.updateAssociation(tx, a, &a.Main, np)
+		for _, assoc := range sched.Associations {
+			if !updateRequired {
+				for _, newAssoc := range assocs.Associations {
+					if !assoc.Equals(newAssoc) {
+						updateRequired = true
+					}
+				}
+			}
+		}
+
+		if updateRequired {
+			sched.Associations = assocs.Associations
+
+			for _, a := range assocs.Associations {
+				for idx, l := range sched.Locations {
+					if a.Tiploc == l.Tiploc {
+						np := a.Category == "NP"
+						if a.Main.RID == sched.RID && (a.Category == "VV" || np) {
+							a.Main.Location = l
+							a.Main.LocInd = idx
+							d3.updateAssociation(a, &a.Assoc, np)
+						} else if a.Assoc.RID == sched.RID && (a.Category == "JJ" || np) {
+							a.Assoc.Location = l
+							a.Assoc.LocInd = idx
+							d3.updateAssociation(a, &a.Main, np)
+						}
 					}
 				}
 			}
@@ -132,14 +135,14 @@ func (d3 *DarwinD3) updateAssociations(tx *bbolt.Tx, sched *Schedule) {
 	}
 }
 
-func (d3 *DarwinD3) updateAssociation(tx *bbolt.Tx, a *Association, as *AssocService, np bool) {
+func (d3 *DarwinD3) updateAssociation(a *Association, as *AssocService, np bool) {
 
 	// np=true then do not resolve in the get else we could go into an infinite loop
 	var s *Schedule
 	if np {
 		s = d3.GetScheduleNoResolve(as.RID)
 	} else {
-		s = GetSchedule(tx, as.RID)
+		s = d3.GetSchedule(as.RID)
 	}
 
 	if s != nil {
@@ -239,7 +242,7 @@ type Associations struct {
 	Associations []*Association `json:"associations"`
 }
 
-func AssociationsFromBytes(b []byte) *Associations {
+func AssociationsFromBytes(b []byte) interface{} {
 	if b == nil {
 		return nil
 	}
@@ -252,22 +255,17 @@ func AssociationsFromBytes(b []byte) *Associations {
 	return associations
 }
 
-func (associations *Associations) Bytes() ([]byte, error) {
-	b, err := json.Marshal(associations)
-	return b, err
-}
-
-func getAssociations(tx *bbolt.Tx, rid string) *Associations {
-	b := tx.Bucket([]byte(AssociationBucket)).Get([]byte(rid))
-	if b != nil {
-		return AssociationsFromBytes(b)
+func (d *DarwinD3) GetAssociations(rid string) *Associations {
+	v, _ := d.Associations.Get(rid)
+	if v != nil {
+		return v.Data().(*Associations)
 	}
+
 	return nil
 }
 
-func (associations *Associations) putAssociations(tx *bbolt.Tx) {
-	b, _ := associations.Bytes()
-	_ = tx.Bucket([]byte(AssociationBucket)).Put([]byte(associations.RID), b)
+func (associations *Associations) putAssociations(tx *Transaction) {
+	tx.d3.Associations.Add(associations.RID, associations)
 }
 
 func (a Association) ForEachAssocService(f func(as AssocService) error) error {

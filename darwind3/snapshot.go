@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/xml"
-	bolt "github.com/etcd-io/bbolt"
 	"github.com/jlaffaye/ftp"
 	"github.com/peter-mount/nre-feeds/util"
 	"log"
@@ -37,11 +36,7 @@ func (fs *FeedStatus) loadSnapshot(ts time.Time) error {
 	// Get the latest TsTime minus 10 minutes (if set)
 	// We do this to reduce the amount we need to download, i.e. without this we could end up
 	// downloading up to 3 hours of data which isn't needed if we are in sync up to 20 minutes ago
-	var latestTsTime time.Time
-	err = fs.d3.GetMeta("ts", &latestTsTime)
-	if err != nil {
-		return err
-	}
+	latestTsTime := fs.d3.GetTimeMeta("ts")
 	if !latestTsTime.IsZero() {
 		latestTsTime = latestTsTime.Add(-10 * time.Minute)
 	}
@@ -87,13 +82,6 @@ func (fs *FeedStatus) cleanup() {
 	// Empty the slice
 	fs.entries = nil
 
-	// Run maintenance jobs now
-	fs.d3.PurgeSchedules()
-	fs.d3.PurgeOrphans()
-	fs.d3.ExpireStationMessages()
-	fs.d3.ExpireAlarms()
-	fs.d3.DBStatus()
-
 	log.Println("Resuming realtime message processing")
 
 	fs.d3.SetStatus("Normal", "green")
@@ -101,11 +89,7 @@ func (fs *FeedStatus) cleanup() {
 
 func (fs *FeedStatus) resolveFiles(latestTsTime time.Time, dirname string, con *ftp.ServerConn, origFiles []logEntry) ([]logEntry, error) {
 	// The latest time we imported a file for this directory
-	var latestTime time.Time
-	err := fs.d3.GetMeta(dirname, &latestTime)
-	if err != nil {
-		return origFiles, err
-	}
+	latestTime := fs.d3.GetTimeMeta(dirname)
 
 	// Use latestTsTime if newer
 	if !latestTsTime.IsZero() && latestTsTime.After(latestTime) {
@@ -188,42 +172,37 @@ func (fs *FeedStatus) importLogEntry(entry logEntry) error {
 	}
 
 	log.Println("Importing", entry.path)
-	err = fs.d3.BulkUpdate(func(tx *bolt.Tx) error {
-		for il.hasToken {
-			for il.next() {
-				ln := il.scanner.Bytes()
-				err = il.scanner.Err()
+	for il.hasToken {
+		for il.next() {
+			ln := il.scanner.Bytes()
+			err = il.scanner.Err()
+			if err != nil {
+				return err
+			}
+
+			if len(ln) > 0 {
+				p := &Pport{}
+				r := bytes.NewReader(ln)
+				err := xml.NewDecoder(r).Decode(p)
 				if err != nil {
 					return err
 				}
 
-				if len(ln) > 0 {
-					p := &Pport{}
-					r := bytes.NewReader(ln)
-					err := xml.NewDecoder(r).Decode(p)
-					if err != nil {
-						return err
-					}
+				err = p.Process(fs.d3)
+				if err != nil {
+					return err
+				}
 
-					err = p.Process(fs.d3)
-					if err != nil {
-						return err
-					}
-
-					il.lc++
-					if (il.lc % 1000) == 0 {
-						log.Println("Imported", il.lc)
-					}
+				il.lc++
+				if (il.lc % 1000) == 0 {
+					log.Println("Imported", il.lc)
 				}
 			}
 		}
-
-		// Update the meta
-		return PutMeta(tx, entry.meta, entry.time)
-	})
-	if err != nil {
-		return err
 	}
+
+	// Update the meta
+	fs.d3.PutTimeMeta(entry.meta, entry.time)
 
 	log.Println("Finished importing", il.lc, "messages")
 	return nil

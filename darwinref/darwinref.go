@@ -37,7 +37,7 @@ type DarwinReference struct {
 	viaMap *ViaMap
 }
 
-// OpenDB opens a DarwinReference database.
+// Init opens a DarwinReference database.
 func (r *DarwinReference) OpenDB(dbFile string) error {
 	if r.db != nil {
 		return errors.New("DarwinReference Already attached to a Database")
@@ -63,7 +63,7 @@ func (r *DarwinReference) UseDB(db *bolt.DB) error {
 	return r.useDB(db)
 }
 
-// common to OpenDB() && UseDB()
+// common to Init() && UseDB()
 func (r *DarwinReference) useDB(db *bolt.DB) error {
 	r.db = db
 
@@ -95,11 +95,11 @@ func (r *DarwinReference) useDB(db *bolt.DB) error {
 }
 
 // Close the database.
-// If OpenDB() was used to open the db then that db is closed.
+// If Init() was used to open the db then that db is closed.
 // If UseDB() was used this simply detaches the DarwinReference from that DB. The DB is not closed()
 func (r *DarwinReference) Close() {
 
-	// Only close if we own the DB, e.g. via OpenDB()
+	// Only close if we own the DB, e.g. via Init()
 	if r.allowClose && r.db != nil {
 		r.db.Close()
 	}

@@ -10,7 +10,7 @@ import (
 
 func (d *LDB) PutSchedule(s *darwind3.Schedule) error {
 	return d.Update(func(tx *bolt.Tx) error {
-		darwind3.PutSchedule(tx, s)
+		PutSchedule(tx, s)
 		return nil
 	})
 }
@@ -18,7 +18,7 @@ func (d *LDB) PutSchedule(s *darwind3.Schedule) error {
 func (d *LDB) GetSchedule(rid string) *darwind3.Schedule {
 	var sched *darwind3.Schedule
 	_ = d.View(func(tx *bolt.Tx) error {
-		sched = darwind3.GetSchedule(tx, rid)
+		sched = GetSchedule(tx, rid)
 		return nil
 	})
 	return sched
@@ -31,8 +31,20 @@ func (d *LDB) RemoveSchedule(rid string) {
 	})
 }
 
+func DeleteSchedule(tx *bolt.Tx, rid []byte) {
+	deleteSchedule(tx.Bucket([]byte(darwind3.AssociationBucket)), rid)
+	deleteSchedule(tx.Bucket([]byte(darwind3.ScheduleBucket)), rid)
+	deleteSchedule(tx.Bucket([]byte(darwind3.TsBucket)), rid)
+}
+
+func deleteSchedule(bucket *bolt.Bucket, rid []byte) {
+	if bucket != nil {
+		_ = bucket.Delete(rid)
+	}
+}
+
 func RemoveSchedule(tx *bolt.Tx, rid []byte) {
-	darwind3.DeleteSchedule(tx, rid)
+	/*darwind3.*/ DeleteSchedule(tx, rid)
 
 	bucket := tx.Bucket([]byte(serviceBucket))
 	_ = bucket.ForEach(func(k, v []byte) error {

@@ -1,32 +1,22 @@
 package darwind3
 
-import (
-	"github.com/etcd-io/bbolt"
-)
-
 // Process inbound associations
 func (a *Association) Process(tx *Transaction) error {
-	return tx.d3.UpdateBulkAware(func(dbtx *bbolt.Tx) error {
-		return a.process(tx, dbtx)
-	})
-}
-
-func (a *Association) process(tx *Transaction, dbtx *bbolt.Tx) error {
 	a.Date = tx.pport.TS
 	a.Assoc.Times.UpdateTime()
 	a.Main.Times.UpdateTime()
 
-	err := a.Main.processSched(tx, dbtx, a)
+	err := a.Main.processSched(tx, a)
 	if err != nil {
 		return err
 	}
 
-	return a.Assoc.processSched(tx, dbtx, a)
+	return a.Assoc.processSched(tx, a)
 }
 
-func (as *AssocService) processSched(tx *Transaction, dbtx *bbolt.Tx, a *Association) error {
+func (as *AssocService) processSched(tx *Transaction, a *Association) error {
 
-	assocs := getAssociations(dbtx, as.RID)
+	assocs := tx.d3.GetAssociations(as.RID)
 	if assocs == nil {
 		assocs = &Associations{RID: as.RID}
 	}
@@ -41,10 +31,11 @@ func (as *AssocService) processSched(tx *Transaction, dbtx *bbolt.Tx, a *Associa
 	if !found {
 		assocs.Associations = append(assocs.Associations, a)
 	}
-	assocs.putAssociations(dbtx)
+	assocs.putAssociations(tx)
 
-	sched := GetSchedule(dbtx, assocs.RID)
+	sched := tx.d3.GetSchedule(assocs.RID)
 	if sched != nil {
+
 		tx.d3.UpdateAssociations(sched)
 
 		sched.Date = tx.pport.TS
