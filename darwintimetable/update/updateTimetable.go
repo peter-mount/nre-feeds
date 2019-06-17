@@ -3,10 +3,16 @@ package update
 import (
 	"compress/gzip"
 	"encoding/xml"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/etcd-io/bbolt"
 	"github.com/peter-mount/golib/kernel/logger"
 	"github.com/peter-mount/nre-feeds/darwind3"
+	"log"
 	"os"
+	"strings"
 )
 
 const (
@@ -118,4 +124,54 @@ func (d *TimetableUpdateService) uploadFile(log *logger.Logger, tid *darwind3.Ti
 		}
 	}
 	return nil
+}
+
+func (d *TimetableUpdateService) findUpdates() {
+	log.Println("Looking for updates")
+
+	config := d.config.S3
+
+	sess, err := session.NewSession(
+		&aws.Config{
+			Region: aws.String(config.Region),
+			Credentials: credentials.NewStaticCredentials(
+				config.AccessKey,
+				config.SecretKey,
+				"",
+			),
+		})
+	if err != nil {
+		log.Println("Failed to create aws session", err)
+	}
+
+	client := s3.New(sess)
+
+	input := &s3.ListObjectsInput{
+		Bucket:  aws.String(config.Bucket),
+		MaxKeys: aws.Int64(256),
+	}
+
+	objs, err := client.ListObjects(input)
+	if err != nil {
+		log.Println("Failed to find updates", err)
+	}
+
+	for _, obj := range objs.Contents {
+		if strings.Contains(*obj.Key, "v8.xml") {
+			file := *obj.Key
+			if strings.HasPrefix(file, config.Path) {
+				file = file[len(config.Path):]
+			}
+
+			id := file
+			if i := strings.Index(id, "_"); i > -1 {
+				id = id[:i]
+			}
+
+			_ = d.updateTimetable(&darwind3.TimeTableId{
+				TimeTableId: id,
+				TTFile:      file,
+			})
+		}
+	}
 }

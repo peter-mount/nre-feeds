@@ -54,6 +54,8 @@ func (a *TimetableUpdateService) Start() error {
 		if err != nil {
 			return err
 		}
+
+		go a.findUpdates()
 	}
 
 	return nil
