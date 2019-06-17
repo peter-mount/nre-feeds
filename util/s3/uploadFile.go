@@ -5,11 +5,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"log"
+	"github.com/peter-mount/golib/kernel/logger"
 	"os"
 )
 
-func (c *S3Credentials) UploadFile(file *os.File, fname string) error {
+func (c *S3Credentials) UploadFile(log *logger.Logger, file *os.File, fname string) error {
 	log.Printf("Uploading %s", file.Name())
 
 	sess, err := session.NewSession(

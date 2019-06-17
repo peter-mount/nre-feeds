@@ -2,8 +2,8 @@
 
 # Module to build & run
 #MODULE=darwinref
-#MODULE=darwintimetable
-MODULE=darwind3
+MODULE=darwintimetable
+#MODULE=darwind3
 #MODULE=ldb
 #MODULE=darwinkb
 #MODULE=darwindb
@@ -23,7 +23,14 @@ fi
 
 ARGS="$ARGS -e CACHEDIR=/database/${MODULE}"
 
+if [ ! -z "$IPP" ]
+then
+    ARGS="$ARGS -e IPP=$IPP"
+fi
+
 ARGS="$ARGS test:${MODULE}-amd64-latest"
 
+echo $ARGS
+
 ./build.sh test amd64 latest ${MODULE} &&\
-docker run $ARGS
+exec docker run $ARGS

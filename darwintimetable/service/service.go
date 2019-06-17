@@ -53,27 +53,27 @@ func (a *DarwinTimetableService) PostInit() error {
 	}
 
 	// Prune schedules at 2am
-	a.cron.AddFunc("0 0 2 * * *", func() {
+	_, _ = a.cron.AddFunc("0 0 2 * * *", func() {
 		a.timetable.PruneSchedules()
 	})
 
 	/*
-		   if a.config.Ftp.Enabled {
-		     // Scheduled updates
-	       if a.config.Ftp.schedule != "" {
-	         a.cron.AddFunc( a.config.Ftp.schedule, func () {
-		         if err := a.updater.TimetableUpdate( &a.timetable ); err != nil {
-		           log.Println( "Failed import:", err )
-		         }
-		       })
-	         log.Println( "Auto SnapshotUpdate using:", a.config.Ftp.schedule )
-		     }
+			   if a.config.Ftp.Enabled {
+			     // Scheduled updates
+		       if a.config.Ftp.schedule != "" {
+		         a.cron.AddFunc( a.config.Ftp.schedule, func () {
+			         if err := a.updater.TimetableUpdate( &a.timetable ); err != nil {
+			           log.Println( "Failed import:", err )
+			         }
+			       })
+		         log.Println( "Auto SnapshotUpdate using:", a.config.Ftp.schedule )
+			     }
 
-		     // Initial import required?
-		     if a.updater.ImportRequiredTimetable( &a.timetable ) {
-		       a.updater.TimetableUpdate( &a.timetable )
-		     }
-		   }
+			     // Initial import required?
+			     if a.updater.ImportRequiredTimetable( &a.timetable ) {
+			       a.updater.TimetableUpdate( &a.timetable )
+			     }
+			   }
 	*/
 
 	// Rest services
