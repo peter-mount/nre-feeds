@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # Module to build & run
-#MODULE=darwinref
-MODULE=darwintimetable
+MODULE=darwinref
+#MODULE=darwintimetable
 #MODULE=darwind3
 #MODULE=ldb
 #MODULE=darwinkb
@@ -34,3 +34,12 @@ echo $ARGS
 
 ./build.sh test amd64 latest ${MODULE} &&\
 exec docker run $ARGS
+
+
+
+{"Type":"timeTableUpdate","TimeTableId":{"timeTableId":"20190617020748","ttfile":"20190617020748_v8.xml.gz"}}
+
+{"Type":"timeTableUpdate","TimeTableId":{"timeTableId":"20190617020748","ttfile":"20190617020748_v7.xml.gz"}}
+
+{"Type":"timeTableUpdate","TimeTableId":{"timeTableId":"20190617020748","ttreffile":"20190615020704_ref_v3.xml.gz"}}
+
