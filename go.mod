@@ -10,7 +10,7 @@ require (
 	github.com/gorilla/handlers v1.4.0
 	github.com/jlaffaye/ftp v0.0.0-20190522102603-9284a88df536
 	github.com/lib/pq v1.1.1
-	github.com/peter-mount/filecache v0.0.0-20190610173925-76db2d37a743
+	github.com/peter-mount/filecache v0.0.0-20190830183136-89a6502bbd38
 	github.com/peter-mount/go.uuid v1.2.1-0.20180103174451-36e9d2ebbde5 // indirect
 	github.com/peter-mount/golib v0.0.0-20190617183954-4c041110b09a
 	github.com/peter-mount/goxml2json v1.1.0
