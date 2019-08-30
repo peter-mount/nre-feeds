@@ -9,6 +9,7 @@ import (
 	"github.com/peter-mount/nre-feeds/ldb"
 	"github.com/peter-mount/nre-feeds/util"
 	"sort"
+	"strconv"
 	"time"
 )
 
@@ -33,6 +34,76 @@ type stationResult struct {
 	Date time.Time `json:"date"`
 	// The URL of this departure board
 	Self string `json:"self"`
+}
+
+type boardFilter struct {
+	station    []string // List of stations tiplocs
+	length     int      // limit to this number of services if >0
+	terminated bool     // if true then don't include services terminating at this location
+}
+
+func initboardFilter(r *rest.Rest, station []string) *boardFilter {
+	bf := &boardFilter{station: station}
+
+	url := r.Request().URL
+	if url != nil {
+
+		for k, v := range url.Query() {
+			switch k {
+			case "len":
+				for _, s := range v {
+					l, err := strconv.Atoi(s)
+					if err == nil && l > 0 {
+						bf.length = l
+					}
+				}
+
+			case "term":
+				bf.terminated = false
+				if v != nil {
+					for _, e := range v {
+						if e == "false" {
+							bf.terminated = true
+						}
+					}
+				}
+
+			default:
+				// Ignore unknown parameters
+			}
+		}
+
+	}
+
+	return bf
+}
+
+func (bf *boardFilter) atStation(tpl string) bool {
+	for _, s := range bf.station {
+		if s == tpl {
+			return true
+		}
+	}
+	return false
+}
+
+func (bf *boardFilter) accept(service ldb.Service, services []ldb.Service) bool {
+	// Original requirement, must have an RID
+	if service.RID == "" {
+		return false
+	}
+
+	// limit response length
+	if bf.length > 0 && len(services) >= bf.length {
+		return false
+	}
+
+	// remove terminating services
+	if bf.terminated && bf.atStation(service.Destination) {
+		return false
+	}
+
+	return true
 }
 
 func (d *LDBService) stationHandler(r *rest.Rest) error {
@@ -82,10 +153,12 @@ func (d *LDBService) stationHandler(r *rest.Rest) error {
 			}
 		}
 
+		filter := initboardFilter(r, res.Station)
+
 		// Tiplocs within the departures
 		for _, se := range services {
 			s := d.getService(&b, se)
-			if s.RID != "" {
+			if filter.accept(s, res.Services) {
 				res.Services = append(res.Services, s)
 
 				if len(s.CallingPoints) > 0 {
