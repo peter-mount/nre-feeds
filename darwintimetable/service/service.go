@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/gorilla/handlers"
 	"github.com/peter-mount/golib/kernel"
 	"github.com/peter-mount/golib/kernel/cron"
 	"github.com/peter-mount/golib/rest"
@@ -75,6 +76,9 @@ func (a *DarwinTimetableService) PostInit() error {
 			     }
 			   }
 	*/
+
+	// nre-feeds#24 Add compression to output
+	a.restService.Use(handlers.CompressHandler)
 
 	// Rest services
 	a.restService.Handle("/journey/{rid}", a.JourneyHandler).Methods("GET")

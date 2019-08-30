@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/gorilla/handlers"
 	"github.com/peter-mount/golib/kernel"
 	"github.com/peter-mount/golib/kernel/cron"
 	"github.com/peter-mount/golib/rest"
@@ -52,6 +53,9 @@ func (a *DarwinRefService) PostInit() error {
 	if err := a.reference.OpenDB(a.config.Database.Reference); err != nil {
 		return err
 	}
+
+	// nre-feeds#24 Add compression to output
+	a.restService.Use(handlers.CompressHandler)
 
 	// Rest services
 

@@ -7,6 +7,7 @@ require (
 	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/etcd-io/bbolt v1.3.3
+	github.com/gorilla/handlers v1.4.0
 	github.com/jlaffaye/ftp v0.0.0-20190522102603-9284a88df536
 	github.com/lib/pq v1.1.1
 	github.com/peter-mount/filecache v0.0.0-20190610173925-76db2d37a743

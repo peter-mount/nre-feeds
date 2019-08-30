@@ -1,6 +1,7 @@
 package service
 
 import (
+  "github.com/gorilla/handlers"
 	"github.com/peter-mount/filecache"
 	fcsve "github.com/peter-mount/filecache/service"
 	"github.com/peter-mount/golib/kernel"
@@ -65,6 +66,9 @@ func (a *DarwinD3Service) PostInit() error {
 		// Allow D3 to resolve schedules from the timetable
 		a.darwind3.Timetable = a.config.Services.Timetable
 	}
+
+  // nre-feeds#24 Add compression to output
+  a.restService.Use(handlers.CompressHandler)
 
 	// Rest services
 	a.restService.Handle("/alarm/{rid}", a.AlarmHandler).Methods("GET")

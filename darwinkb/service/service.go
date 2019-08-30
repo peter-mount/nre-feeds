@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/gorilla/handlers"
 	"github.com/peter-mount/golib/kernel"
 	"github.com/peter-mount/golib/rest"
 	"github.com/peter-mount/nre-feeds/bin"
@@ -44,6 +45,9 @@ func (a *DarwinKBService) Init(k *kernel.Kernel) error {
 }
 
 func (a *DarwinKBService) Start() error {
+
+	// nre-feeds#24 Add compression to output
+	a.restService.Use(handlers.CompressHandler)
 
 	a.restService.Handle("/companies", a.CompaniesHandler).Methods("GET")
 	a.restService.Handle("/company/{id}", a.CompanyHandler).Methods("GET")

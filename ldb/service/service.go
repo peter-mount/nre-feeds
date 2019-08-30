@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/gorilla/handlers"
 	"github.com/peter-mount/golib/kernel"
 	"github.com/peter-mount/golib/kernel/cron"
 	"github.com/peter-mount/golib/rest"
@@ -47,6 +48,10 @@ func (a *LDBService) Init(k *kernel.Kernel) error {
 func (a *LDBService) PostInit() error {
 	a.ldb.Darwin = a.config.Services.DarwinD3
 	a.ldb.Reference = a.config.Services.Reference
+
+	// nre-feeds#24 Add compression to output
+	a.restService.Use(handlers.CompressHandler)
+
 
 	// Rest services
 	a.restService.Handle("/boards/{crs}", a.stationHandler).Methods("GET")
