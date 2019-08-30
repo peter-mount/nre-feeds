@@ -15,7 +15,7 @@ type serviceResult struct {
 	// Origin
 	Origin *darwind3.Location `json:"origin"`
 	// Destination
-	Destination *darwind3.Location `json:"destination"`
+  Destination *darwind3.Location `json:"callAt"`
 	// The service
 	Service *darwind3.Schedule `json:"service"`
 	// Map of Tiploc's
@@ -61,7 +61,7 @@ func (d *LDBService) serviceHandler(r *rest.Rest) error {
 		Self:    r.Self("/service/" + rid),
 	}
 
-	// resolve the origin & destination
+  // resolve the origin & callAt
 	if service.Origin != nil {
 		res.Origin = service.Origin
 	}
@@ -70,7 +70,7 @@ func (d *LDBService) serviceHandler(r *rest.Rest) error {
 	}
 
 	if res.Origin == nil || res.Destination == nil {
-		// Just incase, if we don't have an origin/destination then use the first & last locations in the schedule
+    // Just incase, if we don't have an origin/callAt then use the first & last locations in the schedule
 		if len(service.Locations) > 0 {
 			if res.Origin == nil {
 				res.Origin = service.Locations[0]
