@@ -113,14 +113,15 @@ func (bf *boardFilter) callsAt(callingPoints []darwind3.CallingPoint, tpls []str
   return false
 }
 
-func (bf *boardFilter) accept(service ldb.Service, services []ldb.Service) bool {
+// isResponseLengthValid returns true if the len= is set and we have not yet hit that limit
+func (bf *boardFilter) isResponseLengthValid(services []ldb.Service) bool {
+  return bf.length < 1 || len(services) < bf.length
+}
+
+// acceptService returns true if the service is to be accepted, false if it's to be ignored
+func (bf *boardFilter) acceptService(service ldb.Service, services []ldb.Service) bool {
   // Original requirement, must have an RID
   if service.RID == "" {
-    return false
-  }
-
-  // limit response length
-  if bf.length > 0 && len(services) >= bf.length {
     return false
   }
 
@@ -187,115 +188,121 @@ func (d *LDBService) stationHandler(r *rest.Rest) error {
 
     // Tiplocs within the departures
     for _, se := range services {
-      s := d.getService(&b, se)
-      if filter.accept(s, res.Services) {
-        res.Services = append(res.Services, s)
+      // limit response length. Do this here so we limit calls to getService if we have hit the len limit
+      if filter.isResponseLengthValid(res.Services) {
 
-        if len(s.CallingPoints) > 0 {
-          viaRequest := &darwinref.ViaResolveRequest{
-            Crs:         station.Crs,
-            Destination: s.CallingPoints[len(s.CallingPoints)-1].Tiploc,
-          }
-          b.vias[s.RID] = viaRequest
+        // Resolve the service
+        s := d.getService(&b, se)
 
-          for _, cp := range s.CallingPoints {
-            b.tiplocs[cp.Tiploc] = nil
-            viaRequest.Tiplocs = append(viaRequest.Tiplocs, cp.Tiploc)
-          }
-        }
+        if filter.acceptService(s, res.Services) {
+          res.Services = append(res.Services, s)
 
-        // The association tiplocs
-        for _, assoc := range s.Associations {
-          assoc.AddTiplocs(b.tiplocs)
+          if len(s.CallingPoints) > 0 {
+            viaRequest := &darwinref.ViaResolveRequest{
+              Crs:         station.Crs,
+              Destination: s.CallingPoints[len(s.CallingPoints)-1].Tiploc,
+            }
+            b.vias[s.RID] = viaRequest
 
-          //if assoc.IsJoin() || assoc.IsSplit() {
-          ar := assoc.Main.RID
-          ai := assoc.Main.LocInd
-          if ar == s.RID {
-            ar = assoc.Assoc.RID
-            ai = assoc.Assoc.LocInd
-          }
-
-          // Resolve the schedule if a split, join or if NP only if previous service & we are not yet running
-          //if ar != s.RID {
-          if assoc.Category != "NP" || (s.LastReport.Tiploc == "" && assoc.Assoc.RID == s.RID) {
-            as := d.ldb.GetSchedule(ar)
-            if as != nil {
-              assoc.Schedule = as
-              as.AddTiplocs(b.tiplocs)
-
-              as.LastReport = as.GetLastReport()
-
-              refClient.AddToc(res.Tocs, as.Toc)
-
-              if ai < (len(as.Locations) - 1) {
-                viaRequest := &darwinref.ViaResolveRequest{
-                  Crs:         station.Crs,
-                  Destination: as.Locations[len(as.Locations)-1].Tiploc,
-                }
-                b.vias[ar] = viaRequest
-
-                for _, l := range as.Locations[ai:] {
-                  b.tiplocs[l.Tiploc] = nil
-                  viaRequest.Tiplocs = append(viaRequest.Tiplocs, l.Tiploc)
-                }
-              }
-
-              // Cancellation reason
-              if as.CancelReason.Reason > 0 {
-                if reason, _ := refClient.GetCancelledReason(as.CancelReason.Reason); reason != nil {
-                  res.Reasons.AddReason(reason)
-                }
-
-                if as.CancelReason.Tiploc != "" {
-                  b.tiplocs[as.CancelReason.Tiploc] = nil
-                }
-              }
-
-              // Late reason
-              if as.LateReason.Reason > 0 {
-                if reason, _ := refClient.GetLateReason(as.LateReason.Reason); reason != nil {
-                  res.Reasons.AddReason(reason)
-                }
-
-                if as.LateReason.Tiploc != "" {
-                  b.tiplocs[as.LateReason.Tiploc] = nil
-                }
-              }
-
+            for _, cp := range s.CallingPoints {
+              b.tiplocs[cp.Tiploc] = nil
+              viaRequest.Tiplocs = append(viaRequest.Tiplocs, cp.Tiploc)
             }
           }
 
+          // The association tiplocs
+          for _, assoc := range s.Associations {
+            assoc.AddTiplocs(b.tiplocs)
+
+            //if assoc.IsJoin() || assoc.IsSplit() {
+            ar := assoc.Main.RID
+            ai := assoc.Main.LocInd
+            if ar == s.RID {
+              ar = assoc.Assoc.RID
+              ai = assoc.Assoc.LocInd
+            }
+
+            // Resolve the schedule if a split, join or if NP only if previous service & we are not yet running
+            //if ar != s.RID {
+            if assoc.Category != "NP" || (s.LastReport.Tiploc == "" && assoc.Assoc.RID == s.RID) {
+              as := d.ldb.GetSchedule(ar)
+              if as != nil {
+                assoc.Schedule = as
+                as.AddTiplocs(b.tiplocs)
+
+                as.LastReport = as.GetLastReport()
+
+                refClient.AddToc(res.Tocs, as.Toc)
+
+                if ai < (len(as.Locations) - 1) {
+                  viaRequest := &darwinref.ViaResolveRequest{
+                    Crs:         station.Crs,
+                    Destination: as.Locations[len(as.Locations)-1].Tiploc,
+                  }
+                  b.vias[ar] = viaRequest
+
+                  for _, l := range as.Locations[ai:] {
+                    b.tiplocs[l.Tiploc] = nil
+                    viaRequest.Tiplocs = append(viaRequest.Tiplocs, l.Tiploc)
+                  }
+                }
+
+                // Cancellation reason
+                if as.CancelReason.Reason > 0 {
+                  if reason, _ := refClient.GetCancelledReason(as.CancelReason.Reason); reason != nil {
+                    res.Reasons.AddReason(reason)
+                  }
+
+                  if as.CancelReason.Tiploc != "" {
+                    b.tiplocs[as.CancelReason.Tiploc] = nil
+                  }
+                }
+
+                // Late reason
+                if as.LateReason.Reason > 0 {
+                  if reason, _ := refClient.GetLateReason(as.LateReason.Reason); reason != nil {
+                    res.Reasons.AddReason(reason)
+                  }
+
+                  if as.LateReason.Tiploc != "" {
+                    b.tiplocs[as.LateReason.Tiploc] = nil
+                  }
+                }
+
+              }
+            }
+
+          }
+
+          // Toc running this service
+          refClient.AddToc(res.Tocs, s.Toc)
+
+          // Cancellation reason
+          if s.CancelReason.Reason > 0 {
+            if reason, _ := refClient.GetCancelledReason(s.CancelReason.Reason); reason != nil {
+              res.Reasons.AddReason(reason)
+            }
+
+            if s.CancelReason.Tiploc != "" {
+              b.tiplocs[s.CancelReason.Tiploc] = nil
+            }
+          }
+
+          // Late reason
+          if s.LateReason.Reason > 0 {
+            if reason, _ := refClient.GetLateReason(s.LateReason.Reason); reason != nil {
+              res.Reasons.AddReason(reason)
+            }
+
+            if s.LateReason.Tiploc != "" {
+              b.tiplocs[s.LateReason.Tiploc] = nil
+            }
+          }
+
+          // Set self to point to our service endpoint
+          s.Self = r.Self("/service/" + s.RID)
         }
-
-        // Toc running this service
-        refClient.AddToc(res.Tocs, s.Toc)
-
-        // Cancellation reason
-        if s.CancelReason.Reason > 0 {
-          if reason, _ := refClient.GetCancelledReason(s.CancelReason.Reason); reason != nil {
-            res.Reasons.AddReason(reason)
-          }
-
-          if s.CancelReason.Tiploc != "" {
-            b.tiplocs[s.CancelReason.Tiploc] = nil
-          }
-        }
-
-        // Late reason
-        if s.LateReason.Reason > 0 {
-          if reason, _ := refClient.GetLateReason(s.LateReason.Reason); reason != nil {
-            res.Reasons.AddReason(reason)
-          }
-
-          if s.LateReason.Tiploc != "" {
-            b.tiplocs[s.LateReason.Tiploc] = nil
-          }
-        }
-
-        // Set self to point to our service endpoint
-        s.Self = r.Self("/service/" + s.RID)
-      }
+      } // if length
     }
 
     // Now resolve the tiplocs en-masse and resolve the toc's at the same time

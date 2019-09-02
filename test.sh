@@ -1,10 +1,10 @@
 #!/bin/sh
 
 # Module to build & run
-MODULE=darwinref
+#MODULE=darwinref
 #MODULE=darwintimetable
 #MODULE=darwind3
-#MODULE=ldb
+MODULE=ldb
 #MODULE=darwinkb
 #MODULE=darwindb
 

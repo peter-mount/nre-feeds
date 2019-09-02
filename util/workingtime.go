@@ -193,3 +193,10 @@ func (wt WorkingTime) IsApproaching() bool {
 	t := wt.Time(now)
 	return t.After(lm) && !t.After(now)
 }
+
+// Difference returns the difference between two WorkingTimes in seconds.
+// A positive value indicates that this WorkingTime is after the parameter.
+// A negative value inidcates that this WorkingTime is before the parameter.
+func (wt WorkingTime) Difference(ot WorkingTime) int {
+	return wt.t - ot.t
+}
