@@ -64,3 +64,21 @@ func (wt *WorkingTime) TrainTime(t time.Time) time.Time {
 	}
 	return r
 }
+
+// Compare a time.Time against another, accounting for crossing midnight.
+// The rules for handling crossing midnight are:
+// < -6 hours = crossed midnight
+// < 0 back in time
+// < 18 hours increasing time
+// > 18 hours back in time & crossing midnight
+func CompareTime(a, b time.Time) bool {
+	at := (((a.Hour() * 60) + a.Minute()) * 60) + a.Second()
+	bt := (((b.Hour() * 60) + b.Minute()) * 60) + b.Second()
+	d := at - bt
+
+	if d < -21600 || d > 64800 {
+		return at > bt
+	}
+
+	return at < bt
+}

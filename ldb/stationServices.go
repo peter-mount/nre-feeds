@@ -5,6 +5,7 @@ import (
 	"github.com/etcd-io/bbolt"
 	"github.com/peter-mount/nre-feeds/darwind3"
 	"github.com/peter-mount/nre-feeds/util"
+	"sort"
 	"time"
 )
 
@@ -119,29 +120,25 @@ func (s *Station) getServices(tx *bbolt.Tx, from *util.WorkingTime, to *util.Wor
 			if t != nil && t.Between(from, to) {
 				services = getServices(v, services)
 			}
-
-			// Limit returned size for large stations, e.g. LBG can hit over 100
-			if len(services) > 60 {
-				return services
-			}
 		}
 
 		// No services then get the next few - needed for small stations with few services
 		if len(services) == 0 {
-			for k, v := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, v = c.Next() {
+			for k, v := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix) && len(services) < 10; k, v = c.Next() {
 				t := getServiceTime(k)
 				if t != nil && t.After(from) {
 					services = getServices(v, services)
-				}
-
-				// Limit to 10 but usually it's lower anyhow
-				if len(services) > 10 {
-					return services
 				}
 			}
 		}
 
 	}
+
+	// Sort the services by time, accounting for midnight.
+	// This is needed else we can have services become lost when we truncate results
+	sort.SliceStable(services, func(i, j int) bool {
+		return util.CompareTime(services[i].Date, services[j].Date)
+	})
 
 	return services
 }

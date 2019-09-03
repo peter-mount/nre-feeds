@@ -56,7 +56,7 @@ func (d *LDBService) initboardFilter(r *rest.Rest, station []string) *boardFilte
       case "len":
         for _, s := range v {
           l, err := strconv.Atoi(s)
-          if err == nil && l > 0 {
+          if err == nil && l >= 0 {
             bf.length = l
           }
         }
