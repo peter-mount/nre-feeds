@@ -8,7 +8,7 @@ import (
   refclient "github.com/peter-mount/nre-feeds/darwinref/client"
   "github.com/peter-mount/nre-feeds/ldb"
   "github.com/peter-mount/nre-feeds/util"
-  "sort"
+  "log"
   "strconv"
   "time"
 )
@@ -149,8 +149,8 @@ func (bf *boardFilter) callsAt(callingPoints []darwind3.CallingPoint, tpls []str
 }
 
 // isResponseLengthValid returns true if the len= is set and we have not yet hit that limit
-func (bf *boardFilter) isResponseLengthValid(services []ldb.Service) bool {
-  return bf.length < 1 || len(services) < bf.length
+func (bf *boardFilter) isResponseLengthValid() bool {
+  return bf.length < 1 || len(bf.res.Services) < bf.length
 }
 
 // Add a tiploc to the result so that it will be included in the tiploc map
@@ -263,27 +263,24 @@ func (bf *boardFilter) resolve() {
       bf.res.Via = vias
     }
   }
-
-  // sort into time order
-  sort.SliceStable(bf.res.Services, func(i, j int) bool {
-    return bf.res.Services[i].Location.Compare(&bf.res.Services[j].Location)
-  })
-
 }
 
 // acceptService returns true if the service is to be accepted, false if it's to be ignored
 func (bf *boardFilter) acceptService(service ldb.Service) bool {
   // Original requirement, must have an RID
   if service.RID == "" {
+    log.Println("no RID")
     return false
   }
 
   // remove terminating services
   if bf.terminated && bf.atStation(service.Destination) {
+    log.Printf("%s terminated", service.RID)
     return false
   }
 
   if bf.callAt && !bf.callsAt(service.CallingPoints, bf.callAtTiplocs) {
+    log.Printf("%s not callAt", service.RID)
     return false
   }
 
@@ -343,7 +340,7 @@ func (d *LDBService) stationHandler(r *rest.Rest) error {
 
     for _, se := range filter.services {
       // limit response length. Do this here so we limit calls to getService if we have hit the len limit
-      if filter.isResponseLengthValid(filter.res.Services) {
+      if filter.isResponseLengthValid() {
 
         // Resolve the service
         s := filter.getService(se)
@@ -360,7 +357,7 @@ func (d *LDBService) stationHandler(r *rest.Rest) error {
           // Set self to point to our service endpoint
           s.Self = r.Self("/service/" + s.RID)
         }
-      } // if length
+      }
     }
 
     filter.resolve()
