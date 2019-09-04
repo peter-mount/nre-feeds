@@ -36,17 +36,50 @@ type stationResult struct {
   Self string `json:"self"`
 }
 
+// boardFilter handles an individual request
 type boardFilter struct {
-  station       []string // List of stations tiplocs
-  length        int      // limit to this number of services if >0
-  terminated    bool     // if true then don't include services terminating at this location
-  callAt        bool     // If present then filter services that only arrive at a specific station
-  callAtTiplocs []string // tiplocs to filter when callAt is true
+  d             *LDBService
+  length        int                                     // limit to this number of services if >0
+  terminated    bool                                    // if true then don't include services terminating at this location
+  callAt        bool                                    // If present then filter services that only arrive at a specific station
+  callAtTiplocs []string                                // tiplocs to filter when callAt is true
+  d3Client      *d3client.DarwinD3Client                // client to d3 service
+  refClient     *refclient.DarwinRefClient              // client to ref service
+  station       *ldb.Station                            // The station details
+  services      []ldb.ServiceEntry                      // The available services
+  res           *stationResult                          // The final result
+  tiplocs       map[string]interface{}                  // tiplocs in the response
+  vias          map[string]*darwinref.ViaResolveRequest // vias
+  now           time.Time                               // The time the request was made
 }
 
-func (d *LDBService) initboardFilter(r *rest.Rest, station []string) *boardFilter {
-  bf := &boardFilter{station: station}
+func (d *LDBService) createBoardFilter(r *rest.Rest, crs string, station *ldb.Station) *boardFilter {
+  d3Client := &d3client.DarwinD3Client{Url: d.ldb.Darwin}
+  refClient := &refclient.DarwinRefClient{Url: d.ldb.Reference}
 
+  location, _ := time.LoadLocation("Europe/London")
+  now := time.Now().In(location)
+
+  bf := &boardFilter{
+    d:         d,
+    d3Client:  d3Client,
+    refClient: refClient,
+    now:       now,
+    station:   station,
+    tiplocs:   make(map[string]interface{}),
+    vias:      make(map[string]*darwinref.ViaResolveRequest),
+    res: &stationResult{
+      Crs:      crs,
+      Tiplocs:  darwinref.NewLocationMap(),
+      Tocs:     darwinref.NewTocMap(),
+      Messages: station.GetMessages(d3Client),
+      Reasons:  darwinref.NewReasonMap(),
+      Date:     now,
+      Self:     r.Self("/boards/" + crs),
+    },
+  }
+
+  // Parse the query parameters. Don't use gorillamux to do this as they are optional
   url := r.Request().URL
   if url != nil {
 
@@ -92,8 +125,9 @@ func (d *LDBService) initboardFilter(r *rest.Rest, station []string) *boardFilte
   return bf
 }
 
+// Is the tiploc one for this station
 func (bf *boardFilter) atStation(tpl string) bool {
-  for _, s := range bf.station {
+  for _, s := range bf.res.Station {
     if s == tpl {
       return true
     }
@@ -101,6 +135,7 @@ func (bf *boardFilter) atStation(tpl string) bool {
   return false
 }
 
+// Does the service call at a specific station
 func (bf *boardFilter) callsAt(callingPoints []darwind3.CallingPoint, tpls []string) bool {
   for _, cp := range callingPoints {
     for _, tpl := range tpls {
@@ -118,8 +153,126 @@ func (bf *boardFilter) isResponseLengthValid(services []ldb.Service) bool {
   return bf.length < 1 || len(services) < bf.length
 }
 
+// Add a tiploc to the result so that it will be included in the tiploc map
+func (bf *boardFilter) addTiploc(tiploc string) {
+  if tiploc != "" {
+    bf.tiplocs[tiploc] = nil
+  }
+}
+
+// Add a ViaResolveRequest to the response
+func (bf *boardFilter) addVia(rid, dest string) *darwinref.ViaResolveRequest {
+  viaRequest := &darwinref.ViaResolveRequest{
+    Crs:         bf.station.Crs,
+    Destination: dest,
+  }
+  bf.vias[rid] = viaRequest
+  return viaRequest
+}
+
+// Process calling points so that we generate the appropriate via and include their tiplocs
+func (bf *boardFilter) processCallingPoints(s ldb.Service) {
+  if len(s.CallingPoints) > 0 {
+    viaRequest := bf.addVia(s.RID, s.CallingPoints[len(s.CallingPoints)-1].Tiploc)
+
+    for _, cp := range s.CallingPoints {
+      bf.addTiploc(cp.Tiploc)
+      viaRequest.AppendTiploc(cp.Tiploc)
+    }
+  }
+}
+
+// Process any associations, pulling in their schedules
+func (bf *boardFilter) processAssociations(s ldb.Service) {
+  for _, assoc := range s.Associations {
+    assoc.AddTiplocs(bf.tiplocs)
+
+    //if assoc.IsJoin() || assoc.IsSplit() {
+    ar := assoc.Main.RID
+    ai := assoc.Main.LocInd
+    if ar == s.RID {
+      ar = assoc.Assoc.RID
+      ai = assoc.Assoc.LocInd
+    }
+
+    // Resolve the schedule if a split, join or if NP only if previous service & we are not yet running
+    //if ar != s.RID {
+    if assoc.Category != "NP" || (s.LastReport.Tiploc == "" && assoc.Assoc.RID == s.RID) {
+      as := bf.d.ldb.GetSchedule(ar)
+      if as != nil {
+        assoc.Schedule = as
+        as.AddTiplocs(bf.tiplocs)
+
+        as.LastReport = as.GetLastReport()
+
+        bf.processToc(as.Toc)
+
+        if ai < (len(as.Locations) - 1) {
+          if as.Origin != nil {
+            bf.addTiploc(as.Destination.Tiploc)
+          }
+
+          destination := as.Locations[len(as.Locations)-1].Tiploc
+          if as.Destination != nil {
+            destination = as.Destination.Tiploc
+          }
+          viaRequest := bf.addVia(ar, destination)
+
+          for _, l := range as.Locations[ai:] {
+            bf.addTiploc(l.Tiploc)
+            viaRequest.AppendTiploc(l.Tiploc)
+          }
+        }
+
+        bf.processReason(as.CancelReason)
+        bf.processReason(as.LateReason)
+
+      }
+    }
+
+  }
+}
+
+func (bf *boardFilter) processToc(toc string) {
+  bf.refClient.AddToc(bf.res.Tocs, toc)
+}
+
+func (bf *boardFilter) processReason(r darwind3.DisruptionReason) {
+  if r.Reason > 0 {
+    if reason, _ := bf.refClient.GetCancelledReason(r.Reason); reason != nil {
+      bf.res.Reasons.AddReason(reason)
+    }
+
+    bf.addTiploc(r.Tiploc)
+  }
+}
+
+func (bf *boardFilter) resolve() {
+  // Now resolve the tiplocs en-masse and resolve the toc's at the same time
+  if locs, _ := bf.refClient.GetTiplocsMapKeys(bf.tiplocs); locs != nil {
+    bf.res.Tiplocs.AddAll(locs)
+
+    for _, l := range locs {
+      bf.refClient.AddToc(bf.res.Tocs, l.Toc)
+    }
+  }
+
+  // Resolve via texts
+  if len(bf.vias) > 0 {
+    if vias, _ := bf.refClient.GetVias(bf.vias); vias != nil {
+      bf.res.Via = vias
+    }
+  }
+
+  // sort into time order
+  sort.SliceStable(bf.res.Services, func(i, j int) bool {
+    return bf.res.Services[i].Location.Compare(&bf.res.Services[j].Location)
+  })
+
+}
+
 // acceptService returns true if the service is to be accepted, false if it's to be ignored
-func (bf *boardFilter) acceptService(service ldb.Service, services []ldb.Service) bool {
+func (bf *boardFilter) acceptService(service ldb.Service) bool {
   // Original requirement, must have an RID
   if service.RID == "" {
     return false
@@ -137,210 +290,8 @@ func (bf *boardFilter) acceptService(service ldb.Service, services []ldb.Service
   return true
 }
 
-func (d *LDBService) stationHandler(r *rest.Rest) error {
-
-  crs := r.Var("crs")
-
-  station := d.ldb.GetStationCrs(crs)
-
-  if station == nil {
-    r.Status(404)
-  } else {
-
-    d3Client := &d3client.DarwinD3Client{Url: d.ldb.Darwin}
-    refClient := &refclient.DarwinRefClient{Url: d.ldb.Reference}
-
-    // We want everything for the next hour
-    location, _ := time.LoadLocation("Europe/London")
-    now := time.Now().In(location)
-    from := util.WorkingTime_FromTime(now)
-    to := util.WorkingTime_FromTime(now.Add(time.Hour))
-
-    services := d.ldb.GetServices(station, from, to)
-
-    res := &stationResult{
-      Crs:      crs,
-      Tiplocs:  darwinref.NewLocationMap(),
-      Tocs:     darwinref.NewTocMap(),
-      Messages: station.GetMessages(d3Client),
-      Reasons:  darwinref.NewReasonMap(),
-      Date:     now,
-      Self:     r.Self("/boards/" + crs),
-    }
-
-    b := stationBuilder{
-      // Set of tiplocs
-      tiplocs: make(map[string]interface{}),
-
-      // Map of via texts
-      vias: make(map[string]*darwinref.ViaResolveRequest),
-    }
-
-    // Station details
-    if sl, _ := refClient.GetCrs(crs); sl != nil {
-      for _, l := range sl.Tiploc {
-        res.Station = append(res.Station, l.Tiploc)
-        b.tiplocs[l.Tiploc] = nil
-      }
-    }
-
-    filter := d.initboardFilter(r, res.Station)
-
-    // Tiplocs within the departures
-    for _, se := range services {
-      // limit response length. Do this here so we limit calls to getService if we have hit the len limit
-      if filter.isResponseLengthValid(res.Services) {
-
-        // Resolve the service
-        s := d.getService(&b, se)
-
-        if filter.acceptService(s, res.Services) {
-          res.Services = append(res.Services, s)
-
-          if len(s.CallingPoints) > 0 {
-            viaRequest := &darwinref.ViaResolveRequest{
-              Crs:         station.Crs,
-              Destination: s.CallingPoints[len(s.CallingPoints)-1].Tiploc,
-            }
-            b.vias[s.RID] = viaRequest
-
-            for _, cp := range s.CallingPoints {
-              b.tiplocs[cp.Tiploc] = nil
-              viaRequest.Tiplocs = append(viaRequest.Tiplocs, cp.Tiploc)
-            }
-          }
-
-          // The association tiplocs
-          for _, assoc := range s.Associations {
-            assoc.AddTiplocs(b.tiplocs)
-
-            //if assoc.IsJoin() || assoc.IsSplit() {
-            ar := assoc.Main.RID
-            ai := assoc.Main.LocInd
-            if ar == s.RID {
-              ar = assoc.Assoc.RID
-              ai = assoc.Assoc.LocInd
-            }
-
-            // Resolve the schedule if a split, join or if NP only if previous service & we are not yet running
-            //if ar != s.RID {
-            if assoc.Category != "NP" || (s.LastReport.Tiploc == "" && assoc.Assoc.RID == s.RID) {
-              as := d.ldb.GetSchedule(ar)
-              if as != nil {
-                assoc.Schedule = as
-                as.AddTiplocs(b.tiplocs)
-
-                as.LastReport = as.GetLastReport()
-
-                refClient.AddToc(res.Tocs, as.Toc)
-
-                if ai < (len(as.Locations) - 1) {
-                  viaRequest := &darwinref.ViaResolveRequest{
-                    Crs:         station.Crs,
-                    Destination: as.Locations[len(as.Locations)-1].Tiploc,
-                  }
-                  b.vias[ar] = viaRequest
-
-                  for _, l := range as.Locations[ai:] {
-                    b.tiplocs[l.Tiploc] = nil
-                    viaRequest.Tiplocs = append(viaRequest.Tiplocs, l.Tiploc)
-                  }
-                }
-
-                // Cancellation reason
-                if as.CancelReason.Reason > 0 {
-                  if reason, _ := refClient.GetCancelledReason(as.CancelReason.Reason); reason != nil {
-                    res.Reasons.AddReason(reason)
-                  }
-
-                  if as.CancelReason.Tiploc != "" {
-                    b.tiplocs[as.CancelReason.Tiploc] = nil
-                  }
-                }
-
-                // Late reason
-                if as.LateReason.Reason > 0 {
-                  if reason, _ := refClient.GetLateReason(as.LateReason.Reason); reason != nil {
-                    res.Reasons.AddReason(reason)
-                  }
-
-                  if as.LateReason.Tiploc != "" {
-                    b.tiplocs[as.LateReason.Tiploc] = nil
-                  }
-                }
-
-              }
-            }
-
-          }
-
-          // Toc running this service
-          refClient.AddToc(res.Tocs, s.Toc)
-
-          // Cancellation reason
-          if s.CancelReason.Reason > 0 {
-            if reason, _ := refClient.GetCancelledReason(s.CancelReason.Reason); reason != nil {
-              res.Reasons.AddReason(reason)
-            }
-
-            if s.CancelReason.Tiploc != "" {
-              b.tiplocs[s.CancelReason.Tiploc] = nil
-            }
-          }
-
-          // Late reason
-          if s.LateReason.Reason > 0 {
-            if reason, _ := refClient.GetLateReason(s.LateReason.Reason); reason != nil {
-              res.Reasons.AddReason(reason)
-            }
-
-            if s.LateReason.Tiploc != "" {
-              b.tiplocs[s.LateReason.Tiploc] = nil
-            }
-          }
-
-          // Set self to point to our service endpoint
-          s.Self = r.Self("/service/" + s.RID)
-        }
-      } // if length
-    }
-
-    // Now resolve the tiplocs en-masse and resolve the toc's at the same time
-    if locs, _ := refClient.GetTiplocsMapKeys(b.tiplocs); locs != nil {
-      res.Tiplocs.AddAll(locs)
-
-      for _, l := range locs {
-        refClient.AddToc(res.Tocs, l.Toc)
-      }
-    }
-
-    // Resolve via texts
-    if len(b.vias) > 0 {
-      if vias, _ := refClient.GetVias(b.vias); vias != nil {
-        res.Via = vias
-      }
-    }
-
-    // sort into time order
-    sort.SliceStable(res.Services, func(i, j int) bool {
-      return res.Services[i].Location.Compare(&res.Services[j].Location)
-    })
-
-    r.Status(200).
-      JSON().
-      Value(res)
-  }
-
-  return nil
-}
-
-type stationBuilder struct {
-  tiplocs map[string]interface{}
-  vias    map[string]*darwinref.ViaResolveRequest
-}
-
-func (d *LDBService) getService(b *stationBuilder, se ldb.ServiceEntry) ldb.Service {
-  sched := d.ldb.GetSchedule(se.RID)
+func (bf *boardFilter) getService(se ldb.ServiceEntry) ldb.Service {
+  sched := bf.d.ldb.GetSchedule(se.RID)
   if sched == nil {
     return ldb.Service{}
   }
@@ -350,29 +301,74 @@ func (d *LDBService) getService(b *stationBuilder, se ldb.ServiceEntry) ldb.Serv
     return ldb.Service{}
   }
 
-  // Destination & location tiplocs
-  b.tiplocs[s.Destination] = nil
-  b.tiplocs[s.Location.Tiploc] = nil
-
-  // The origin Location
-  if s.Origin.Tiploc != "" {
-    b.tiplocs[s.Origin.Tiploc] = nil
-  }
-
-  // The callAt Location
-  if s.Dest.Tiploc != "" {
-    b.tiplocs[s.Dest.Tiploc] = nil
-  }
-
-  // Add CallingPoints tiplocs to map & via request
   s.Associations = sched.Associations
 
   s.CallingPoints = sched.GetCallingPoints(s.LocationIndex)
 
   s.LastReport = sched.GetLastReport()
-  if s.LastReport.Tiploc != "" {
-    b.tiplocs[s.LastReport.Tiploc] = nil
-  }
+
+  bf.addTiploc(s.Dest.Tiploc)
+  bf.addTiploc(s.Destination)
+  bf.addTiploc(s.LastReport.Tiploc)
+  bf.addTiploc(s.Location.Tiploc)
+  bf.addTiploc(s.Origin.Tiploc)
+  bf.addTiploc(s.Terminates.Tiploc)
 
   return s
+}
+
+func (d *LDBService) stationHandler(r *rest.Rest) error {
+
+  crs := r.Var("crs")
+
+  station := d.ldb.GetStationCrs(crs)
+
+  if station == nil {
+    r.Status(404)
+  } else {
+    filter := d.createBoardFilter(r, crs, station)
+
+    // The services
+    from := util.WorkingTime_FromTime(filter.now)
+    to := util.WorkingTime_FromTime(filter.now.Add(time.Hour))
+    filter.services = d.ldb.GetServices(station, from, to)
+
+    // Station details
+    if sl, _ := filter.refClient.GetCrs(crs); sl != nil {
+      for _, l := range sl.Tiploc {
+        filter.res.Station = append(filter.res.Station, l.Tiploc)
+        filter.addTiploc(l.Tiploc)
+      }
+    }
+
+    for _, se := range filter.services {
+      // limit response length. Do this here so we limit calls to getService if we have hit the len limit
+      if filter.isResponseLengthValid(filter.res.Services) {
+
+        // Resolve the service
+        s := filter.getService(se)
+
+        if filter.acceptService(s) {
+          filter.res.Services = append(filter.res.Services, s)
+
+          filter.processCallingPoints(s)
+          filter.processAssociations(s)
+          filter.processToc(s.Toc)
+          filter.processReason(s.CancelReason)
+          filter.processReason(s.LateReason)
+
+          // Set self to point to our service endpoint
+          s.Self = r.Self("/service/" + s.RID)
+        }
+      } // if length
+    }
+
+    filter.resolve()
+
+    r.Status(200).
+      JSON().
+      Value(filter.res)
+  }
+
+  return nil
 }

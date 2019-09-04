@@ -41,3 +41,9 @@ type ViaResolveRequest struct {
 	// Tiplocs of journey after this location to search
 	Tiplocs []string `json:"tpls"`
 }
+
+func (vr *ViaResolveRequest) AppendTiploc(tiploc string) {
+	if tiploc != "" {
+		vr.Tiplocs = append(vr.Tiplocs, tiploc)
+	}
+}
