@@ -8,7 +8,7 @@ import (
   refclient "github.com/peter-mount/nre-feeds/darwinref/client"
   "github.com/peter-mount/nre-feeds/ldb"
   "github.com/peter-mount/nre-feeds/util"
-  "log"
+  "sort"
   "strconv"
   "time"
 )
@@ -148,11 +148,6 @@ func (bf *boardFilter) callsAt(callingPoints []darwind3.CallingPoint, tpls []str
   return false
 }
 
-// isResponseLengthValid returns true if the len= is set and we have not yet hit that limit
-func (bf *boardFilter) isResponseLengthValid() bool {
-  return bf.length < 1 || len(bf.res.Services) < bf.length
-}
-
 // Add a tiploc to the result so that it will be included in the tiploc map
 func (bf *boardFilter) addTiploc(tiploc string) {
   if tiploc != "" {
@@ -263,24 +258,31 @@ func (bf *boardFilter) resolve() {
       bf.res.Via = vias
     }
   }
+
+  // sort into time order
+  sort.SliceStable(bf.res.Services, func(i, j int) bool {
+    return bf.res.Services[i].Location.Times.Compare(&bf.res.Services[j].Location.Times)
+  })
+
+  // Truncate
+  if bf.length > 0 && len(bf.res.Services) > bf.length {
+    bf.res.Services = bf.res.Services[:bf.length]
+  }
 }
 
 // acceptService returns true if the service is to be accepted, false if it's to be ignored
 func (bf *boardFilter) acceptService(service ldb.Service) bool {
   // Original requirement, must have an RID
   if service.RID == "" {
-    log.Println("no RID")
     return false
   }
 
   // remove terminating services
   if bf.terminated && bf.atStation(service.Destination) {
-    log.Printf("%s terminated", service.RID)
     return false
   }
 
   if bf.callAt && !bf.callsAt(service.CallingPoints, bf.callAtTiplocs) {
-    log.Printf("%s not callAt", service.RID)
     return false
   }
 
@@ -292,6 +294,8 @@ func (bf *boardFilter) getService(se ldb.ServiceEntry) ldb.Service {
   if sched == nil {
     return ldb.Service{}
   }
+
+  sched.UpdateTime()
 
   s := ldb.Service{}
   if !s.Update(sched, se.LocationIndex) {
@@ -339,24 +343,20 @@ func (d *LDBService) stationHandler(r *rest.Rest) error {
     }
 
     for _, se := range filter.services {
-      // limit response length. Do this here so we limit calls to getService if we have hit the len limit
-      if filter.isResponseLengthValid() {
+      // Resolve the service
+      s := filter.getService(se)
 
-        // Resolve the service
-        s := filter.getService(se)
+      if filter.acceptService(s) {
+        filter.res.Services = append(filter.res.Services, s)
 
-        if filter.acceptService(s) {
-          filter.res.Services = append(filter.res.Services, s)
+        filter.processCallingPoints(s)
+        filter.processAssociations(s)
+        filter.processToc(s.Toc)
+        filter.processReason(s.CancelReason)
+        filter.processReason(s.LateReason)
 
-          filter.processCallingPoints(s)
-          filter.processAssociations(s)
-          filter.processToc(s.Toc)
-          filter.processReason(s.CancelReason)
-          filter.processReason(s.LateReason)
-
-          // Set self to point to our service endpoint
-          s.Self = r.Self("/service/" + s.RID)
-        }
+        // Set self to point to our service endpoint
+        s.Self = r.Self("/service/" + s.RID)
       }
     }
 
