@@ -28,13 +28,13 @@ ADD . .
 # ============================================================
 # Run all tests in a new container so any output won't affect
 # the final build.
-#FROM source as test
-#RUN CGO_ENABLED=0 go test -v \
-#      ./util \
-#      ./darwinref \
-#      ./darwind3 \
-#      ./ldb \
-#      ./issues
+FROM source as test
+RUN CGO_ENABLED=0 go test -v \
+      ./util \
+      ./darwinref \
+      ./darwind3 \
+      ./ldb \
+      ./issues
 
 # ============================================================
 # Compile the source.
