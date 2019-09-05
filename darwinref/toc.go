@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	bolt "github.com/etcd-io/bbolt"
-	"github.com/peter-mount/golib/rest"
 	"time"
 )
 
@@ -16,8 +15,6 @@ type Toc struct {
 	Url     string   `json:"url" xml:"url,attr"`
 	// Date entry was inserted into the database
 	Date time.Time `json:"date" xml:"date,attr"`
-	// URL to this entity
-	Self string `json:"self" xml:"self,attr,omitempty"`
 }
 
 func (a *Toc) Equals(b *Toc) bool {
@@ -27,10 +24,6 @@ func (a *Toc) Equals(b *Toc) bool {
 	return a.Toc == b.Toc &&
 		a.Name == b.Name &&
 		a.Url == b.Url
-}
-
-func (t *Toc) SetSelf(r *rest.Rest) {
-	t.Self = r.Self(r.Context() + "/toc/" + t.Toc)
 }
 
 // GetToc returns details of a TOC

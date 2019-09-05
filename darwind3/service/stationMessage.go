@@ -11,7 +11,6 @@ func (d *DarwinD3Service) StationMessageHandler(r *rest.Rest) error {
 	if id, err := strconv.ParseInt(r.Var("id"), 10, 64); err != nil {
 		r.Status(404)
 	} else if msg := d.darwind3.Messages.Get(int64(id)); msg != nil {
-		msg.Self = r.Self(r.Context() + "/message/" + r.Var("id"))
 		r.Status(200).
 			JSON().
 			Value(msg)

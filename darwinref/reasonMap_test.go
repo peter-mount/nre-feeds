@@ -51,7 +51,7 @@ func TestReasonMap_JSON_Late(t *testing.T) {
 	})
 
 	testReasonMap_JSON(t, r,
-		"{\"late\":{\"1\":{\"code\":1,\"reasontext\":\"\",\"canc\":false,\"date\":\"0001-01-01T00:00:00Z\",\"self\":\"\"}}}")
+		"{\"late\":{\"1\":{\"code\":1,\"reasontext\":\"\",\"canc\":false,\"date\":\"0001-01-01T00:00:00Z\"}}}")
 }
 
 // Test we only include cancellations when no late entries
@@ -64,7 +64,7 @@ func TestReasonMap_JSON_Cancelled(t *testing.T) {
 	})
 
 	testReasonMap_JSON(t, r,
-		"{\"cancelled\":{\"2\":{\"code\":2,\"reasontext\":\"\",\"canc\":true,\"date\":\"0001-01-01T00:00:00Z\",\"self\":\"\"}}}")
+		"{\"cancelled\":{\"2\":{\"code\":2,\"reasontext\":\"\",\"canc\":true,\"date\":\"0001-01-01T00:00:00Z\"}}}")
 }
 
 // Test that json includes both maps
@@ -82,5 +82,5 @@ func TestReasonMap_JSON_Late_and_Cancelled(t *testing.T) {
 	})
 
 	testReasonMap_JSON(t, r,
-		"{\"late\":{\"1\":{\"code\":1,\"reasontext\":\"\",\"canc\":false,\"date\":\"0001-01-01T00:00:00Z\",\"self\":\"\"}},\"cancelled\":{\"2\":{\"code\":2,\"reasontext\":\"\",\"canc\":true,\"date\":\"0001-01-01T00:00:00Z\",\"self\":\"\"}}}")
+		"{\"late\":{\"1\":{\"code\":1,\"reasontext\":\"\",\"canc\":false,\"date\":\"0001-01-01T00:00:00Z\"}},\"cancelled\":{\"2\":{\"code\":2,\"reasontext\":\"\",\"canc\":true,\"date\":\"0001-01-01T00:00:00Z\"}}}")
 }

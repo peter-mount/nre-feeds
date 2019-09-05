@@ -3,7 +3,6 @@ package darwind3
 import (
 	"encoding/json"
 	"encoding/xml"
-	"github.com/peter-mount/golib/rest"
 	"github.com/peter-mount/nre-feeds/util"
 	"sort"
 	"time"
@@ -52,8 +51,6 @@ type Schedule struct {
 	// Usually this is the date we insert into the db but here we use the TS time
 	// as returned from darwin
 	Date time.Time `json:"date,omitempty" xml:"date,attr,omitempty"`
-	// URL to this entity
-	Self string `json:"self,omitempty" xml:"self,attr,omitempty"`
 }
 
 func (service *Schedule) AddTiplocs(tiplocs map[string]interface{}) {
@@ -94,10 +91,6 @@ func (a *Schedule) Clone() *Schedule {
 
 	b.Sort()
 	return b
-}
-
-func (s *Schedule) SetSelf(r *rest.Rest) {
-	s.Self = r.Self(r.Context() + "/schedule/" + s.RID)
 }
 
 // Sort sorts the locations in a schedule by time order

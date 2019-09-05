@@ -23,8 +23,6 @@ type StationMessage struct {
 	// Usually this is the date we insert into the db but here we use the TS time
 	// as returned from darwin
 	Date time.Time `json:"date,omitempty" xml:"date,attr,omitempty"`
-	// URL to this entity
-	Self string `json:"self,omitempty" xml:"self,attr,omitempty"`
 	// Used for system messages, i.e. ID < 0
 	Active bool `json:"active,omitempty"`
 }

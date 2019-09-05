@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	bolt "github.com/etcd-io/bbolt"
-	"github.com/peter-mount/golib/rest"
 	"github.com/peter-mount/nre-feeds/util"
 	"time"
 )
@@ -43,8 +42,6 @@ type Journey struct {
 	Associations []*Association `json:"association" xml:"-"`
 	// Date entry was inserted into the database
 	Date time.Time `json:"date" xml:"date,attr"`
-	// URL to this entity
-	Self string `json:"self" xml:"self,attr,omitempty"`
 }
 
 type cancelReason struct {
@@ -63,10 +60,6 @@ func (a *Journey) Equals(b *Journey) bool {
 		a.TrainCat == b.TrainCat &&
 		a.Passenger == b.Passenger &&
 		a.CancelReason == b.CancelReason
-}
-
-func (t *Journey) SetSelf(r *rest.Rest) {
-	t.Self = r.Self(r.Context() + "/journey/" + t.RID)
 }
 
 // GetJourney returns details of a Journey

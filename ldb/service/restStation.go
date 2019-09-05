@@ -32,8 +32,6 @@ type stationResult struct {
   Via map[string]*darwinref.Via `json:"via"`
   // The date of this request
   Date time.Time `json:"date"`
-  // The URL of this departure board
-  Self string `json:"self"`
 }
 
 // boardFilter handles an individual request
@@ -75,7 +73,6 @@ func (d *LDBService) createBoardFilter(r *rest.Rest, crs string, station *ldb.St
       Messages: station.GetMessages(d3Client),
       Reasons:  darwinref.NewReasonMap(),
       Date:     now,
-      Self:     r.Self("/boards/" + crs),
     },
   }
 
@@ -354,9 +351,6 @@ func (d *LDBService) stationHandler(r *rest.Rest) error {
         filter.processToc(s.Toc)
         filter.processReason(s.CancelReason)
         filter.processReason(s.LateReason)
-
-        // Set self to point to our service endpoint
-        s.Self = r.Self("/service/" + s.RID)
       }
     }
 

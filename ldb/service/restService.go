@@ -28,8 +28,6 @@ type serviceResult struct {
 	Via map[string]*darwinref.Via `json:"via"`
 	// The date of this request
 	Date time.Time `json:"date"`
-	// The URL of this departure board
-	Self string `json:"self"`
 }
 
 // serviceHandler proxies the service from d3 but fills in the required
@@ -58,7 +56,6 @@ func (d *LDBService) serviceHandler(r *rest.Rest) error {
 		Tocs:    darwinref.NewTocMap(),
 		Reasons: darwinref.NewReasonMap(),
 		Date:    time.Now(),
-		Self:    r.Self("/service/" + rid),
 	}
 
   // resolve the origin & callAt

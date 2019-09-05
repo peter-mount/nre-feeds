@@ -52,8 +52,6 @@ type Service struct {
 	LocationIndex int `json:"locind"`
 	// The time this entry was set
 	Date time.Time `json:"date,omitempty" xml:"date,attr,omitempty"`
-	// URL to the train detail page
-	Self string `json:"self,omitempty" xml:"self,attr,omitempty"`
 }
 
 // Entry in the DB, just the essential data
@@ -173,7 +171,6 @@ func (s *Service) Update(sched *darwind3.Schedule, idx int) bool {
 
 		// Copy the date/self of the underlying schedule
 		s.Date = sched.Date
-		s.Self = sched.Self
 
 		return true
 	}
@@ -202,6 +199,5 @@ func (a *Service) Clone() *Service {
 		schedule:         a.schedule,
 		LocationIndex:    a.LocationIndex,
 		Date:             a.Date,
-		Self:             a.Self,
 	}
 }

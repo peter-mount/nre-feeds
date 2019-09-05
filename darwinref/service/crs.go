@@ -18,14 +18,7 @@ func (dr *DarwinRefService) CrsHandler(r *rest.Rest) error {
 				Value(resp)
 
 			resp.Crs = crs
-			resp.Self = r.Self(r.Context() + "/crs/" + crs)
-
 			resp.Tiploc = locations
-
-			for _, l := range locations {
-				l.SetSelf(r)
-			}
-
 		} else {
 			r.Status(404)
 		}
@@ -51,7 +44,6 @@ func (dr *DarwinRefService) AllCrsHandler(r *rest.Rest) error {
 
 			for _, tpl := range tpls {
 				if loc, exists := dr.reference.GetTiplocBucket(tiplocBucket, tpl); exists {
-					loc.SetSelf(r)
 					t = append(t, loc)
 				}
 			}

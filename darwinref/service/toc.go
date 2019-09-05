@@ -11,7 +11,6 @@ func (dr *DarwinRefService) TocHandler(r *rest.Rest) error {
 		id := r.Var("id")
 
 		if toc, exists := dr.reference.GetToc(tx, id); exists {
-			toc.SetSelf(r)
 			r.Status(200).
 				JSON().
 				Value(toc)
@@ -30,14 +29,12 @@ func (dr *DarwinRefService) AllTocsHandler(r *rest.Rest) error {
 		if err := tx.Bucket([]byte("DarwinToc")).ForEach(func(k, v []byte) error {
 			toc := &darwinref.Toc{}
 			if toc.FromBytes(v) {
-				toc.SetSelf(r)
 				resp.Toc = append(resp.Toc, toc)
 			}
 			return nil
 		}); err != nil {
 			return err
 		} else {
-			resp.Self = r.Self(r.Context() + "/toc")
 			r.Status(200).
 				JSON().
 				Value(resp)

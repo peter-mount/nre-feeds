@@ -8,19 +8,16 @@ type CrsResponse struct {
 	XMLName xml.Name    `json:"-" xml:"crs"`
 	Crs     string      `json:"crs" xml:"crs,attr"`
 	Tiploc  []*Location `json:"locations,omitempty" xml:"LocationRef"`
-	Self    string      `json:"self,omitempty" xml:"self,attr,omitempty"`
 }
 
 type ReasonsResponse struct {
 	XMLName xml.Name  `json:"-" xml:"reasons"`
 	Reasons []*Reason `json:"reasons,omitempty" xml:"Reason"`
-	Self    string    `json:"self,omitempty" xml:"self,attr,omitempty"`
 }
 
 type TocsResponse struct {
 	XMLName xml.Name `json:"-" xml:"tocs"`
 	Toc     []*Toc   `json:"tocs,omitempty" xml:"TocRef"`
-	Self    string   `json:"self,omitempty" xml:"self,attr,omitempty"`
 }
 
 type SearchResult struct {

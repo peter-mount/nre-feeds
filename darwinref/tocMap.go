@@ -4,8 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	bolt "github.com/etcd-io/bbolt"
-	//  "encoding/xml"
-	"github.com/peter-mount/golib/rest"
+
 	"sort"
 	"strings"
 )
@@ -62,13 +61,6 @@ func (r *TocMap) AddLocations(dr *DarwinReference, tx *bolt.Tx, lm *LocationMap)
 func (r *TocMap) Get(n string) (*Toc, bool) {
 	t, e := r.m[n]
 	return t, e
-}
-
-// Self sets the Self field to match this request
-func (r *TocMap) Self(rs *rest.Rest) {
-	for _, v := range r.m {
-		v.Self = rs.Self("/ref/toc/" + v.Toc)
-	}
 }
 
 func (t *TocMap) MarshalJSON() ([]byte, error) {

@@ -3,9 +3,7 @@ package darwinref
 import (
 	"encoding/json"
 	"encoding/xml"
-	"fmt"
 	bolt "github.com/etcd-io/bbolt"
-	"github.com/peter-mount/golib/rest"
 	"time"
 )
 
@@ -17,21 +15,6 @@ type Reason struct {
 	Cancelled bool     `json:"canc" xml:"canc,attr"`
 	// Date entry was inserted into the database
 	Date time.Time `json:"date" xml:"date,attr"`
-	// URL to this entity
-	Self string `json:"self" xml:"self,attr,omitempty"`
-}
-
-// SetSelf sets the Self field to match this request
-func (t *Reason) SetSelf(r *rest.Rest) {
-	var prefix string
-
-	if t.Cancelled {
-		prefix = "cancelled"
-	} else {
-		prefix = "late"
-	}
-
-	t.Self = r.Self(fmt.Sprintf("%s/reason/%s/%d", r.Context(), prefix, t.Code))
 }
 
 func (a *Reason) Equals(b *Reason) bool {

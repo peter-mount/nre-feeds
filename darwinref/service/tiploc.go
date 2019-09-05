@@ -11,7 +11,6 @@ func (dr *DarwinRefService) TiplocHandler(r *rest.Rest) error {
 		tpl := r.Var("id")
 
 		if location, exists := dr.reference.GetTiploc(tx, tpl); exists {
-			location.SetSelf(r)
 			r.Status(200).
 				JSON().
 				Value(location)
@@ -36,7 +35,6 @@ func (dr *DarwinRefService) TiplocsHandler(r *rest.Rest) error {
 
 		for _, tpl := range tiplocs {
 			if location, exists := dr.reference.GetTiploc(tx, tpl); exists {
-				location.SetSelf(r)
 				ary = append(ary, location)
 			}
 		}

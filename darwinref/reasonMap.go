@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	bolt "github.com/etcd-io/bbolt"
-	"github.com/peter-mount/golib/rest"
 	"sort"
 	"strconv"
 )
@@ -53,16 +52,6 @@ func (r *ReasonMap) AddReason(reason *Reason) {
 		} else {
 			r.Late[reason.Code] = reason
 		}
-	}
-}
-
-// Self sets the Self field to match this request
-func (r *ReasonMap) Self(rs *rest.Rest) {
-	for _, v := range r.Cancelled {
-		v.SetSelf(rs)
-	}
-	for _, v := range r.Late {
-		v.SetSelf(rs)
 	}
 }
 

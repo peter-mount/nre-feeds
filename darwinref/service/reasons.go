@@ -33,7 +33,6 @@ func (dr *DarwinRefService) reasonHandler(cancelled bool, r *rest.Rest) error {
 		}
 
 		if exists {
-			reason.SetSelf(r)
 			r.Status(200).
 				JSON().
 				Value(reason)
@@ -60,7 +59,6 @@ func (dr *DarwinRefService) allReasonHandler(bname string, prefix string, r *res
 		if err := tx.Bucket([]byte(bname)).ForEach(func(k, v []byte) error {
 			reason := &darwinref.Reason{}
 			if reason.FromBytes(v) {
-				reason.SetSelf(r)
 				resp.Reasons = append(resp.Reasons, reason)
 			}
 			return nil
@@ -75,7 +73,6 @@ func (dr *DarwinRefService) allReasonHandler(bname string, prefix string, r *res
 				return ra.Code < rb.Code
 			})
 
-			resp.Self = r.Self(r.Context() + prefix)
 			r.Status(200).
 				JSON().
 				Value(resp)

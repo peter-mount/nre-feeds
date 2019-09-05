@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	bolt "github.com/etcd-io/bbolt"
-	"github.com/peter-mount/golib/rest"
 	"time"
 )
 
@@ -19,8 +18,6 @@ type Via struct {
 	Text    string   `json:"text" xml:"viatext,attr"`
 	// Date entry was inserted into the database
 	Date time.Time `json:"date" xml:"date,attr"`
-	// URL to this entity
-	Self string `json:"self" xml:"self,attr,omitempty"`
 }
 
 // Are two Via's equal
@@ -29,15 +26,6 @@ func (v *Via) Equals(o *Via) bool {
 		return false
 	}
 	return v.At == o.At && v.Dest == o.Dest && v.Loc1 == o.Loc1 && v.Loc2 == o.Loc2
-}
-
-// SetSelf sets the Self field to match this request
-func (v *Via) SetSelf(r *rest.Rest) {
-	if v.Loc2 == "" {
-		v.Self = r.Self(fmt.Sprintf("%s/via/%s/%s/%s", r.Context(), v.At, v.Dest, v.Loc1))
-	} else {
-		v.Self = r.Self(fmt.Sprintf("%s/via/%s/%s/%s/%s", r.Context(), v.At, v.Dest, v.Loc1, v.Loc2))
-	}
 }
 
 // Key the unique key for this entry

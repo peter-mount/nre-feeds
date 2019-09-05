@@ -12,7 +12,6 @@ func (dr *DarwinRefService) ViaHandler(r *rest.Rest) error {
 		log.Printf("via '%s' '%s' '%s' '%s'", r.Var("at"), r.Var("dest"), r.Var("loc1"), r.Var("loc2"))
 
 		if via, exists := dr.reference.GetVia(tx, r.Var("at"), r.Var("dest"), r.Var("loc1"), r.Var("loc2")); exists {
-			via.SetSelf(r)
 			r.Status(200).
 				JSON().
 				Value(via)

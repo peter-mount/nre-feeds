@@ -2,7 +2,6 @@ package darwinref
 
 import (
 	"encoding/xml"
-	"github.com/peter-mount/golib/rest"
 	"time"
 )
 
@@ -22,13 +21,6 @@ type Location struct {
 	Station bool `json:"station" xml:"station,attr"`
 	// Date entry was inserted into the database
 	Date time.Time `json:"date" xml:"date,attr"`
-	// URL to this entity
-	Self string `json:"self,omitempty" xml:"self,attr,omitempty"`
-}
-
-// SetSelf sets the Self field to match this request
-func (t *Location) SetSelf(r *rest.Rest) {
-	t.Self = r.Self(r.Context() + "/tiploc/" + t.Tiploc)
 }
 
 func (a *Location) Equals(b *Location) bool {

@@ -16,8 +16,6 @@ type Association struct {
 	Deleted   bool         `json:"deleted" xml:"isDeleted,attr"`
 	// Date entry was inserted into the database
 	Date time.Time `json:"date" xml:"date,attr"`
-	// URL to this entity
-	Self string `json:"self" xml:"self,attr,omitempty"`
 }
 
 func (a *Association) Equals(b *Association) bool {

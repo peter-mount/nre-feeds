@@ -24,7 +24,6 @@ func (dr *DarwinRefService) ViaResolveHandler(r *rest.Rest) error {
 
 		for rid, query := range queries {
 			if via := dr.reference.ResolveVia(query.Crs, query.Destination, query.Tiplocs); via != nil {
-				via.SetSelf(r)
 				response[rid] = via
 			}
 		}
