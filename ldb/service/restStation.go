@@ -216,8 +216,8 @@ func (bf *boardFilter) processAssociations(s ldb.Service) {
           }
         }
 
-        bf.processReason(as.CancelReason)
-        bf.processReason(as.LateReason)
+        bf.processReason(as.CancelReason, true)
+        bf.processReason(as.LateReason, false)
 
       }
     }
@@ -229,9 +229,17 @@ func (bf *boardFilter) processToc(toc string) {
   bf.refClient.AddToc(bf.res.Tocs, toc)
 }
 
-func (bf *boardFilter) processReason(r darwind3.DisruptionReason) {
+func (bf *boardFilter) processReason(r darwind3.DisruptionReason, cancelled bool) {
   if r.Reason > 0 {
-    if reason, _ := bf.refClient.GetCancelledReason(r.Reason); reason != nil {
+    var reason *darwinref.Reason
+
+    if cancelled {
+      reason, _ = bf.refClient.GetCancelledReason(r.Reason)
+    } else {
+      reason, _ = bf.refClient.GetLateReason(r.Reason)
+    }
+
+    if reason != nil {
       bf.res.Reasons.AddReason(reason)
     }
 
@@ -349,8 +357,8 @@ func (d *LDBService) stationHandler(r *rest.Rest) error {
         filter.processCallingPoints(s)
         filter.processAssociations(s)
         filter.processToc(s.Toc)
-        filter.processReason(s.CancelReason)
-        filter.processReason(s.LateReason)
+        filter.processReason(s.CancelReason, true)
+        filter.processReason(s.LateReason, false)
       }
     }
 
