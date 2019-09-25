@@ -1,4 +1,44 @@
 -- ======================================================================
+-- text_to_jsonb converts a text into jsonb
+--
+-- Unlike to_jsonb() this will ensure that:
+-- "true" or "false" are represented as their correct boolean types
+-- Numbers are also in their correct json type
+-- ======================================================================
+create or replace function text_to_json(pval text)
+    returns jsonb
+as
+$$
+begin
+    case
+        when pval is null then
+            return null;
+        when pval = 'true' then
+            return to_jsonb(true);
+        when pval = 'false' then
+            return to_jsonb(false);
+        when pval ~ '^(-)?[0-9]+$' then
+            begin
+                return to_jsonb(pval::bigint);
+            exception
+                when numeric_value_out_of_range then
+                -- ignore as it's too big to fit in a bigint
+            end;
+        when pval ~ '^(-)?[0-9]+\.[0-9]+$' then
+            begin
+                return to_jsonb(pval::real);
+            exception
+                when numeric_value_out_of_range then
+                -- ignore as it's too big to fit in a real
+            end; else
+        -- ignore, keep value as is
+        end case;
+    return to_jsonb(pval);
+end;
+$$
+    language plpgsql;
+
+-- ======================================================================
 -- Adds an entry to a jsonb object similar to jsonb_insert
 -- except existing keys are converted into an array
 -- ======================================================================
@@ -8,7 +48,6 @@ as
 $$
 declare
     result jsonb;
-    aval   jsonb;
     ary    jsonb;
 begin
     -- Ensure we have an object
@@ -22,25 +61,6 @@ begin
         return result;
     end if;
 
-    aval = pval;
-    if jsonb_typeof(aval) = 'string' then
-
-        case
-            when aval::text = '"true"' then
-                aval = to_jsonb(true);
-            when aval::text = '"false""' then
-                aval = to_jsonb(false);
-            when aval::text ~ '^"(-)?[0-9]+"$' then
-                begin
-                    aval = to_jsonb(replace(aval::text, '"', '')::bigint);
-                exception
-                    when numeric_value_out_of_range then
-                    -- ignore as it's too big to fit in a bigint
-                end; else
-            -- ignore, keep value as is
-            end case;
-    end if;
-
     -- If entry already exists then ensure it's an array and append the value to it
     if result ? pkey then
         ary = result -> pkey;
@@ -49,13 +69,13 @@ begin
             ary = jsonb_build_array(ary);
         end if;
 
-        ary = jsonb_insert(ary, array ['0'], aval, true);
+        ary = jsonb_insert(ary, array ['0'], pval, true);
 
         -- remove the existing entry as we will insert it with the new value shortly
         result = result - pkey;
     else
         -- it doesn't exist so the value will be a single value
-        ary = aval;
+        ary = pval;
     end if;
 
     -- Set the new value, either the raw value or the updated array
@@ -114,9 +134,9 @@ begin
         -- Handle case of element containing just _value (no children or attrs)
         select into size count(*) from jsonb_object_keys(result);
         if size = 0 then
-            result = to_jsonb(txt);
+            result = text_to_json(txt);
         else
-            result = jsonb_insert_upgrade(result, '_value', to_jsonb(txt));
+            result = jsonb_insert_upgrade(result, '_value', text_to_json(txt));
         end if;
     end if;
 
