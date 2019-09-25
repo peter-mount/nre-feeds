@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<uk.co.nationalrail.xml.incident.PtIncidentStructure xmlns:ns2="http://nationalrail.co.uk/xml/common"
+                                                     xmlns:ns3="http://nationalrail.co.uk/xml/incident">
+    <ns3:CreationTime>2019-09-25T11:40:00.000+01:00</ns3:CreationTime>
+    <ns3:ChangeHistory>
+        <ns2:ChangedBy>AFlanagan</ns2:ChangedBy>
+        <ns2:LastChangedDate>2019-09-25T11:48:00.000+01:00</ns2:LastChangedDate>
+    </ns3:ChangeHistory>
+    <ns3:ParticipantRef>97380</ns3:ParticipantRef>
+    <ns3:IncidentNumber>F4864D64CF8A4139AA4E2F8B3389A331</ns3:IncidentNumber>
+    <ns3:Version>20190925114844</ns3:Version>
+    <ns3:Source>
+        <ns3:TwitterHashtag>#Bletchley</ns3:TwitterHashtag>
+    </ns3:Source>
+    <ns3:ValidityPeriod>
+        <ns2:StartTime>2019-09-25T11:40:00.000+01:00</ns2:StartTime>
+    </ns3:ValidityPeriod>
+    <ns3:Planned>false</ns3:Planned>
+    <ns3:Summary>Delays between Bletchley and Bedford expected until 15:00</ns3:Summary>
+    <ns3:Description>
+        &lt;p&gt;Trains between Bletchley and Bedford may be delayed by up to 10 minutes due to urgent repairs to the
+        track between these stations. This is expected until 15:00.&lt;/p&gt;
+        &lt;p&gt;&lt;strong&gt;Check before you travel:&lt;/strong&gt;&lt;br /&gt;
+        You can check your journey using the National Rail Enquiries real-time &lt;a
+        href="http://ojp.nationalrail.co.uk/service/planjourney/search"&gt;Journey Planner&lt;/a&gt;&lt;/p&gt;
+        &lt;p&gt;&lt;strong&gt;Twitter:&lt;/strong&gt;&lt;br /&gt;
+        If you would like to follow this incident on Twitter, please use &lt;a
+        href="https://twitter.com/hashtag/Bletchley?f=tweets"&gt;#Bletchley&lt;/a&gt;&lt;/p&gt;
+        &lt;p&gt;&lt;strong&gt;Compensation:&lt;/strong&gt;&lt;br /&gt;
+        You may be entitled to &lt;a href="http://www.nationalrail.co.uk/compensation"&gt;compensation&lt;/a&gt; if you
+        experience a delay in completing your journey today. Please keep your train ticket and make a note of your
+        journey, as both will be required to support any claim.&lt;/p&gt;
+        &lt;p&gt;&lt;strong&gt;Feedback:&lt;/strong&gt;&lt;/p&gt;
+        &lt;p&gt; We want to make information better - tell us how! Fill out this online &lt;a
+        href="http://www.nationalrail.co.uk/disruption_survey"&gt;Disruption Survey&lt;/a&gt;.&lt;/p&gt;
+    </ns3:Description>
+    <ns3:InfoLinks>
+        <ns3:InfoLink>
+            <ns3:Uri>https://www.nationalrail.co.uk/service_disruptions/231747.aspx</ns3:Uri>
+            <ns3:Label>nationalrail.co.uk</ns3:Label>
+        </ns3:InfoLink>
+    </ns3:InfoLinks>
+    <ns3:Affects>
+        <ns3:Operators>
+            <ns3:AffectedOperator>
+                <ns3:OperatorRef>LN</ns3:OperatorRef>
+                <ns3:OperatorName>London Northwestern Railway</ns3:OperatorName>
+            </ns3:AffectedOperator>
+        </ns3:Operators>
+        <ns3:RoutesAffected>&lt;p&gt;Between Bletchley and Bedford&lt;/p&gt;</ns3:RoutesAffected>
+    </ns3:Affects>
+    <ns3:ClearedIncident>false</ns3:ClearedIncident>
+    <ns3:IncidentPriority>2</ns3:IncidentPriority>
+</uk.co.nationalrail.xml.incident.PtIncidentStructure>

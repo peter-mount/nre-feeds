@@ -10,7 +10,7 @@ create table if not exists darwin.incident
 (
     id             serial                   not null,               -- internal id
     incidentNumber char(32)                 not null,               -- unique id at NRE, 32 hex ID
-    participantRef text                     not null,               -- unique id of system issuing entry identifier
+    participantRef text,                                            -- unique id of system issuing entry identifier
     created        timestamp with time zone not null,               -- when this incident was created at NRE
     planned        bool                     not null default false, -- was this planned
     cleared        bool                     not null default false, -- has this incident been cleared
@@ -71,17 +71,19 @@ create or replace function darwin.updateIncident(pxml xml)
 as
 $$
 declare
-    ns   text[][] := ARRAY [
+    ns       text[][] := ARRAY [
         ['ic', 'http://nationalrail.co.uk/xml/incident'],
         ['co', 'http://nationalrail.co.uk/xml/common']
         ];
-    iid  bigint; -- internal ID for incident
-    inum char(32); -- incident number
-    iver bigint;
-    axml xml;
-    bxml xml;
-    aref char(2); -- affected toc ref
-    rec  record;
+    iid      bigint; -- internal ID for incident
+    inum     char(32); -- incident number
+    iver     bigint;
+    axml     xml;
+    bxml     xml;
+    aref     char(2); -- affected toc ref
+    aplanned bool; -- planned incident
+    acleared bool; -- cleared incident
+    rec      record;
 begin
     -- Look for the incident, could be one of 2 root elements if from static or live feed
     axml = (xpath('//ic:PtIncident | //uk.co.nationalrail.xml.incident.PtIncidentStructure', pxml, ns))[1];
@@ -96,17 +98,23 @@ begin
         return;
     end if;
 
-    raise notice 'got %v', (xpath('//ic:ParticipantRef/text()', axml, ns))[1]::text;
+    raise notice 'got %', (xpath('//ic:ParticipantRef/text()', axml, ns))[1]::text;
+
+    aplanned = (xpath('//ic:Planned/text()', axml, ns))[1]::text::bool;
+    acleared = (xpath('//ic:Cleared/text()', axml, ns))[1]::text::bool;
 
     -- The main entry
-    insert into darwin.incident (incidentnumber, participantref, created, summary, validfrom, validto, version)
+    insert into darwin.incident (incidentnumber, participantref, created, summary, validfrom, validto, version, planned,
+                                 cleared)
     values (inum,
             (xpath('//ic:ParticipantRef/text()', axml, ns))[1]::text,
             (xpath('//ic:CreationTime/text()', axml, ns))[1]::text::timestamp with time zone,
             (xpath('//ic:Summary/text()', axml, ns))[1]::text,
             (xpath('//ic:ValidityPeriod/co:StartTime/text()', axml, ns))[1]::text::timestamp with time zone,
             (xpath('//ic:ValidityPeriod/co:EndTime/text()', axml, ns))[1]::text::timestamp with time zone,
-            iver)
+            iver,
+            case aplanned when true then true else false end,
+            case acleared when true then true else false end)
     on conflict (incidentNumber)
         do update set participantRef=excluded.participantref,
                       created=excluded.created,
@@ -127,15 +135,37 @@ begin
     delete from darwin.incident_affects where id = iid;
     foreach bxml in array xpath('//ic:Affects/ic:Operators/ic:AffectedOperator', axml, ns)
         loop
+            aref = (xpath('//ic:OperatorRef/text()', bxml, ns))[1]::text;
             insert into darwin.incident_affects_toc (ref, name)
-            values ((xpath('//ic:OperatorRef/text()', bxml, ns))[1]::text,
+            values (aref,
                     (xpath('//ic:OperatorName/text()', bxml, ns))[1]::text)
-            on conflict do nothing
-            returning ref into aref;
+            on conflict do nothing;
 
             insert into darwin.incident_affects (id, toc)
             values (iid, aref)
             on conflict do nothing;
+        end loop;
+end ;
+$$ language plpgsql;
+
+-- ======================================================================
+-- updateIncidents updates all incidents from the static feed
+-- ======================================================================
+
+create or replace function darwin.updateIncidents(pxml xml)
+    returns void
+as
+$$
+declare
+    ns   text[][] := ARRAY [
+        ['ic', 'http://nationalrail.co.uk/xml/incident'],
+        ['co', 'http://nationalrail.co.uk/xml/common']
+        ];
+    axml xml;
+begin
+    foreach axml in array (xpath('//ic:Incidents/ic:PtIncident', pxml, ns))
+        loop
+            perform darwin.updateIncident(axml);
         end loop;
 end ;
 $$ language plpgsql;

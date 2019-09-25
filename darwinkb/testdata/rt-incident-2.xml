@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<uk.co.nationalrail.xml.incident.PtIncidentStructure xmlns:ns2="http://nationalrail.co.uk/xml/common"
+                                                     xmlns:ns3="http://nationalrail.co.uk/xml/incident">
+    <ns3:CreationTime>2019-09-25T11:52:00.000+01:00</ns3:CreationTime>
+    <ns3:ChangeHistory>
+        <ns2:ChangedBy>MBaker</ns2:ChangedBy>
+        <ns2:LastChangedDate>2019-09-25T12:01:00.000+01:00</ns2:LastChangedDate>
+    </ns3:ChangeHistory>
+    <ns3:ParticipantRef>660A83EEE0E6469BBA175ACA305429E2</ns3:ParticipantRef>
+    <ns3:IncidentNumber>660A83EEE0E6469BBA175ACA305429E2</ns3:IncidentNumber>
+    <ns3:Version>20190925120100</ns3:Version>
+    <ns3:ValidityPeriod>
+        <ns2:StartTime>2019-12-15T00:00:00.000Z</ns2:StartTime>
+        <ns2:EndTime>2019-12-15T23:59:00.000Z</ns2:EndTime>
+    </ns3:ValidityPeriod>
+    <ns3:Planned>true</ns3:Planned>
+    <ns3:Summary>No London Overground services between South Tottenham and Barking before 12:10 on Sunday 15 December
+    </ns3:Summary>
+    <ns3:Description>
+        &lt;p&gt;&lt;a href="http://www.nationalrail.co.uk/service_disruptions/121347.aspx"&gt;Engineering work&lt;/a&gt;&amp;#160;is
+        taking place between South Tottenham and Barking, closing all lines.&lt;/p&gt;
+        &lt;p&gt;Before 12:10 on Sunday, no trains will run between South Tottenham and Barking.&lt;/p&gt;
+        &lt;p&gt;Replacement buses will run between Walthamstow Central and Barking.&lt;/p&gt;
+        &lt;p&gt;&lt;strong&gt;Ticket acceptance:&lt;/strong&gt;&lt;/p&gt;
+        &lt;p&gt;Customers can use their tickets on London Buses between South Tottenham and Walthamstow Central, and
+        also on London Underground between Seven Sisters and Walthamstow Central / East Ham / Barking&lt;/p&gt;
+        &lt;p&gt;&lt;strong&gt;Check before you travel:&lt;/strong&gt;&lt;/p&gt;
+        &lt;p&gt;You can plan your journey using the National Rail Enquiries &lt;a href="http://ojp.nationalrail.co.uk/"&gt;Journey
+        Planner&lt;/a&gt;&lt;/p&gt;
+        &lt;p&gt;You can plan
+        your journey on London Buses and London Underground by using the
+        Transport for London
+        &lt;a href="https://tfl.gov.uk/plan-a-journey/"&gt;Journey Planner&lt;/a&gt;&lt;/p&gt;
+        &lt;p&gt;&lt;strong&gt;Replacement Bus Travel Advice:&lt;/strong&gt;&lt;/p&gt;
+        &lt;p&gt;You can find the location of your bus replacement by checking station signs or by searching for your
+        station on our station &lt;a href="http://www.nationalrail.co.uk/stations_destinations/default.aspx"&gt;
+        information pages&lt;/a&gt;.&lt;/p&gt;
+        &lt;p&gt;&lt;a href="http://www.nationalrail.co.uk/stations_destinations/cyclists.aspx"&gt; Bicycles&lt;/a&gt;
+        are not allowed on rail replacement bus services at any time, unless fully folded. More travel advice for your
+        replacement bus journey is available by selecting the Train Operating Company you are travelling with &lt;a
+        href="http://www.nationalrail.co.uk/service_disruptions/200756.aspx"&gt;here&lt;/a&gt;.&lt;/p&gt;
+    </ns3:Description>
+    <ns3:InfoLinks>
+        <ns3:InfoLink>
+            <ns3:Uri>https://www.nationalrail.co.uk/service_disruptions/231749.aspx</ns3:Uri>
+            <ns3:Label>nationalrail.co.uk</ns3:Label>
+        </ns3:InfoLink>
+        <ns3:InfoLink>
+            <ns3:Uri>http://www.nationalrail.co.uk/static/documents/maps/South%20Tottenham%20Barking_15_12.pdf</ns3:Uri>
+            <ns3:Label>Additional Maps</ns3:Label>
+        </ns3:InfoLink>
+    </ns3:InfoLinks>
+    <ns3:Affects>
+        <ns3:Operators>
+            <ns3:AffectedOperator>
+                <ns3:OperatorRef>LO</ns3:OperatorRef>
+                <ns3:OperatorName>London Overground</ns3:OperatorName>
+            </ns3:AffectedOperator>
+        </ns3:Operators>
+        <ns3:RoutesAffected>&lt;p&gt;Between Gospel Oak and Barking&lt;/p&gt;</ns3:RoutesAffected>
+    </ns3:Affects>
+    <ns3:IncidentPriority>2</ns3:IncidentPriority>
+</uk.co.nationalrail.xml.incident.PtIncidentStructure>
