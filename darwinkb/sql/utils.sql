@@ -8,6 +8,7 @@ as
 $$
 declare
     result jsonb;
+    aval   jsonb;
     ary    jsonb;
 begin
     -- Ensure we have an object
@@ -21,6 +22,26 @@ begin
         return result;
     end if;
 
+    aval = pval;
+    if jsonb_typeof(aval) = 'string' then
+
+        case
+            when aval::text = '"true"' then
+                aval = to_jsonb(true);
+            when aval::text = '"false""' then
+                aval = to_jsonb(false);
+            when aval::text ~ '^"(-)?[0-9]+"$' then
+                begin
+                    aval = to_jsonb(replace(aval::text, '"', '')::bigint);
+                exception
+                    when numeric_value_out_of_range then
+                    -- ignore as it's too big to fit in a bigint
+                end; else
+            -- ignore, keep value as is
+            end case;
+    end if;
+
+    -- If entry already exists then ensure it's an array and append the value to it
     if result ? pkey then
         ary = result -> pkey;
 
@@ -28,14 +49,16 @@ begin
             ary = jsonb_build_array(ary);
         end if;
 
-        ary = jsonb_insert(ary, array ['0'], pval, true);
+        ary = jsonb_insert(ary, array ['0'], aval, true);
 
+        -- remove the existing entry as we will insert it with the new value shortly
         result = result - pkey;
     else
-        ary = pval;
+        -- it doesn't exist so the value will be a single value
+        ary = aval;
     end if;
 
-    raise notice '% = %', pkey, ary;
+    -- Set the new value, either the raw value or the updated array
     result = jsonb_insert(result, array [pkey], ary, true);
 
     return result;
@@ -55,17 +78,13 @@ declare
     result jsonb = '{}';
     root   text;
     size   int;
-    keys   text[];
-    vals   jsonb[];
     txt    text;
     rec    record;
     child  jsonb;
 begin
-    --raise notice 'xml %', p_xml;
 
     -- Get root element name
     select '/*[name() = "' || (xpath('name(/*)', p_xml))[1]::text || '"]' into root;
-    raise notice 'root %', root;
 
     -- attributes
     for rec in
@@ -75,7 +94,6 @@ begin
         where v is not null
         order by i
         loop
-            raise notice 'attr % %', rec.rk, rec.v;
             result = jsonb_insert_upgrade(result, rec.rk, rec.v);
         end loop;
 
@@ -84,7 +102,6 @@ begin
                from unnest(xpath(root || '/*', p_xml)) with ordinality as a(v, i)
                order by i
         loop
-            raise notice 'child %', rec.rk;
             child = xml_to_json(rec.v);
             if child is not null then
                 result = jsonb_insert_upgrade(result, rec.rk, child);
@@ -96,7 +113,6 @@ begin
     if txt is not null and txt != '' then
         -- Handle case of element containing just _value (no children or attrs)
         select into size count(*) from jsonb_object_keys(result);
-        raise notice 'size %', size;
         if size = 0 then
             result = to_jsonb(txt);
         else
