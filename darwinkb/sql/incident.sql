@@ -169,3 +169,59 @@ begin
         end loop;
 end ;
 $$ language plpgsql;
+
+-- ======================================================================
+-- getIncident returns details about a specific incident
+-- ======================================================================
+
+-- drop function darwin.getIncident(piid char(32));
+create or replace function darwin.getIncident(piid char(32))
+    returns jsonb
+as
+$$
+declare
+    axml xml;
+begin
+    select into axml x.xml
+        from darwin.incident_xml x
+    inner join darwin.incident i on x.id = i.id
+    where i.incidentnumber = piid;
+    if not found then
+        return null;
+    end if;
+
+    return xml_to_json( axml );
+end ;
+$$ language plpgsql;
+
+-- ======================================================================
+-- getIncidents returns incidents for a toc or all if toc is null
+-- ======================================================================
+
+-- drop function darwin.getIncident(piid char(32));
+create or replace function darwin.getIncidents(ptoc char(2))
+    returns json
+as
+$$
+select json_agg(row)
+from (with incidents as (
+    select distinct on (i.incidentNumber) i.incidentNumber,
+                                          i.created,
+                                          i.planned,
+                                          i.summary,
+                                          i.validfrom,
+                                          i.validto,
+                                          i.version
+    from darwin.incident i
+             inner join darwin.incident_affects a on i.id = a.id
+             inner join darwin.incident_affects_toc t on a.toc = ptoc or ptoc is null
+    where not i.cleared
+      --and i.validfrom <= now()
+      --and (i.validto is null or i.validto >= now())
+    order by i.incidentnumber
+)
+      select *
+      from incidents
+      order by created desc
+     ) row
+$$ language sql;
