@@ -37,7 +37,6 @@ begin
 end;
 $$
     language plpgsql;
-
 -- ======================================================================
 -- Adds an entry to a jsonb object similar to jsonb_insert
 -- except existing keys are converted into an array
@@ -69,17 +68,11 @@ begin
             ary = jsonb_build_array(ary);
         end if;
 
-        ary = jsonb_insert(ary, array ['0'], pval, true);
-
-        -- remove the existing entry as we will insert it with the new value shortly
-        result = result - pkey;
+        result = jsonb_set(result, array [pkey], ary || pval);
     else
         -- it doesn't exist so the value will be a single value
-        ary = pval;
+        result = jsonb_set(result, array [pkey], pval, true);
     end if;
-
-    -- Set the new value, either the raw value or the updated array
-    result = jsonb_insert(result, array [pkey], ary, true);
 
     return result;
 end;
@@ -118,8 +111,12 @@ begin
         end loop;
 
     -- children
-    for rec in select (xpath('local-name(' || root || '/*[' || i || '])', p_xml))[1]::text as rk, v
-               from unnest(xpath(root || '/*', p_xml)) with ordinality as a(v, i)
+    for rec in with a as (
+        select (xpath('local-name(' || root || '/*[' || i || '])', p_xml))[1]::text as rk, v, i
+        from unnest(xpath(root || '/*', p_xml)) with ordinality as a(v, i)
+    )
+               select *
+               from a
                order by i
         loop
             child = xml_to_json(rec.v);
