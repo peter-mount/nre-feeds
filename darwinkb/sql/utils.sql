@@ -129,7 +129,9 @@ begin
         end loop;
 
     -- Add inner text as valueroot element .text(). No text (or just whitespace) will not include a value
-    txt = regexp_replace(array_to_string((xpath('/' || root || '/text()', p_xml))::text[], ' ', ''), '\s+$', '');
+    txt = regexp_replace(
+            regexp_replace(array_to_string((xpath('/' || root || '/text()', p_xml))::text[], ' ', ''), '^\s+', ''),
+            '\s+$', '');
     if txt is not null and txt != '' then
         -- Handle case of element containing just _value (no children or attrs)
         select into size count(*) from jsonb_object_keys(result);
