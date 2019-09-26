@@ -17,14 +17,7 @@ begin
             return to_jsonb(true);
         when pval = 'false' then
             return to_jsonb(false);
-        when pval ~ '^(-)?[0-9]+$' then
-            begin
-                return to_jsonb(pval::bigint);
-            exception
-                when numeric_value_out_of_range then
-                -- ignore as it's too big to fit in a bigint
-            end;
-        when pval ~ '^(-)?[0-9]+\.[0-9]+$' then
+        when pval ~ '^(-)?[0-9]+(\.[0-9]+)?$' then
             begin
                 return to_jsonb(pval::numeric);
             exception
