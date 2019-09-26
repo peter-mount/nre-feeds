@@ -26,7 +26,7 @@ begin
             end;
         when pval ~ '^(-)?[0-9]+\.[0-9]+$' then
             begin
-                return to_jsonb(pval::real);
+                return to_jsonb(pval::numeric);
             exception
                 when numeric_value_out_of_range then
                 -- ignore as it's too big to fit in a real
@@ -37,6 +37,7 @@ begin
 end;
 $$
     language plpgsql;
+
 -- ======================================================================
 -- Adds an entry to a jsonb object similar to jsonb_insert
 -- except existing keys are converted into an array
