@@ -94,23 +94,18 @@ begin
     select '/*[name() = "' || (xpath('name(/*)', p_xml))[1]::text || '"]' into root;
 
     -- attributes
-    for rec in
-        select '@' || (xpath('local-name(' || root || '/@*[' || i || '])', p_xml))[1]::text as rk,
-               to_jsonb(v::text)                                                            as v
-        from unnest(xpath(root || '/@*', p_xml)) with ordinality as a(v, i)
-        where v is not null
-        order by i
+    for rec in select '@' || (xpath('local-name(' || root || '/@*[' || i || '])', p_xml))[1]::text as rk,
+                      v::text                                                                      as v
+               from unnest(xpath(root || '/@*', p_xml)) with ordinality as a(v, i)
+               where v is not null
+               order by i
         loop
-            result = jsonb_insert_upgrade(result, rec.rk, rec.v);
+            result = jsonb_insert_upgrade(result, rec.rk, text_to_json(rec.v));
         end loop;
 
     -- children
-    for rec in with a as (
-        select (xpath('local-name(' || root || '/*[' || i || '])', p_xml))[1]::text as rk, v, i
-        from unnest(xpath(root || '/*', p_xml)) with ordinality as a(v, i)
-    )
-               select *
-               from a
+    for rec in select (xpath('local-name(' || root || '/*[' || i || '])', p_xml))[1]::text as rk, v, i
+               from unnest(xpath(root || '/*', p_xml)) with ordinality as a(v, i)
                order by i
         loop
             child = xml_to_json(rec.v);
