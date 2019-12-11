@@ -27,8 +27,8 @@ type FeedStatus struct {
 //
 // Also, on startup this will also force a retrieval so we are in a consistent state.
 func (fs *FeedStatus) process(p *Pport) {
-	// Do nothing for sR entries
-	if p.SnapshotUpdate {
+	// Do nothing for sR entries or entries with no headers
+	if p.SnapshotUpdate || p.FeedHeaders.SequenceNumber < 0 {
 		return
 	}
 

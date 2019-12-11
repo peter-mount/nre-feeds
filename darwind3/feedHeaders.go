@@ -19,12 +19,14 @@ func (h *FeedHeaders) populate(msg amqp.Delivery) {
 	h.PushPortSequence = h.stringHeader(msg, "PushPortSequence")
 }
 
+// intHeader returns the value of a message header property as an int.
+// If the header property is missing then returns -1
 func (h *FeedHeaders) intHeader(msg amqp.Delivery, s string) int32 {
 	sn := msg.Headers[s]
 	if sn != nil {
 		return sn.(int32)
 	}
-	return 0
+	return -1
 }
 
 func (h *FeedHeaders) stringHeader(msg amqp.Delivery, s string) string {
