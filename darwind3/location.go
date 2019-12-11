@@ -267,7 +267,8 @@ func (l *Location) UpdateTime() {
 	l.Forecast.Delayed = l.Forecast.Departure.Delayed || l.Forecast.Arrival.Delayed || l.Forecast.Pass.Delayed
 
 	if !l.Forecast.Time.IsZero() && !l.Times.Time.IsZero() {
-		l.Delay = l.Forecast.Time.Get() - l.Times.Time.Get()
+		// Use the PublicTime not the working Time for calculating delays
+		l.Delay = l.Forecast.Time.Get() - l.Times.PublicTime.Get()
 	} else {
 		l.Delay = 0
 	}
