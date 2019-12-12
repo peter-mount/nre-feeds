@@ -23,6 +23,20 @@ func (r *DarwinReference) unmarshalXML(tx *bolt.Tx, decoder *xml.Decoder, start 
 
 	r.cisSource = make(map[string]string)
 
+	// Create a dummy TOC for the XMas special
+	var xnpToc *Toc = &Toc{
+		Toc:  "XM",
+		Name: "North Pole",
+		Url:  "",
+		Date: time.Now(),
+	}
+	if err, updated := r.addToc(xnpToc); err != nil {
+		return err
+	} else if updated {
+		tocCount++
+	}
+
+	// now unmarshal the rest
 	for _, attr := range start.Attr {
 		switch attr.Name.Local {
 		case "timetableId":
@@ -49,6 +63,13 @@ func (r *DarwinReference) unmarshalXML(tx *bolt.Tx, decoder *xml.Decoder, start 
 					return err
 				}
 				loc.Date = date
+
+				// Special case, XNP which exists, put a human name to the entry and our dummy toc
+				if loc.Crs == "XNP" {
+					loc.Name = "North Pole International"
+					loc.Toc = xnpToc.Toc
+					loc.Station = true
+				}
 
 				if err, updated := r.addTiploc(loc); err != nil {
 					return err

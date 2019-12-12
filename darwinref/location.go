@@ -41,5 +41,6 @@ func (a *Location) Equals(b *Location) bool {
 // This will expose the underground but better than leave a major station. Hopefully with Crossrail this will revert
 // back to the single station.
 func (t *Location) IsPublic() bool {
-	return t.Crs != "" && t.Crs[0] != 'X' //&& t.Crs[0] != 'Z'
+	// XNP = North Pole which actually exists
+	return t.Crs == "XNP" || (t.Crs != "" && t.Crs[0] != 'X') //&& t.Crs[0] != 'Z'
 }
