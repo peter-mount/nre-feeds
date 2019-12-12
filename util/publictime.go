@@ -91,7 +91,7 @@ func (t *PublicTime) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
 
 // String returns a PublicTime in HH:MM format or 5 blank spaces if it's not set.
 func (t *PublicTime) String() string {
-	if t.IsZero() {
+	if t == nil || t.IsZero() {
 		return "     "
 	}
 
