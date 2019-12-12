@@ -63,6 +63,7 @@ func (r *DarwinReference) unmarshalXML(tx *bolt.Tx, decoder *xml.Decoder, start 
 					return err
 				}
 				loc.Date = date
+				loc.Station = loc.IsPublic()
 
 				// Special case, XNP which exists, put a human name to the entry and our dummy toc
 				if loc.Crs == "XNP" {
