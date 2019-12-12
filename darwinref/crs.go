@@ -36,6 +36,7 @@ func (r *DarwinReference) GetCrsBucket(crsbucket *bolt.Bucket, tiplocbucket *bol
 	var t []*Location
 	for _, k := range ar {
 		if loc, exists := r.GetTiplocBucket(tiplocbucket, k); exists {
+			loc.Station = loc.IsPublic()
 			t = append(t, loc)
 		}
 	}

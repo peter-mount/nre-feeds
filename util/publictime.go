@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"strconv"
+	"time"
 )
 
 // Public Timetable time
@@ -115,4 +116,17 @@ func (t *PublicTime) IsZero() bool {
 // Is this instance representing nil
 func (t *PublicTime) IsNil() bool {
 	return t.n
+}
+
+// SetTime set's the working time to the current time (resolution 1 minute)
+func (t *PublicTime) SetTime(tm time.Time) {
+	t.Set((tm.Hour() * 60) + tm.Minute())
+}
+
+// WorkingTime_FromTime returns a WorkingTime from a time.Time with a resolution
+// of 1 minute.
+func PublicTime_FromTime(tm time.Time) *PublicTime {
+	t := &PublicTime{}
+	t.SetTime(tm)
+	return t
 }

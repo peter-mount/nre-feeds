@@ -34,6 +34,8 @@ func (r *DarwinReference) GetTiplocBucket(bucket *bolt.Bucket, tpl string) (*Loc
 		return nil, false
 	}
 
+	loc.Station = loc.IsPublic()
+
 	return loc, true
 }
 

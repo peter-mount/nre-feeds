@@ -49,3 +49,7 @@ func (t *SSD) String() string {
 func (t *SSD) Time() time.Time {
 	return t.t.In(London())
 }
+
+func (t *SSD) Set(t0 time.Time) {
+	t.t = t0
+}
