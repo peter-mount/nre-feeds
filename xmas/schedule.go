@@ -8,18 +8,18 @@ import (
 )
 
 const (
-  longToMinutes   = -60.0 / 15.0 // Number of minutes per degree of longitude
-  NPTIPLOC        = "NPLEINT"    // North Pole tiploc
-  NPCRS           = "XNP"
-  NPNAME          = "North Pole International"
+  longToMinutes   = (-60.0 / 15.0) // Number of minutes per degree of longitude
+  NorthPoleTiploc = "NPLEINT"      // North Pole tiploc
+  NorthPoleCrs    = "XNP"
+  NorthPoleName   = "North Pole International"
   TimeToNorthPole = 5 * time.Minute
 )
 
 func northPole(t time.Time) *Station {
   return &Station{
-    Tiploc:    NPTIPLOC,
-    Crs:       NPCRS,
-    Name:      NPNAME,
+    Tiploc:    NorthPoleTiploc,
+    Crs:       NorthPoleCrs,
+    Name:      NorthPoleName,
     Longitude: 0,
     Latitude:  90,
     tm:        t,
@@ -31,7 +31,7 @@ func (x *XmasService) sortStations(t0 time.Time) []*Station {
   var stations []*Station
 
   for _, station := range x.stationMap {
-    station.tm = t0.Add(time.Second * time.Duration(uint64(station.Longitude*longToMinutes)))
+    station.tm = t0.Add(time.Minute * time.Duration(station.Longitude*longToMinutes))
     stations = append(stations, station)
   }
 

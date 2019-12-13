@@ -79,7 +79,7 @@ func (x *XmasService) loadStations() error {
   log.Printf("Loaded %d visitable stations", len(x.stationMap))
 
   // Finally add the North pole to the lookup map, no need for an accurate time here
-  x.tiplocMap[NPTIPLOC] = northPole(time.Now())
+  x.tiplocMap[NorthPoleTiploc] = northPole(time.Now())
 
   return nil
 }

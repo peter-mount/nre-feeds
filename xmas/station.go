@@ -14,7 +14,7 @@ type Station struct {
   Name      string    `xml:"Name"`      // Name used in schedule print only
   Longitude float64   `xml:"Longitude"` // Longitude of station
   Latitude  float64   `xml:"Latitude"`  // Latitude of station
-  tm        time.Time // Time of station within our schedule
+  tm        time.Time `xml:"-"`         // Time of station within our schedule
 }
 
 func (s *Station) toLocation() *darwind3.Location {
