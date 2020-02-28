@@ -26,24 +26,17 @@ func (s *Station) toLocation() *darwind3.Location {
   }
 
   // Set the arrival & departure time as the same
-  pt := &util.PublicTime{}
-  pt.SetTime(s.tm)
-  l.Times.Pta = pt
+  l.Times.Pta = publicTime(s.tm)
+  l.Times.Ptd = publicTime(s.tm)
 
-  pt = &util.PublicTime{}
-  pt.SetTime(s.tm)
-  l.Times.Ptd = pt
-
-  wt := &util.WorkingTime{}
-  wt.SetTime(s.tm)
-  l.Times.Wta = wt
-  l.Times.Wtd = wt
+  l.Times.Wta = workingTime(s.tm)
+  l.Times.Wtd = workingTime(s.tm)
 
   // The forecast
-  l.Forecast.Arrival.ET = wt
-  l.Forecast.Arrival.WET = wt
-  l.Forecast.Departure.ET = wt
-  l.Forecast.Departure.WET = wt
+  l.Forecast.Arrival.ET = workingTime(s.tm)
+  l.Forecast.Arrival.WET = workingTime(s.tm)
+  l.Forecast.Departure.ET = workingTime(s.tm)
+  l.Forecast.Departure.WET = workingTime(s.tm)
 
   // The platform
   l.Forecast.Platform.Platform = "SKY"
@@ -51,6 +44,26 @@ func (s *Station) toLocation() *darwind3.Location {
   l.Forecast.Platform.Confirmed = true
 
   return l
+}
+
+// Public timetable cannot have anything scheduled at 00:00 so add 1 minute if after midnight
+func handleMidnight(t time.Time) time.Time {
+  if t.Hour() == 0 {
+    t = t.Add(time.Minute)
+  }
+  return t
+}
+
+func publicTime(t time.Time) *util.PublicTime {
+  pt := &util.PublicTime{}
+  pt.SetTime(handleMidnight(t))
+  return pt
+}
+
+func workingTime(t time.Time) *util.WorkingTime {
+  wt := &util.WorkingTime{}
+  wt.SetTime(handleMidnight(t))
+  return wt
 }
 
 func (s *Station) String() string {

@@ -9,13 +9,13 @@ import (
 	"time"
 )
 
-type serviceResult struct {
+type ServiceResult struct {
 	// The service RID
 	RID string `json:"rid"`
 	// Origin
 	Origin *darwind3.Location `json:"origin"`
 	// Destination
-  Destination *darwind3.Location `json:"callAt"`
+	Destination *darwind3.Location `json:"callAt"`
 	// The service
 	Service *darwind3.Schedule `json:"service"`
 	// Map of Tiploc's
@@ -49,7 +49,7 @@ func (d *LDBService) serviceHandler(r *rest.Rest) error {
 		return nil
 	}
 
-	res := &serviceResult{
+	res := &ServiceResult{
 		RID:     rid,
 		Service: service,
 		Tiplocs: darwinref.NewLocationMap(),
@@ -58,7 +58,7 @@ func (d *LDBService) serviceHandler(r *rest.Rest) error {
 		Date:    time.Now(),
 	}
 
-  // resolve the origin & callAt
+	// resolve the origin & callAt
 	if service.Origin != nil {
 		res.Origin = service.Origin
 	}

@@ -13,7 +13,7 @@ import (
   "time"
 )
 
-type stationResult struct {
+type StationResult struct {
   // The requested crs
   Crs string `json:"crs"`
   // The departures
@@ -45,7 +45,7 @@ type boardFilter struct {
   refClient     *refclient.DarwinRefClient              // client to ref service
   station       *ldb.Station                            // The station details
   services      []ldb.ServiceEntry                      // The available services
-  res           *stationResult                          // The final result
+  res           *StationResult                          // The final result
   tiplocs       map[string]interface{}                  // tiplocs in the response
   vias          map[string]*darwinref.ViaResolveRequest // vias
   now           time.Time                               // The time the request was made
@@ -66,7 +66,7 @@ func (d *LDBService) createBoardFilter(r *rest.Rest, crs string, station *ldb.St
     station:   station,
     tiplocs:   make(map[string]interface{}),
     vias:      make(map[string]*darwinref.ViaResolveRequest),
-    res: &stationResult{
+    res: &StationResult{
       Crs:      crs,
       Tiplocs:  darwinref.NewLocationMap(),
       Tocs:     darwinref.NewTocMap(),

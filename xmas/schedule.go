@@ -8,8 +8,8 @@ import (
 )
 
 const (
-  longToMinutes   = (-60.0 / 15.0) // Number of minutes per degree of longitude
-  NorthPoleTiploc = "NPLEINT"      // North Pole tiploc
+  longToSeconds   = (-60.0 / 15.0) * 60 // Number of seconds per degree of longitude
+  NorthPoleTiploc = "NPLEINT"           // North Pole tiploc
   NorthPoleCrs    = "XNP"
   NorthPoleName   = "North Pole International"
   TimeToNorthPole = 5 * time.Minute
@@ -31,7 +31,7 @@ func (x *XmasService) sortStations(t0 time.Time) []*Station {
   var stations []*Station
 
   for _, station := range x.stationMap {
-    station.tm = t0.Add(time.Minute * time.Duration(station.Longitude*longToMinutes))
+    station.tm = t0.Add(time.Second * time.Duration(station.Longitude*longToSeconds))
     stations = append(stations, station)
   }
 
@@ -106,9 +106,10 @@ func (x *XmasService) createSchedule(stations []*Station) *darwind3.Schedule {
 }
 
 func (x *XmasService) debugSchedule(s *darwind3.Schedule) {
-  fmt.Printf("Schedule:\n RID %s\n UID %s\n TID %s\nOrig %-7s %s\nDest %-7s %s\n\n",
+  fmt.Printf("Schedule:\n RID %s\n UID %s\n SSD %s\n TID %s\nOrig %-7s %s\nDest %-7s %s\n\n",
     s.RID,
     s.UID,
+    s.SSD.String(),
     s.TrainId,
     s.Origin.Tiploc, x.tiplocMap[s.Origin.Tiploc].Name,
     s.Destination.Tiploc, x.tiplocMap[s.Destination.Tiploc].Name,
