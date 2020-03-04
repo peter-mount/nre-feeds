@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	bolt "github.com/etcd-io/bbolt"
-
 	"sort"
 	"strings"
 )
@@ -93,4 +92,9 @@ func (t *LocationMap) MarshalJSON() ([]byte, error) {
 
 	b.WriteByte('}')
 	return b.Bytes(), nil
+}
+
+func (t *LocationMap) UnmarshalJSON(data []byte) error {
+	t.m = make(map[string]*Location)
+	return json.Unmarshal(data, &t.m)
 }
