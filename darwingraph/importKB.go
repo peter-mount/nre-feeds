@@ -97,7 +97,6 @@ func (r *ImportStations) UnmarshalXML(decoder *xml.Decoder, start xml.StartEleme
 					for _, tpl := range r.d.GetCrs(r.crs) {
 						n := r.d.GetNode(tpl)
 						if n != nil {
-							n.Crs = r.crs
 							// Only update if not Null Island & either no source or a previous NreKB entry
 							// This prevents invalid points and we don't overwrite custom entries
 							if !isNullIsland(float32(lat)) && !isNullIsland(float32(lon)) &&

@@ -8,18 +8,22 @@ import (
 	"strconv"
 )
 
+const (
+	IdBase = 36 // Base for persisting id's, 36 = lowercase tiploc by coincidence
+)
+
 type TiplocGraph struct {
-	id    int64                   // Current ID
-	ids   map[string]int64        // Map of tiploc to id
-	crs   map[string][]string     // Map of CRS to tiplocs (1..n relationship)
-	graph *simple.UndirectedGraph // Underlying graph
+	id    int64                 // Current ID
+	ids   map[string]int64      // Map of tiploc to id
+	crs   map[string][]string   // Map of CRS to tiplocs (1..n relationship)
+	graph *simple.DirectedGraph // Underlying directed graph
 }
 
 func NewTiplocGraph() *TiplocGraph {
 	return &TiplocGraph{
 		ids:   make(map[string]int64),
 		crs:   make(map[string][]string),
-		graph: simple.NewUndirectedGraph(),
+		graph: simple.NewDirectedGraph(),
 	}
 }
 
@@ -72,6 +76,7 @@ func (d *TiplocGraph) ComputeIfAbsent(tiploc string, f func() *TiplocNode) *Tipl
 		tn = f()
 		if tn != nil {
 			tn.Tiploc = tiploc
+			// Gen ID from tiploc so base36 works here
 			tn.id, _ = strconv.ParseInt(tiploc, 36, 64)
 			if tn.id == 0 {
 				log.Printf("id=0 for tpl \"%s\"", tn.Tiploc)
@@ -83,14 +88,42 @@ func (d *TiplocGraph) ComputeIfAbsent(tiploc string, f func() *TiplocNode) *Tipl
 	return tn
 }
 
+// Link links two tiplocs together
+// Returns the new TiplocEdge or nil if one already exists
+func (d *TiplocGraph) Link(a, b string) *TiplocEdge {
+	aT := d.GetNode(a)
+	bT := d.GetNode(b)
+
+	if aT != nil && bT != nil && aT.id != bT.id && !d.graph.HasEdgeBetween(aT.id, bT.id) {
+		edge := &TiplocEdge{f: aT, t: bT}
+		d.graph.SetEdge(edge)
+		return edge
+	}
+
+	return nil
+}
+
 func (d *TiplocGraph) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	return util.NewXmlBuilder(e, start).
-		AddAttribute(xml.Name{Local: "id"}, strconv.FormatInt(d.id, 36)).
+		AddAttribute(xml.Name{Local: "id"}, strconv.FormatInt(d.id, IdBase)).
 		AddAttribute(xml.Name{Local: "nodes"}, strconv.FormatInt(int64(len(d.ids)), 10)).
 		Run(func(builder *util.XmlBuilder) error {
+			// Encode all nodes
 			nodeName := xml.Name{Local: "node"}
-			for _, v := range d.ids {
-				builder.Append(nodeName, d.graph.Node(v))
+
+			nodes := d.graph.Nodes()
+			for nodes.Next() {
+				builder.Append(nodeName, nodes.Node())
+			}
+
+			return nil
+		}).
+		Run(func(builder *util.XmlBuilder) error {
+			// Encode all edges
+			edgeName := xml.Name{Local: "edge"}
+			edges := d.graph.Edges()
+			for edges.Next() {
+				builder.Append(edgeName, edges.Edge())
 			}
 			return nil
 		}).
@@ -98,12 +131,11 @@ func (d *TiplocGraph) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 }
 
 func (d *TiplocGraph) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error {
-
 	for _, attr := range start.Attr {
 		var err error
 		switch attr.Name.Local {
 		case "id":
-			d.id, err = strconv.ParseInt(attr.Value, 36, 64)
+			d.id, err = strconv.ParseInt(attr.Value, IdBase, 64)
 			if err != nil {
 				return err
 			}
@@ -126,6 +158,19 @@ func (d *TiplocGraph) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement)
 					return err
 				}
 				d.setNode(n)
+
+			case "edge":
+				e := &TiplocEdge{}
+				err := decoder.DecodeElement(e, &tok)
+				if err != nil {
+					return err
+				}
+				e.f = d.graph.Node(e.F).(*TiplocNode)
+				e.t = d.graph.Node(e.T).(*TiplocNode)
+				log.Printf("edge f=\"%s\" t=\"%s\" f=%v t=%v", e.F, e.T, e.f, e.t)
+				if e.f != nil && e.t != nil {
+					d.graph.SetEdge(e)
+				}
 			}
 
 		case xml.EndElement:

@@ -32,7 +32,7 @@ func isNullIsland(v float32) bool {
 
 func (n *TiplocNode) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	return util.NewXmlBuilder(e, start).
-		AddAttribute(xml.Name{Local: "id"}, strconv.FormatInt(n.id, 36)).
+		AddAttribute(xml.Name{Local: "id"}, strconv.FormatInt(n.id, IdBase)).
 		AddAttribute(xml.Name{Local: "tpl"}, n.Tiploc).
 		AddAttributeIfSet(xml.Name{Local: "crs"}, n.Crs).
 		AddAttributeIfSet(xml.Name{Local: "name"}, n.Name).
@@ -55,7 +55,7 @@ func (n *TiplocNode) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) 
 
 		switch attr.Name.Local {
 		case "id":
-			n.id, err = strconv.ParseInt(attr.Value, 36, 64)
+			n.id, err = strconv.ParseInt(attr.Value, IdBase, 64)
 		case "tpl":
 			n.Tiploc = attr.Value
 		case "crs":

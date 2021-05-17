@@ -126,3 +126,18 @@ func (d *DarwinGraph) ComputeIfAbsent(tiploc string, f func() *TiplocNode) *Tipl
 	defer d.mutex.Unlock()
 	return d.graph.ComputeIfAbsent(tiploc, f)
 }
+
+// GetCrs returns the tiplocs associated with a CRS code or nil if none
+func (d *DarwinGraph) GetCrs(crs string) []string {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+	return d.graph.GetCrs(crs)
+}
+
+// Link links two tiplocs together
+// Returns the new TiplocEdge or nil if one already exists
+func (d *DarwinGraph) Link(a, b string) *TiplocEdge {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+	return d.graph.Link(a, b)
+}
