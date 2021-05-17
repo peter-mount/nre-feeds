@@ -129,8 +129,7 @@ func (d *TiplocGraph) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	})
 
 	return util.NewXmlBuilder(e, start).
-		AddAttribute(xml.Name{Local: "nodes"}, strconv.FormatInt(int64(len(nodeAry)), 10)).
-		AddAttribute(xml.Name{Local: "edges"}, strconv.FormatInt(int64(len(edgeAry)), 10)).
+		Append(xml.Name{Local: "meta"}, d.Status()).
 		Run(func(builder *util.XmlBuilder) error {
 			for _, n := range nodeAry {
 				builder.Append(nodeName, n)

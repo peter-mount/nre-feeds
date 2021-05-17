@@ -82,6 +82,9 @@ func (d *DarwinGraph) Start() error {
 			return err
 		}
 	}
+
+	d.Status()
+
 	// Once started save the current graph (if enabled)
 	return d.SaveGraph()
 }
