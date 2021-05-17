@@ -8,10 +8,11 @@ import (
 )
 
 type TiplocEdge struct {
-	F int64
-	T int64
-	f *TiplocNode
-	t *TiplocNode
+	F   int64       // from tiploc - used in XML parser only
+	T   int64       // to  tiploc - used in XML parser only
+	Src string      // Source of edge
+	f   *TiplocNode // From node
+	t   *TiplocNode // To node
 }
 
 // From returns the from-node of the edge.
@@ -27,6 +28,7 @@ func (e *TiplocEdge) MarshalXML(encoder *xml.Encoder, start xml.StartElement) er
 	return util.NewXmlBuilder(encoder, start).
 		AddAttribute(xml.Name{Local: "from"}, strconv.FormatInt(e.f.ID(), IdBase)).
 		AddAttribute(xml.Name{Local: "to"}, strconv.FormatInt(e.t.ID(), IdBase)).
+		AddAttributeIfSet(xml.Name{Local: "src"}, e.Src).
 		Build()
 }
 
@@ -38,6 +40,8 @@ func (e *TiplocEdge) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) 
 			e.F, err = strconv.ParseInt(attr.Value, IdBase, 64)
 		case "to":
 			e.T, err = strconv.ParseInt(attr.Value, IdBase, 64)
+		case "src":
+			e.Src = attr.Value
 		}
 		if err != nil {
 			return err

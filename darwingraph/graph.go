@@ -16,6 +16,7 @@ type DarwinGraph struct {
 	graph            *TiplocGraph // The graph representing the UK rail network
 	importFileName   *string      // -import filename to create an initial model
 	stationsFileName *string      // -kbstation filename to import data from the NRE Knowledge Base
+	cifFileName      *string      // -cif filename to import from an NR CIF file
 	xmlFileName      *string      // -xml filename to load/save the model
 }
 
@@ -27,6 +28,7 @@ func (d *DarwinGraph) Init(k *kernel.Kernel) error {
 	d.importFileName = flag.String("import", "", "Import tiploc data")
 	d.xmlFileName = flag.String("xml", "", "xml filename for the graph")
 	d.stationsFileName = flag.String("kbstation", "", "xml to import KB data into the graph")
+	d.cifFileName = flag.String("cif", "", "Network Rail CIF file to import data into the graph")
 	return nil
 }
 
@@ -61,6 +63,15 @@ func (d *DarwinGraph) Start() error {
 			return err
 		}
 	}
+
+	if *d.cifFileName != "" {
+		// Import information from the NRE KB feed
+		err := d.importCIF()
+		if err != nil {
+			return err
+		}
+	}
+
 	// Once started save the current graph (if enabled)
 	return d.SaveGraph()
 }

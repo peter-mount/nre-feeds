@@ -23,3 +23,6 @@ config.yaml
 .idea
 go.sum
 /inbound.xml
+/station.xml
+/ukrail.xml
+/tt.cif
