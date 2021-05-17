@@ -19,18 +19,20 @@ type DarwinGraph struct {
 	cifFileName      *string      // -cif filename to import from an NR CIF file
 	cifRouting       *bool        // -no-cif-routing to ignore routing in -cif
 	xmlFileName      *string      // -xml filename to load/save the model
+	tiplocFileName   *string      // -tiplocExport to import from Legolash2o tiploc location map
 }
 
 func (d *DarwinGraph) Name() string {
 	return "DarwinGraph"
 }
 
-func (d *DarwinGraph) Init(k *kernel.Kernel) error {
+func (d *DarwinGraph) Init(_ *kernel.Kernel) error {
 	d.importFileName = flag.String("import", "", "Import tiploc data")
 	d.xmlFileName = flag.String("xml", "", "xml filename for the graph")
 	d.stationsFileName = flag.String("kbstation", "", "xml to import KB data into the graph")
 	d.cifFileName = flag.String("cif", "", "Network Rail CIF file to import data into the graph")
 	d.cifRouting = flag.Bool("cif-routing", false, "With -cif, true to import routing from CIF as well as locations")
+	d.tiplocFileName = flag.String("tiploc-location", "", "Import tiploc locations from legolash2o export")
 	return nil
 }
 
@@ -74,6 +76,12 @@ func (d *DarwinGraph) Start() error {
 		}
 	}
 
+	if *d.tiplocFileName != "" {
+		err := d.importTiplocLocations()
+		if err != nil {
+			return err
+		}
+	}
 	// Once started save the current graph (if enabled)
 	return d.SaveGraph()
 }
