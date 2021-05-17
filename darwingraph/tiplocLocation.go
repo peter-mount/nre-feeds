@@ -48,7 +48,7 @@ func (d *DarwinGraph) importTiplocLocations() error {
 			n.LocSrc = Legolash
 		}
 
-		if n.Name == tpl {
+		if n.Name == tpl || n.Name != e.Name {
 			n.Name = e.Name
 			n.LocSrc = Legolash
 		}
