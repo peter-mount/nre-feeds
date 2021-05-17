@@ -2,8 +2,8 @@ package service
 
 import (
 	"github.com/gorilla/handlers"
-	"github.com/peter-mount/golib/kernel"
-	"github.com/peter-mount/golib/rest"
+	"github.com/peter-mount/go-kernel"
+	"github.com/peter-mount/go-kernel/rest"
 	"github.com/peter-mount/nre-feeds/bin"
 	"github.com/peter-mount/nre-feeds/darwinkb"
 )

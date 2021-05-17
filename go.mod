@@ -13,11 +13,12 @@ require (
 	github.com/jlaffaye/ftp v0.0.0-20190828173736-6aaa91c7796e
 	github.com/lib/pq v1.2.0
 	github.com/peter-mount/filecache v0.0.0-20190909121939-281dcdcbbbfd
+	github.com/peter-mount/go-kernel v0.0.0-20210517141539-30ae4d463a5a
 	github.com/peter-mount/golib v0.0.0-20190924084925-7f296a747319
 	github.com/peter-mount/goxml2json v1.1.0
 	github.com/peter-mount/nrod-cif v0.0.0-20190716191943-8c7234b142cc
 	github.com/peter-mount/sortfold v0.2.1
-	github.com/streadway/amqp v0.0.0-20190827072141-edfb9018d271
+	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.4.0 // indirect
 	golang.org/x/net v0.0.0-20190923162816-aa69164e4478 // indirect
 	gonum.org/v1/gonum v0.9.1

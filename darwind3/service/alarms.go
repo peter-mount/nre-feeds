@@ -1,6 +1,6 @@
 package service
 
-import "github.com/peter-mount/golib/rest"
+import "github.com/peter-mount/go-kernel/rest"
 
 func (d *DarwinD3Service) AlarmHandler(r *rest.Rest) error {
 	r.Status(200).

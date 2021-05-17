@@ -1,8 +1,7 @@
 package update
 
 import (
-	"github.com/peter-mount/golib/kernel"
-	"github.com/peter-mount/golib/kernel/logger"
+	"github.com/peter-mount/go-kernel"
 	"github.com/peter-mount/nre-feeds/bin"
 	"github.com/peter-mount/nre-feeds/darwind3"
 	"github.com/peter-mount/nre-feeds/darwintimetable/service"
@@ -11,7 +10,6 @@ import (
 type TimetableUpdateService struct {
 	config    *bin.Config
 	timetable *service.DarwinTimetableService
-	logger    *logger.LoggerService
 }
 
 func (a *TimetableUpdateService) Name() string {
@@ -30,12 +28,6 @@ func (a *TimetableUpdateService) Init(k *kernel.Kernel) error {
 		return err
 	}
 	a.timetable = (svce).(*service.DarwinTimetableService)
-
-	svce, err = k.AddService(&logger.LoggerService{})
-	if err != nil {
-		return err
-	}
-	a.logger = (svce).(*logger.LoggerService)
 
 	return nil
 }

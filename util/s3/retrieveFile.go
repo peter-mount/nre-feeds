@@ -6,11 +6,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/peter-mount/golib/kernel/logger"
+	"log"
 	"os"
 )
 
-func (c *S3Credentials) RetrieveFile(log *logger.Logger, fname string, file *os.File) error {
+func (c *S3Credentials) RetrieveFile(fname string, file *os.File) error {
 	log.Printf("Retrieving %s", fname)
 
 	sess, err := session.NewSession(

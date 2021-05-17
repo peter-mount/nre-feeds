@@ -2,7 +2,7 @@ package bin
 
 import (
 	"fmt"
-	"github.com/peter-mount/golib/kernel"
+	"github.com/peter-mount/go-kernel"
 	"github.com/peter-mount/golib/statistics"
 	"github.com/streadway/amqp"
 )

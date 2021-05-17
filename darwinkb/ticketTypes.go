@@ -1,7 +1,7 @@
 package darwinkb
 
 import (
-	"github.com/peter-mount/golib/kernel/bolt"
+	"github.com/peter-mount/go-kernel/bolt"
 	"github.com/peter-mount/sortfold"
 	"log"
 	"sort"

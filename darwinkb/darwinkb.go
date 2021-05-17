@@ -1,9 +1,9 @@
 package darwinkb
 
 import (
-	"github.com/peter-mount/golib/kernel"
-	"github.com/peter-mount/golib/kernel/bolt"
-	"github.com/peter-mount/golib/kernel/cron"
+	"github.com/peter-mount/go-kernel"
+	"github.com/peter-mount/go-kernel/bolt"
+	"github.com/peter-mount/go-kernel/cron"
 	"github.com/peter-mount/nre-feeds/bin"
 	"os"
 )

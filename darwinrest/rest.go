@@ -3,7 +3,7 @@
 package darwinrest
 
 import (
-	"github.com/peter-mount/golib/rest"
+	"github.com/peter-mount/go-kernel/rest"
 	"github.com/peter-mount/nre-feeds/darwinref"
 	"github.com/peter-mount/nre-feeds/darwintimetable"
 )

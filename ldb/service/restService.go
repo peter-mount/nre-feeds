@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/peter-mount/golib/rest"
+	"github.com/peter-mount/go-kernel/rest"
 	"github.com/peter-mount/nre-feeds/darwind3"
 	d3client "github.com/peter-mount/nre-feeds/darwind3/client"
 	"github.com/peter-mount/nre-feeds/darwinref"
@@ -67,7 +67,7 @@ func (d *LDBService) serviceHandler(r *rest.Rest) error {
 	}
 
 	if res.Origin == nil || res.Destination == nil {
-    // Just incase, if we don't have an origin/callAt then use the first & last locations in the schedule
+		// Just incase, if we don't have an origin/callAt then use the first & last locations in the schedule
 		if len(service.Locations) > 0 {
 			if res.Origin == nil {
 				res.Origin = service.Locations[0]

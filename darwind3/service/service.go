@@ -1,12 +1,12 @@
 package service
 
 import (
-  "github.com/gorilla/handlers"
+	"github.com/gorilla/handlers"
 	"github.com/peter-mount/filecache"
 	fcsve "github.com/peter-mount/filecache/service"
-	"github.com/peter-mount/golib/kernel"
-	"github.com/peter-mount/golib/kernel/cron"
-	"github.com/peter-mount/golib/rest"
+	"github.com/peter-mount/go-kernel"
+	"github.com/peter-mount/go-kernel/cron"
+	"github.com/peter-mount/go-kernel/rest"
 	"github.com/peter-mount/nre-feeds/bin"
 	"github.com/peter-mount/nre-feeds/darwind3"
 	"runtime/debug"
@@ -67,8 +67,8 @@ func (a *DarwinD3Service) PostInit() error {
 		a.darwind3.Timetable = a.config.Services.Timetable
 	}
 
-  // nre-feeds#24 Add compression to output
-  a.restService.Use(handlers.CompressHandler)
+	// nre-feeds#24 Add compression to output
+	a.restService.Use(handlers.CompressHandler)
 
 	// Rest services
 	a.restService.Handle("/alarm/{rid}", a.AlarmHandler).Methods("GET")

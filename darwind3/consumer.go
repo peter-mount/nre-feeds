@@ -3,7 +3,7 @@ package darwind3
 import (
 	"bytes"
 	"encoding/xml"
-	"github.com/peter-mount/golib/rabbitmq"
+	"github.com/peter-mount/go-kernel/rabbitmq"
 	"github.com/peter-mount/golib/statistics"
 	"github.com/streadway/amqp"
 )

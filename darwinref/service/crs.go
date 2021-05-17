@@ -3,7 +3,7 @@ package service
 import (
 	"encoding/json"
 	bolt "github.com/etcd-io/bbolt"
-	"github.com/peter-mount/golib/rest"
+	"github.com/peter-mount/go-kernel/rest"
 	"github.com/peter-mount/nre-feeds/darwinref"
 )
 

@@ -2,9 +2,9 @@ package service
 
 import (
 	"github.com/gorilla/handlers"
-	"github.com/peter-mount/golib/kernel"
-	"github.com/peter-mount/golib/kernel/cron"
-	"github.com/peter-mount/golib/rest"
+	"github.com/peter-mount/go-kernel"
+	"github.com/peter-mount/go-kernel/cron"
+	"github.com/peter-mount/go-kernel/rest"
 	"github.com/peter-mount/nre-feeds/bin"
 	"github.com/peter-mount/nre-feeds/darwind3"
 	"github.com/peter-mount/nre-feeds/ldb"
@@ -51,7 +51,6 @@ func (a *LDBService) PostInit() error {
 
 	// nre-feeds#24 Add compression to output
 	a.restService.Use(handlers.CompressHandler)
-
 
 	// Rest services
 	a.restService.Handle("/boards/{crs}", a.stationHandler).Methods("GET")

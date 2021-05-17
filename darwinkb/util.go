@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/peter-mount/golib/kernel/bolt"
+	"github.com/peter-mount/go-kernel/bolt"
 )
 
 func (r *DarwinKB) View(n string, f func(*bolt.Bucket) error) error {

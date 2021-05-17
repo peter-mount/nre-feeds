@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/peter-mount/golib/rest"
+	"github.com/peter-mount/go-kernel/rest"
 )
 
 func (d *DarwinD3Service) ScheduleHandler(r *rest.Rest) error {

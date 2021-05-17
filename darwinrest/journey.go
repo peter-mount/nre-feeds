@@ -3,7 +3,7 @@ package darwinrest
 import (
 	"encoding/xml"
 	bolt "github.com/etcd-io/bbolt"
-	"github.com/peter-mount/golib/rest"
+	"github.com/peter-mount/go-kernel/rest"
 	"github.com/peter-mount/nre-feeds/darwinref"
 	"github.com/peter-mount/nre-feeds/darwintimetable"
 )
@@ -23,7 +23,6 @@ func (rs *DarwinRest) JourneyHandler(r *rest.Rest) error {
 
 	if err := rs.TT.View(func(tx *bolt.Tx) error {
 		if journey, exists := rs.TT.GetJourney(tx, res.RID); exists {
-			journey.SetSelf(r)
 			res.Journey = journey
 		}
 		return nil
@@ -45,7 +44,6 @@ func (rs *DarwinRest) JourneyHandler(r *rest.Rest) error {
 			tpls = append(tpls, l.Tiploc)
 		}
 		res.Locations.AddTiplocs(rs.Ref, tx, tpls)
-		res.Locations.Self(r)
 
 		var tocs []string
 		res.Locations.ForEach(func(l *darwinref.Location) {
@@ -54,7 +52,6 @@ func (rs *DarwinRest) JourneyHandler(r *rest.Rest) error {
 			}
 		})
 		res.Tocs.AddTocs(rs.Ref, tx, tocs)
-		res.Tocs.Self(r)
 
 		return nil
 	}); err != nil {

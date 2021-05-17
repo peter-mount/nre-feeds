@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/peter-mount/golib/kernel"
+	"github.com/peter-mount/go-kernel"
 	"github.com/peter-mount/nre-feeds/darwinref/service"
 	"github.com/peter-mount/nre-feeds/darwinref/update"
 	"log"
