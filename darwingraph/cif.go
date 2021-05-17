@@ -9,10 +9,11 @@ import (
 )
 
 type cifImporter struct {
-	s          *bufio.Scanner // Scanner to read CIF from
-	d          *TiplocGraph   // Graph being imported into
-	prevTiploc string         // Previous tiploc in sequence
-	curTiploc  string         // Current tiploc in sequence
+	s              *bufio.Scanner // Scanner to read CIF from
+	d              *TiplocGraph   // Graph being imported into
+	includeRouting bool           // true then include schedules to form an initial map
+	prevTiploc     string         // Previous tiploc in sequence
+	curTiploc      string         // Current tiploc in sequence
 }
 
 func (d *DarwinGraph) importCIF() error {
@@ -25,8 +26,9 @@ func (d *DarwinGraph) importCIF() error {
 	defer f.Close()
 
 	i := &cifImporter{
-		d: d.graph,
-		s: bufio.NewScanner(f),
+		d:              d.graph,             // Graph to import into
+		s:              bufio.NewScanner(f), // Scanner to read from
+		includeRouting: *d.cifRouting,       // Flag to include/exclude CIF routing
 	}
 
 	err = i.parse()
@@ -71,15 +73,17 @@ func (i *cifImporter) parse() error {
 }
 
 func (i *cifImporter) parseLocation(l string) {
-	parseStringTrim(l, 2, 7, &i.curTiploc)
-	if i.prevTiploc != "" {
-		// Link the two
-		edge := i.d.Link(i.prevTiploc, i.curTiploc)
-		if edge != nil {
-			edge.Src = "CIF"
+	if i.includeRouting {
+		parseStringTrim(l, 2, 7, &i.curTiploc)
+		if i.prevTiploc != "" {
+			// Link the two
+			edge := i.d.Link(i.prevTiploc, i.curTiploc)
+			if edge != nil {
+				edge.Src = "CIF"
+			}
 		}
+		i.prevTiploc = i.curTiploc
 	}
-	i.prevTiploc = i.curTiploc
 }
 
 func (i *cifImporter) parseTiploc(l string) error {

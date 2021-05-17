@@ -3,8 +3,10 @@ package darwingraph
 import (
 	"encoding/xml"
 	"github.com/peter-mount/nre-feeds/util"
+	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
 	"log"
+	"sort"
 	"strconv"
 )
 
@@ -104,26 +106,47 @@ func (d *TiplocGraph) Link(a, b string) *TiplocEdge {
 }
 
 func (d *TiplocGraph) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	nodeName := xml.Name{Local: "node"}
+	edgeName := xml.Name{Local: "edge"}
+
+	// Get list of nodes sorted by tiploc
+	var nodeAry []*TiplocNode
+	nodes := d.graph.Nodes()
+	for nodes.Next() {
+		nodeAry = append(nodeAry, nodes.Node().(*TiplocNode))
+	}
+	sort.Slice(nodeAry, func(i, j int) bool {
+		return nodeAry[i].Tiploc < nodeAry[j].Tiploc
+	})
+
+	// Get list of edges sorted by tiploc
+	var edgeAry []graph.Edge
+	edges := d.graph.Edges()
+	for edges.Next() {
+		edgeAry = append(edgeAry, edges.Edge())
+	}
+	sort.Slice(edgeAry, func(i, j int) bool {
+		af := edgeAry[i].From().(*TiplocNode).Tiploc
+		bf := edgeAry[j].From().(*TiplocNode).Tiploc
+		if af == bf {
+			af = edgeAry[i].To().(*TiplocNode).Tiploc
+			bf = edgeAry[j].To().(*TiplocNode).Tiploc
+		}
+		return af < bf
+	})
+
 	return util.NewXmlBuilder(e, start).
 		AddAttribute(xml.Name{Local: "id"}, strconv.FormatInt(d.id, IdBase)).
 		AddAttribute(xml.Name{Local: "nodes"}, strconv.FormatInt(int64(len(d.ids)), 10)).
 		Run(func(builder *util.XmlBuilder) error {
-			// Encode all nodes
-			nodeName := xml.Name{Local: "node"}
-
-			nodes := d.graph.Nodes()
-			for nodes.Next() {
-				builder.Append(nodeName, nodes.Node())
+			for _, n := range nodeAry {
+				builder.Append(nodeName, n)
 			}
-
 			return nil
 		}).
 		Run(func(builder *util.XmlBuilder) error {
-			// Encode all edges
-			edgeName := xml.Name{Local: "edge"}
-			edges := d.graph.Edges()
-			for edges.Next() {
-				builder.Append(edgeName, edges.Edge())
+			for _, e := range edgeAry {
+				builder.Append(edgeName, e)
 			}
 			return nil
 		}).

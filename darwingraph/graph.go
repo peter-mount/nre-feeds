@@ -17,6 +17,7 @@ type DarwinGraph struct {
 	importFileName   *string      // -import filename to create an initial model
 	stationsFileName *string      // -kbstation filename to import data from the NRE Knowledge Base
 	cifFileName      *string      // -cif filename to import from an NR CIF file
+	cifRouting       *bool        // -no-cif-routing to ignore routing in -cif
 	xmlFileName      *string      // -xml filename to load/save the model
 }
 
@@ -29,6 +30,7 @@ func (d *DarwinGraph) Init(k *kernel.Kernel) error {
 	d.xmlFileName = flag.String("xml", "", "xml filename for the graph")
 	d.stationsFileName = flag.String("kbstation", "", "xml to import KB data into the graph")
 	d.cifFileName = flag.String("cif", "", "Network Rail CIF file to import data into the graph")
+	d.cifRouting = flag.Bool("cif-routing", false, "With -cif, true to import routing from CIF as well as locations")
 	return nil
 }
 
