@@ -1,6 +1,8 @@
 package util
 
-import "encoding/xml"
+import (
+	"encoding/xml"
+)
 
 type xmlIntType struct {
 	Value int `xml:",chardata"`
