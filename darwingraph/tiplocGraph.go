@@ -15,7 +15,6 @@ const (
 )
 
 type TiplocGraph struct {
-	id    int64                 // Current ID
 	ids   map[string]int64      // Map of tiploc to id
 	crs   map[string][]string   // Map of CRS to tiplocs (1..n relationship)
 	graph *simple.DirectedGraph // Underlying directed graph
@@ -39,12 +38,6 @@ func (d *TiplocGraph) GetNode(tiploc string) *TiplocNode {
 		return d.graph.Node(id).(*TiplocNode)
 	}
 	return nil
-}
-
-func (d *TiplocGraph) NextID() int64 {
-	id := d.id
-	d.id = d.id + 1
-	return id
 }
 
 // addCrs internal call to add tiploc to a crs
@@ -136,8 +129,8 @@ func (d *TiplocGraph) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	})
 
 	return util.NewXmlBuilder(e, start).
-		AddAttribute(xml.Name{Local: "id"}, strconv.FormatInt(d.id, IdBase)).
-		AddAttribute(xml.Name{Local: "nodes"}, strconv.FormatInt(int64(len(d.ids)), 10)).
+		AddAttribute(xml.Name{Local: "nodes"}, strconv.FormatInt(int64(len(nodeAry)), 10)).
+		AddAttribute(xml.Name{Local: "edges"}, strconv.FormatInt(int64(len(edgeAry)), 10)).
 		Run(func(builder *util.XmlBuilder) error {
 			for _, n := range nodeAry {
 				builder.Append(nodeName, n)
@@ -154,16 +147,7 @@ func (d *TiplocGraph) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 }
 
 func (d *TiplocGraph) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error {
-	for _, attr := range start.Attr {
-		var err error
-		switch attr.Name.Local {
-		case "id":
-			d.id, err = strconv.ParseInt(attr.Value, IdBase, 64)
-			if err != nil {
-				return err
-			}
-		}
-	}
+	// We ignore attributes as they are just information in the generated xml file
 
 	for {
 		token, err := decoder.Token()
