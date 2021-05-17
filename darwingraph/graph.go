@@ -26,6 +26,7 @@ func (d *DarwinGraph) Name() string {
 func (d *DarwinGraph) Init(k *kernel.Kernel) error {
 	d.importFileName = flag.String("import", "", "Import tiploc data")
 	d.xmlFileName = flag.String("xml", "", "xml filename for the graph")
+	d.stationsFileName = flag.String("kbstation", "", "xml to import KB data into the graph")
 	return nil
 }
 
@@ -53,6 +54,13 @@ func (d *DarwinGraph) Start() error {
 		}
 	}
 
+	if *d.stationsFileName != "" {
+		// Import information from the NRE KB feed
+		err := d.importKBStations()
+		if err != nil {
+			return err
+		}
+	}
 	// Once started save the current graph (if enabled)
 	return d.SaveGraph()
 }

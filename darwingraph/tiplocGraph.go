@@ -11,14 +11,20 @@ import (
 type TiplocGraph struct {
 	id    int64                   // Current ID
 	ids   map[string]int64        // Map of tiploc to id
+	crs   map[string][]string     // Map of CRS to tiplocs (1..n relationship)
 	graph *simple.UndirectedGraph // Underlying graph
 }
 
 func NewTiplocGraph() *TiplocGraph {
 	return &TiplocGraph{
 		ids:   make(map[string]int64),
+		crs:   make(map[string][]string),
 		graph: simple.NewUndirectedGraph(),
 	}
+}
+
+func (d *TiplocGraph) GetCrs(crs string) []string {
+	return d.crs[crs]
 }
 
 // GetNode returns an existing TiplocNode or nil if it doesn't exist
@@ -35,10 +41,28 @@ func (d *TiplocGraph) NextID() int64 {
 	return id
 }
 
+// addCrs internal call to add tiploc to a crs
+func (d *TiplocGraph) addCrs(crs, tiploc string) {
+	if crs != "" {
+		tpls := d.GetCrs(crs)
+		if tpls == nil || len(tpls) == 0 {
+			d.crs[crs] = []string{tiploc}
+		} else {
+			for _, tpl := range tpls {
+				if tpl == tiploc {
+					return
+				}
+			}
+			d.crs[crs] = append(tpls, tiploc)
+		}
+	}
+}
+
 // setNode internal call to set a node in the graph
 func (d *TiplocGraph) setNode(n *TiplocNode) {
 	d.graph.AddNode(n)
 	d.ids[n.Tiploc] = n.id
+	d.addCrs(n.Crs, n.Tiploc)
 }
 
 func (d *TiplocGraph) ComputeIfAbsent(tiploc string, f func() *TiplocNode) *TiplocNode {

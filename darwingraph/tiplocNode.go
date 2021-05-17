@@ -11,9 +11,10 @@ import (
 type TiplocNode struct {
 	id                 int64   // ID of this node
 	darwinref.Location         // Location entry
+	LocSrc             string  // Source of Location
 	Lat                float32 // Latitude of point
 	Lon                float32 // Longitude of point
-	Generated          bool    // true if Lat,Lon were generated/extrapolated
+	LLSrc              string  // Source of Lat/Lon
 }
 
 func (n TiplocNode) ID() int64 {
@@ -37,11 +38,12 @@ func (n *TiplocNode) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 		AddAttributeIfSet(xml.Name{Local: "name"}, n.Name).
 		AddAttributeIfSet(xml.Name{Local: "toc"}, n.Toc).
 		AddBoolAttributeIfSet(xml.Name{Local: "station"}, n.Station).
+		AddAttribute(xml.Name{Local: "locSrc"}, n.LocSrc).
 		// Coordinates only if they are not at null point island
 		If(!isNullIsland(n.Lon) && !isNullIsland(n.Lat)).
 		AddFloat32Attribute(xml.Name{Local: "lat"}, n.Lat).
 		AddFloat32Attribute(xml.Name{Local: "lon"}, n.Lon).
-		AddBoolAttributeIfSet(xml.Name{Local: "generated"}, n.Generated).
+		AddAttributeIfSet(xml.Name{Local: "llSrc"}, n.LLSrc).
 		EndIf().
 		Build()
 }
@@ -74,12 +76,10 @@ func (n *TiplocNode) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) 
 		case "lon":
 			f, err = strconv.ParseFloat(attr.Value, 32)
 			n.Lon = float32(f)
-		case "generated":
-			if attr.Value == "true" {
-				n.Generated = true
-			} else {
-				n.Generated = false
-			}
+		case "llSrc":
+			n.LLSrc = attr.Value
+		case "locSrc":
+			n.LocSrc = attr.Value
 		}
 
 		if err != nil {

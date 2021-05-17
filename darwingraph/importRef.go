@@ -57,7 +57,7 @@ func (r *ImportXml) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) e
 
 				// Ensure we have an entry
 				node := r.d.ComputeIfAbsent(loc.Tiploc, func() *TiplocNode {
-					return &TiplocNode{}
+					return &TiplocNode{LocSrc: "NreRef"}
 				})
 
 				// Update the location to the parsed one
