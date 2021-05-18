@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"log"
 	"strconv"
+	"strings"
 )
 
 // StationNode is a node in StationGraph representing a station
@@ -48,17 +49,15 @@ func (n StationNode) String() string {
 }
 
 func (n *StationNode) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	tiplocName := xml.Name{Local: "tiploc"}
+	var s []string
+	for _, t := range n.tiploc {
+		s = append(s, t.Tiploc)
+	}
 	return util.NewXmlBuilder(e, start).
 		AddAttribute(xml.Name{Local: "id"}, strconv.FormatInt(n.id, IdBase)).
 		AddAttribute(xml.Name{Local: "crs"}, n.Crs).
 		AddAttribute(xml.Name{Local: "name"}, n.Name).
-		Run(func(builder *util.XmlBuilder) error {
-			for _, t := range n.tiploc {
-				builder.Append(tiplocName, t.Tiploc)
-			}
-			return nil
-		}).
+		AddCharData(strings.Join(s, ",")).
 		Build()
 }
 
@@ -85,16 +84,8 @@ func (n *StationNode) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement)
 		}
 
 		switch tok := token.(type) {
-		case xml.StartElement:
-			switch tok.Name.Local {
-			case "tiploc":
-				var t string
-				err := decoder.DecodeElement(&t, &tok)
-				if err != nil {
-					return err
-				}
-
-				// Resolve the TiplocNode
+		case xml.CharData:
+			for _, t := range strings.Split(strings.ReplaceAll(string(tok), " ", ""), ",") {
 				tn := n.graph.tgraph.GetNode(t)
 				if tn == nil {
 					return errors.Errorf("tiploc \"%s\" not found for \"%s\"", t, n.Crs)

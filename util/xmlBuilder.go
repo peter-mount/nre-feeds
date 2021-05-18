@@ -114,6 +114,23 @@ func (b *XmlBuilder) Element(n xml.Name, f func(builder *XmlBuilder) error) *Xml
 	return b
 }
 
+func (b *XmlBuilder) AddComment(v string) *XmlBuilder {
+	if b.err == nil {
+		b.err = b.e.EncodeToken(xml.Comment(v))
+	}
+	return b
+}
+
+func (b *XmlBuilder) AddCharData(v string) *XmlBuilder {
+	if !b.started {
+		b.startElement()
+	}
+	if b.err == nil {
+		b.err = b.e.EncodeToken(xml.CharData(v))
+	}
+	return b
+}
+
 func (b *XmlBuilder) AddAttribute(n xml.Name, v string) *XmlBuilder {
 	if !b.ifCond {
 		return b
