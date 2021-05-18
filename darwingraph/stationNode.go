@@ -10,11 +10,11 @@ import (
 
 // StationNode is a node in StationGraph representing a station
 type StationNode struct {
-	id      int64         // Unique ID
-	Crs     string        // CRS of this station
-	Name    string        // Name of the station
-	tiplpoc []*TiplocNode // Tiploc nodes for this entry
-	graph   *StationGraph // LinkTiplocs to parent graph
+	id     int64         // Unique ID
+	Crs    string        // CRS of this station
+	Name   string        // Name of the station
+	tiploc []*TiplocNode // Tiploc nodes for this entry
+	graph  *StationGraph // LinkTiplocs to parent graph
 }
 
 func (d *StationGraph) NewStationNode(crs string, tiplocs []*TiplocNode) *StationNode {
@@ -31,11 +31,11 @@ func (d *StationGraph) NewStationNode(crs string, tiplocs []*TiplocNode) *Statio
 	}
 
 	return &StationNode{
-		id:      id,
-		Crs:     crs,
-		Name:    tiplocs[0].Name, // Name from first tiploc
-		tiplpoc: tiplocs,
-		graph:   d,
+		id:     id,
+		Crs:    crs,
+		Name:   tiplocs[0].Name, // Name from first tiploc
+		tiploc: tiplocs,
+		graph:  d,
 	}
 }
 
@@ -54,7 +54,7 @@ func (n *StationNode) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 		AddAttribute(xml.Name{Local: "crs"}, n.Crs).
 		AddAttribute(xml.Name{Local: "name"}, n.Name).
 		Run(func(builder *util.XmlBuilder) error {
-			for _, t := range n.tiplpoc {
+			for _, t := range n.tiploc {
 				builder.Append(tiplocName, t.Tiploc)
 			}
 			return nil
@@ -100,7 +100,7 @@ func (n *StationNode) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement)
 					return errors.Errorf("tiploc \"%s\" not found for \"%s\"", t, n.Crs)
 				}
 
-				n.tiplpoc = append(n.tiplpoc, tn)
+				n.tiploc = append(n.tiploc, tn)
 			}
 		case xml.EndElement:
 			return nil
