@@ -184,9 +184,15 @@ func (d *TiplocGraph) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement)
 				}
 				e.f = d.graph.Node(e.F).(*TiplocNode)
 				e.t = d.graph.Node(e.T).(*TiplocNode)
-				log.Printf("edge f=\"%s\" t=\"%s\" f=%v t=%v", e.F, e.T, e.f, e.t)
 				if e.f != nil && e.t != nil {
 					d.graph.SetEdge(e)
+				}
+
+			case "meta":
+				var e string
+				err := decoder.DecodeElement(&e, &tok)
+				if err != nil {
+					return err
 				}
 			}
 
