@@ -42,9 +42,7 @@ func (d *DarwinGraph) importTiplocLocations() error {
 		})
 
 		if n.Crs == "" {
-			n.Crs = e.Details.CRS
-			n.Station = n.Location.IsPublic()
-			d.graph.addCrs(n.Crs, tpl)
+			d.graph.AddCrs(e.Details.CRS, tpl)
 			n.LocSrc = Legolash
 		}
 

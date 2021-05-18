@@ -64,7 +64,7 @@ func (r *ImportXml) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) e
 				node.Location = loc
 
 				// Ensure CRS is updated
-				r.d.addCrs(node.Crs, node.Tiploc)
+				r.d.AddCrs(node.Crs, node.Tiploc)
 			}
 		}
 	}

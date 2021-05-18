@@ -158,6 +158,13 @@ func (d *DarwinGraph) GetCrs(crs string) []string {
 	return d.graph.GetCrs(crs)
 }
 
+// AddCrs adds a crs to a node with any required internal mapping
+func (d *DarwinGraph) AddCrs(crs, tiploc string) {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+	d.graph.AddCrs(crs, tiploc)
+}
+
 // Link links two tiplocs together
 // Returns the new TiplocEdge or nil if one already exists
 func (d *DarwinGraph) Link(a, b string) *TiplocEdge {

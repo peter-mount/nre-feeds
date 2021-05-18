@@ -106,14 +106,6 @@ func (i *cifImporter) parseTiploc(l string) error {
 		n.LocSrc = "CIF"
 	}
 
-	// If CIF has a CRS but not the node then set it.
-	// This should not happen but just incase
-	if n.Crs == "" {
-		n.Crs = crs
-		n.Station = n.Location.IsPublic()
-		i.d.addCrs(crs, tpl)
-	}
-
 	return nil
 }
 

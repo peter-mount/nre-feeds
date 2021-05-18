@@ -40,9 +40,20 @@ func (d *TiplocGraph) GetNode(tiploc string) *TiplocNode {
 	return nil
 }
 
-// addCrs internal call to add tiploc to a crs
-func (d *TiplocGraph) addCrs(crs, tiploc string) {
-	if crs != "" {
+// AddCrs adds a crs to a node with any required internal mapping
+func (d *TiplocGraph) AddCrs(crs, tiploc string) {
+	if crs == "" {
+		return
+	}
+
+	// Check tiploc exists & doesn't already have a crs or has this one
+	n := d.GetNode(tiploc)
+	if n != nil && (n.Crs == "" || n.Crs == crs) {
+		// Set the crs
+		n.Crs = crs
+		n.Station = n.Location.IsPublic()
+
+		// Add the tiploc to the crs lookup map
 		tpls := d.GetCrs(crs)
 		if tpls == nil || len(tpls) == 0 {
 			d.crs[crs] = []string{tiploc}
@@ -61,7 +72,7 @@ func (d *TiplocGraph) addCrs(crs, tiploc string) {
 func (d *TiplocGraph) setNode(n *TiplocNode) {
 	d.graph.AddNode(n)
 	d.ids[n.Tiploc] = n.id
-	d.addCrs(n.Crs, n.Tiploc)
+	d.AddCrs(n.Crs, n.Tiploc)
 }
 
 func (d *TiplocGraph) ComputeIfAbsent(tiploc string, f func() *TiplocNode) *TiplocNode {
