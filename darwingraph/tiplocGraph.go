@@ -152,7 +152,6 @@ func (d *TiplocGraph) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	})
 
 	return util.NewXmlBuilder(e, start).
-		Append(xml.Name{Local: "meta"}, d.Status()).
 		Run(func(builder *util.XmlBuilder) error {
 			for _, n := range nodeAry {
 				builder.Append(nodeName, n)
@@ -198,13 +197,6 @@ func (d *TiplocGraph) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement)
 				e.t = d.graph.Node(e.T).(*TiplocNode)
 				if e.f != nil && e.t != nil {
 					d.graph.SetEdge(e)
-				}
-
-			case "meta":
-				var e string
-				err := decoder.DecodeElement(&e, &tok)
-				if err != nil {
-					return err
 				}
 			}
 

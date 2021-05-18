@@ -11,7 +11,7 @@ import (
 func (d *DarwinGraph) Status() Status {
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
-	s := d.graph.tiplocGraph.Status()
+	s := d.graph.Status()
 
 	// Percentage of nodes with a position
 	ppc := 0.0
@@ -47,24 +47,21 @@ func appendStatusSrc(v []string, title string, src []StatusSrc) []string {
 	}
 	return v
 }
-func (d *TiplocGraph) Status() Status {
+func (d *RailGraph) Status() Status {
 	s := Status{
 		ExportDate: time.Now(),
-		Edges:      d.graph.Edges().Len(),
+		Edges:      d.tiplocGraph.graph.Edges().Len(),
+		Crs:        d.stationGraph.graph.Nodes().Len(),
 	}
 
 	locSrc := make(map[string]int)
 	llSrc := make(map[string]int)
 
-	nodes := d.graph.Nodes()
+	nodes := d.tiplocGraph.graph.Nodes()
 	s.Nodes = nodes.Len()
 
 	for nodes.Next() {
 		n := nodes.Node().(*TiplocNode)
-
-		if n.Crs != "" {
-			s.Crs++
-		}
 
 		if n.Station {
 			s.Stations++

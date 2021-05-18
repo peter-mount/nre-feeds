@@ -3,7 +3,6 @@ package darwingraph
 import (
 	"encoding/xml"
 	"github.com/peter-mount/nre-feeds/util"
-	"time"
 )
 
 // RailGraph is a wrapper around a TiplocGraph & a StationGraph
@@ -41,7 +40,7 @@ func (d *RailGraph) LinkTiplocs(a, b string) *TiplocEdge {
 
 func (d *RailGraph) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	return util.NewXmlBuilder(e, start).
-		AddAttribute(xml.Name{Local: "generated"}, time.Now().Format(time.RFC3339)).
+		Append(xml.Name{Local: "meta"}, d.Status()).
 		Append(xml.Name{Local: "tiplocs"}, d.tiplocGraph).
 		Append(xml.Name{Local: "stations"}, d.stationGraph).
 		Build()
@@ -59,13 +58,22 @@ func (d *RailGraph) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) e
 		switch tok := token.(type) {
 		case xml.StartElement:
 			switch tok.Name.Local {
+
 			case "tiplocs":
 				err := decoder.DecodeElement(d.tiplocGraph, &tok)
 				if err != nil {
 					return err
 				}
+
 			case "stations":
 				err := decoder.DecodeElement(d.stationGraph, &tok)
+				if err != nil {
+					return err
+				}
+
+			case "meta":
+				var e string
+				err := decoder.DecodeElement(&e, &tok)
 				if err != nil {
 					return err
 				}
