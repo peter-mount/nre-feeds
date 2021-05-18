@@ -18,6 +18,7 @@ require (
 	github.com/peter-mount/goxml2json v1.1.0
 	github.com/peter-mount/nrod-cif v0.0.0-20190716191943-8c7234b142cc
 	github.com/peter-mount/sortfold v0.2.1
+	github.com/pkg/errors v0.9.1
 	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.4.0 // indirect
 	golang.org/x/net v0.0.0-20190923162816-aa69164e4478 // indirect

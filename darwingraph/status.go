@@ -11,7 +11,7 @@ import (
 func (d *DarwinGraph) Status() Status {
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
-	s := d.graph.Status()
+	s := d.graph.tiplocGraph.Status()
 
 	// Percentage of nodes with a position
 	ppc := 0.0

@@ -10,7 +10,7 @@ import (
 
 type cifImporter struct {
 	s              *bufio.Scanner // Scanner to read CIF from
-	d              *TiplocGraph   // Graph being imported into
+	d              *RailGraph     // Graph being imported into
 	includeRouting bool           // true then include schedules to form an initial map
 	prevTiploc     string         // Previous tiploc in sequence
 	curTiploc      string         // Current tiploc in sequence
@@ -77,7 +77,7 @@ func (i *cifImporter) parseLocation(l string) {
 		parseStringTrim(l, 2, 7, &i.curTiploc)
 		if i.prevTiploc != "" {
 			// Link the two
-			edge := i.d.Link(i.prevTiploc, i.curTiploc)
+			edge := i.d.LinkTiplocs(i.prevTiploc, i.curTiploc)
 			if edge != nil {
 				edge.Src = "CIF"
 			}
@@ -92,7 +92,7 @@ func (i *cifImporter) parseTiploc(l string) error {
 	parseStringTitle(l, 18, 26, &name)
 	parseStringTrim(l, 53, 3, &crs)
 
-	n := i.d.ComputeIfAbsent(tpl, func() *TiplocNode {
+	n := i.d.ComputeTiplocIfAbsent(tpl, func() *TiplocNode {
 		return &TiplocNode{
 			Location: darwinref.Location{Tiploc: tpl, Name: name, Crs: crs},
 			LocSrc:   "CIF",

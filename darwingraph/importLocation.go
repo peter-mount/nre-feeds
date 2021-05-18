@@ -34,7 +34,7 @@ func (d *DarwinGraph) importTiplocLocations() error {
 	for _, e := range export.Tiplocs {
 		// Remove spaces, there's 1 tiploc in there with it
 		tpl := strings.ReplaceAll(e.Tiploc, " ", "")
-		n := d.graph.ComputeIfAbsent(tpl, func() *TiplocNode {
+		n := d.graph.ComputeTiplocIfAbsent(tpl, func() *TiplocNode {
 			return &TiplocNode{
 				Location: darwinref.Location{Tiploc: tpl, Name: e.Name, Crs: e.Details.CRS},
 				LocSrc:   Legolash,
@@ -42,7 +42,7 @@ func (d *DarwinGraph) importTiplocLocations() error {
 		})
 
 		if n.Crs == "" {
-			d.graph.AddCrs(e.Details.CRS, tpl)
+			d.graph.tiplocGraph.AddCrs(e.Details.CRS, tpl)
 			n.LocSrc = Legolash
 		}
 

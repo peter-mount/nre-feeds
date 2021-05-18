@@ -40,6 +40,18 @@ func (d *TiplocGraph) GetNode(tiploc string) *TiplocNode {
 	return nil
 }
 
+// GetNodes returns a slice of TiplocNode's by their tiploc
+func (d *TiplocGraph) GetNodes(tiplocs ...string) []*TiplocNode {
+	var r []*TiplocNode
+	for _, tpl := range tiplocs {
+		n := d.GetNode(tpl)
+		if n != nil {
+			r = append(r, n)
+		}
+	}
+	return r
+}
+
 // AddCrs adds a crs to a node with any required internal mapping
 func (d *TiplocGraph) AddCrs(crs, tiploc string) {
 	if crs == "" {

@@ -9,7 +9,7 @@ import (
 func (d *DarwinGraph) Neighbours(tiploc string) []string {
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
-	return d.graph.Neighbours(tiploc)
+	return d.graph.tiplocGraph.Neighbours(tiploc)
 }
 
 func (d *TiplocGraph) Neighbours(tiploc string) []string {
@@ -38,7 +38,7 @@ func (d *DarwinGraph) test() {
 	to := d.GetTiplocNode("MSTONEW")
 
 	log.Printf("Searching %s to %s", from.Tiploc, to.Tiploc)
-	pth := path.DijkstraAllFrom(from, d.graph.graph)
+	pth := path.DijkstraAllFrom(from, d.graph.tiplocGraph.graph)
 	log.Println("AllTo")
 	ladders, weight := pth.AllTo(to.ID())
 	log.Printf("AllTo ladders %d weight %f", len(ladders), weight)

@@ -18,13 +18,13 @@ func (d *DarwinGraph) importFile() error {
 	}
 	defer f.Close()
 
-	importXml := ImportXml{d: d.graph}
+	importXml := ImportXml{d: d.graph.tiplocGraph}
 	err = xml.NewDecoder(f).Decode(&importXml)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("Read %d locations", len(d.graph.ids))
+	log.Printf("Read %d locations", len(d.graph.tiplocGraph.ids))
 
 	return nil
 }

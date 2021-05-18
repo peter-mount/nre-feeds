@@ -21,7 +21,7 @@ func (d *DarwinGraph) importKBStations() error {
 	}
 	defer f.Close()
 
-	importXml := ImportStations{d: d.graph}
+	importXml := ImportStations{d: d.graph.tiplocGraph}
 	err = xml.NewDecoder(f).Decode(&importXml)
 	if err != nil {
 		return err
