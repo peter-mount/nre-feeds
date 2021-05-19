@@ -21,6 +21,7 @@ type DarwinGraph struct {
 	xmlFileName      *string    // -xml filename to load/save the model
 	saveModel        *bool      // -save indicates we want to save the model
 	tiplocFileName   *string    // -tiplocExport to import from Legolash2o tiploc location map
+	nreCacheName     *string    // -nre-schedule-cache copy of schedule cache to import from
 }
 
 func (d *DarwinGraph) Name() string {
@@ -35,6 +36,7 @@ func (d *DarwinGraph) Init(_ *kernel.Kernel) error {
 	d.cifFileName = flag.String("cif", "", "Network Rail CIF file to import data into the graph")
 	d.cifRouting = flag.Bool("cif-routing", false, "With -cif, true to import routing from CIF as well as locations")
 	d.tiplocFileName = flag.String("tiploc-location", "", "Import tiploc locations from legolash2o export")
+	d.nreCacheName = flag.String("nre-schedule-cache", "", "nre-feeds schedule cache to import from")
 	return nil
 }
 
@@ -89,6 +91,13 @@ func (d *DarwinGraph) Start() error {
 			return err
 		}
 		populate = true
+	}
+
+	if *d.nreCacheName != "" {
+		err := d.importNreFeedsCache()
+		if err != nil {
+			return err
+		}
 	}
 
 	if populate {

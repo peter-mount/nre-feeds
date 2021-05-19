@@ -18,8 +18,6 @@ type cifImporter struct {
 }
 
 func (d *DarwinGraph) importCIF() error {
-	log.Printf("Importing CIF %s", *d.cifFileName)
-
 	f, err := os.Open(*d.cifFileName)
 	if err != nil {
 		return err
@@ -31,6 +29,8 @@ func (d *DarwinGraph) importCIF() error {
 		s:              bufio.NewScanner(f), // Scanner to read from
 		includeRouting: *d.cifRouting,       // Flag to include/exclude CIF routing
 	}
+
+	log.Printf("Importing CIF %s includeRouting %v", *d.cifFileName, i.includeRouting)
 
 	err = i.parse()
 	if err != nil {
