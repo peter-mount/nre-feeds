@@ -8,6 +8,9 @@ require (
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/etcd-io/bbolt v1.3.3
+	github.com/flopp/go-staticmaps v0.0.0-20210425143944-2e6e19a99c28
+	github.com/fogleman/gg v1.3.0
+	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551
 	github.com/gorilla/handlers v1.4.2
 	github.com/gorilla/mux v1.7.3 // indirect
 	github.com/jlaffaye/ftp v0.0.0-20190828173736-6aaa91c7796e
