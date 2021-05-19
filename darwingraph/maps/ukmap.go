@@ -46,7 +46,11 @@ func (m *UKMap) Start() error {
 			return err
 		}
 		defer f.Close()
-		return m.Plot(f, 400, 300)
+		err = m.Plot(f, 400, 300)
+		if err != nil {
+			return err
+		}
+		log.Printf("Generated %s", *m.plotMap)
 	}
 
 	return nil
@@ -54,12 +58,18 @@ func (m *UKMap) Start() error {
 
 func (m *UKMap) Plot(w io.Writer, width, height int) error {
 
-	return m.mapGenerator.Builder().
-		SetSize(1200, 900).
-		Render(w)
+	b := m.mapGenerator.Builder().
+		Size(1200, 900).
+		Zoom(8)
+
+	m.darwinGraph.ForEachStationNode(func(node *darwingraph.StationNode) {
+		b.AppendStation(node)
+	})
+
+	return b.Render(w)
 
 	/*ctx := sm.NewContext()
-	ctx.SetSize(width, height)
+	ctx.Size(width, height)
 	ctx.AddObject(
 		sm.NewMarker(
 			s2.LatLngFromDegrees(52.514536, 13.350151),

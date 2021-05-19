@@ -52,6 +52,14 @@ func (n StationNode) NodeType() int {
 	return NodeStation
 }
 
+func (n *StationNode) ForEachTiploc(f func(node *TiplocNode)) {
+	if n != nil {
+		for _, t := range n.tiploc {
+			f(t)
+		}
+	}
+}
+
 func (n *StationNode) addTiploc(tiploc *TiplocNode) {
 	if tiploc != nil && tiploc.Crs == n.Crs {
 		n.tiploc = append(n.tiploc, tiploc)

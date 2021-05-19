@@ -179,3 +179,28 @@ func (d *DarwinGraph) LinkTiplocs(a, b string) *TiplocEdge {
 	defer d.mutex.Unlock()
 	return d.graph.LinkTiplocs(a, b)
 }
+
+func (d *DarwinGraph) ForEachNode(f func(node RailNode)) {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+	nodes := d.graph.graph.Nodes()
+	for nodes.Next() {
+		f(nodes.Node().(RailNode))
+	}
+}
+
+func (d *DarwinGraph) ForEachTiplocNode(f func(node *TiplocNode)) {
+	d.ForEachNode(func(node RailNode) {
+		if node != nil && node.NodeType() == NodeTiploc {
+			f(node.(*TiplocNode))
+		}
+	})
+}
+
+func (d *DarwinGraph) ForEachStationNode(f func(node *StationNode)) {
+	d.ForEachNode(func(node RailNode) {
+		if node != nil && node.NodeType() == NodeStation {
+			f(node.(*StationNode))
+		}
+	})
+}

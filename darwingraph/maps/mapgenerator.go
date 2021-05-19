@@ -56,6 +56,6 @@ func (m *MapGenerator) PostInit() error {
 
 func (m *MapGenerator) Builder() *MapBuilder {
 	return NewMapBuilder().
-		SetTileProvider(m.tileProvider.Generator()).
-		SetSize(1200, 900)
+		TileProvider(m.tileProvider.Generator()).
+		Size(1200, 900)
 }

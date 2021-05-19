@@ -34,6 +34,10 @@ func isNullIsland(v float32) bool {
 	return v >= -0.0002777778 && v <= 0.0002777778
 }
 
+func (n *TiplocNode) HasPosition() bool {
+	return n != nil && !isNullIsland(n.Lon) && !isNullIsland(n.Lat)
+}
+
 func (n *TiplocNode) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	return util.NewXmlBuilder(e, start).
 		AddAttribute(xml.Name{Local: "id"}, strconv.FormatInt(n.id, IdBase)).
