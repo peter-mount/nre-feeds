@@ -31,6 +31,14 @@ func (e StationEdge) EdgeType() int {
 	return EdgeStation
 }
 
+func (e *StationEdge) ForEachTiploc(f func(node *TiplocNode)) {
+	if e != nil {
+		for _, t := range e.s {
+			f(t)
+		}
+	}
+}
+
 func (e *StationEdge) MarshalXML(encoder *xml.Encoder, start xml.StartElement) error {
 	var s []string
 	for _, v := range e.s {

@@ -189,18 +189,43 @@ func (d *DarwinGraph) ForEachNode(f func(node RailNode)) {
 	}
 }
 
-func (d *DarwinGraph) ForEachTiplocNode(f func(node *TiplocNode)) {
-	d.ForEachNode(func(node RailNode) {
-		if node != nil && node.NodeType() == NodeTiploc {
-			f(node.(*TiplocNode))
+func (d *DarwinGraph) ForEachTiplocNode(f func(*TiplocNode)) {
+	d.ForEachNode(func(n RailNode) {
+		if n != nil && n.NodeType() == NodeTiploc {
+			f(n.(*TiplocNode))
 		}
 	})
 }
 
-func (d *DarwinGraph) ForEachStationNode(f func(node *StationNode)) {
-	d.ForEachNode(func(node RailNode) {
-		if node != nil && node.NodeType() == NodeStation {
-			f(node.(*StationNode))
+func (d *DarwinGraph) ForEachStationNode(f func(*StationNode)) {
+	d.ForEachNode(func(n RailNode) {
+		if n != nil && n.NodeType() == NodeStation {
+			f(n.(*StationNode))
+		}
+	})
+}
+
+func (d *DarwinGraph) ForEachEdge(f func(RailEdge)) {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+	edges := d.graph.graph.Edges()
+	for edges.Next() {
+		f(edges.Edge().(RailEdge))
+	}
+}
+
+func (d *DarwinGraph) ForEachTiplocEdge(f func(*TiplocEdge)) {
+	d.ForEachEdge(func(e RailEdge) {
+		if e != nil && e.EdgeType() == EdgeTiploc {
+			f(e.(*TiplocEdge))
+		}
+	})
+}
+
+func (d *DarwinGraph) ForEachStationEdge(f func(edge *StationEdge)) {
+	d.ForEachEdge(func(e RailEdge) {
+		if e != nil && e.EdgeType() == EdgeStation {
+			f(e.(*StationEdge))
 		}
 	})
 }

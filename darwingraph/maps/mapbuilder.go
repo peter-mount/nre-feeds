@@ -68,3 +68,13 @@ func (m *MapBuilder) AppendStation(s *darwingraph.StationNode) *MapBuilder {
 	})
 	return m
 }
+
+func (m *MapBuilder) AppendStationEdge(s *darwingraph.StationEdge) *MapBuilder {
+	var points []s2.LatLng
+	s.ForEachTiploc(func(t *darwingraph.TiplocNode) {
+		if t.HasPosition() {
+			points = append(points, s2.LatLngFromDegrees(float64(t.Lat), float64(t.Lon)))
+		}
+	})
+	return m.AddObject(sm.NewPath(points, color.RGBA{A: 0xff}, 1))
+}

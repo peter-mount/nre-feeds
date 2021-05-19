@@ -60,7 +60,11 @@ func (m *UKMap) Plot(w io.Writer, width, height int) error {
 
 	b := m.mapGenerator.Builder().
 		Size(1200, 900).
-		Zoom(8)
+		Zoom(6)
+
+	m.darwinGraph.ForEachStationEdge(func(edge *darwingraph.StationEdge) {
+		b.AppendStationEdge(edge)
+	})
 
 	m.darwinGraph.ForEachStationNode(func(node *darwingraph.StationNode) {
 		b.AppendStation(node)
