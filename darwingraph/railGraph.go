@@ -165,6 +165,23 @@ func (d *RailGraph) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) e
 				n.id, _ = strconv.ParseInt(n.Crs, IdBase, 64)
 				d.AddNode(n)
 
+			case "line":
+				e := &StationEdge{}
+				err := decoder.DecodeElement(e, &tok)
+				if err != nil {
+					return err
+				}
+				e.f = d.graph.Node(e.F).(*TiplocNode)
+				e.t = d.graph.Node(e.T).(*TiplocNode)
+				for _, tpl := range e.ss {
+					n := d.graph.Node(tpl).(*TiplocNode)
+					if n != nil {
+						e.s = append(e.s, n)
+					}
+				}
+				if e.f != nil && e.t != nil {
+					d.graph.SetEdge(e)
+				}
 			}
 
 		case xml.EndElement:

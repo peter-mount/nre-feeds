@@ -15,7 +15,7 @@ type StationEdge struct {
 	f   RailNode      // From node
 	t   RailNode      // To node
 	s   []*TiplocNode // Tiplocs forming this edge
-	ss  string        // used in unmarshalling
+	ss  []int64       // used in unmarshalling
 }
 
 // From returns the from-node of the edge.
@@ -68,7 +68,12 @@ func (e *StationEdge) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement)
 
 		switch tok := token.(type) {
 		case xml.CharData:
-			e.ss = string(tok)
+			for _, s := range strings.Split(strings.ReplaceAll(string(tok), " ", ""), ",") {
+				v, err := strconv.ParseInt(s, IdBase, 64)
+				if err == nil {
+					e.ss = append(e.ss, v)
+				}
+			}
 
 		case xml.EndElement:
 			return nil
