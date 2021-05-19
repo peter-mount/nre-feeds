@@ -5,38 +5,46 @@ import (
 	"github.com/peter-mount/nre-feeds/util"
 	"gonum.org/v1/gonum/graph"
 	"strconv"
+	"strings"
 )
 
-type TiplocEdge struct {
-	F   int64       // from tiploc - used in XML parser only
-	T   int64       // to  tiploc - used in XML parser only
-	Src string      // Source of edge
-	f   *TiplocNode // From node
-	t   *TiplocNode // To node
+type StationEdge struct {
+	F   int64         // from tiploc - used in XML parser only
+	T   int64         // to  tiploc - used in XML parser only
+	Src string        // Source of edge
+	f   RailNode      // From node
+	t   RailNode      // To node
+	s   []*TiplocNode // Tiplocs forming this edge
+	ss  string        // used in unmarshalling
 }
 
 // From returns the from-node of the edge.
-func (e TiplocEdge) From() graph.Node { return e.f }
+func (e StationEdge) From() graph.Node { return e.f }
 
 // To returns the to-node of the edge.
-func (e TiplocEdge) To() graph.Node { return e.t }
+func (e StationEdge) To() graph.Node { return e.t }
 
 // ReversedEdge returns a new Edge with the F and T fields swapped.
-func (e TiplocEdge) ReversedEdge() graph.Edge { return TiplocEdge{f: e.t, t: e.f} }
+func (e StationEdge) ReversedEdge() graph.Edge { return StationEdge{f: e.t, t: e.f} }
 
-func (e TiplocEdge) EdgeType() int {
-	return EdgeTiploc
+func (e StationEdge) EdgeType() int {
+	return EdgeStation
 }
 
-func (e *TiplocEdge) MarshalXML(encoder *xml.Encoder, start xml.StartElement) error {
+func (e *StationEdge) MarshalXML(encoder *xml.Encoder, start xml.StartElement) error {
+	var s []string
+	for _, v := range e.s {
+		s = append(s, v.Tiploc)
+	}
 	return util.NewXmlBuilder(encoder, start).
 		AddAttribute(xml.Name{Local: "from"}, strconv.FormatInt(e.f.ID(), IdBase)).
 		AddAttribute(xml.Name{Local: "to"}, strconv.FormatInt(e.t.ID(), IdBase)).
 		AddAttributeIfSet(xml.Name{Local: "src"}, e.Src).
+		AddCharData(strings.Join(s, ",")).
 		Build()
 }
 
-func (e *TiplocEdge) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error {
+func (e *StationEdge) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error {
 	for _, attr := range start.Attr {
 		var err error
 		switch attr.Name.Local {
@@ -58,7 +66,10 @@ func (e *TiplocEdge) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) 
 			return err
 		}
 
-		switch token.(type) {
+		switch tok := token.(type) {
+		case xml.CharData:
+			e.ss = string(tok)
+
 		case xml.EndElement:
 			return nil
 		}

@@ -15,27 +15,27 @@ type StationNode struct {
 	Crs    string        // CRS of this station
 	Name   string        // Name of the station
 	tiploc []*TiplocNode // Tiploc nodes for this entry
-	graph  *StationGraph // LinkTiplocs to parent graph
+	graph  *RailGraph    // LinkTiplocs to parent graph
 }
 
-func (d *StationGraph) NewStationNode(crs string, tiplocs []*TiplocNode) *StationNode {
+func (d *RailGraph) NewStationNode(tiploc *TiplocNode) *StationNode {
 	// Nothing to set so ignore
-	if crs == "" || len(tiplocs) == 0 {
+	if tiploc == nil || tiploc.Crs == "" {
 		return nil
 	}
 
 	// Validate the station
-	id, err := strconv.ParseInt(crs, IdBase, 64)
+	id, err := strconv.ParseInt(tiploc.Crs, IdBase, 64)
 	if err != nil {
-		log.Printf("Error: crs \"%s\" invalid", crs)
+		log.Printf("Error: crs \"%s\" invalid", tiploc.Crs)
 		return nil
 	}
 
 	return &StationNode{
-		id:     id,
-		Crs:    crs,
-		Name:   tiplocs[0].Name, // Name from first tiploc
-		tiploc: tiplocs,
+		id:     id, // Crs codes shouldn't clash with Tiplocs as crs are 3 chars & Tiplocs are 4-7.
+		Crs:    tiploc.Crs,
+		Name:   tiploc.Name, // Name from first tiploc
+		tiploc: []*TiplocNode{tiploc},
 		graph:  d,
 	}
 }
@@ -46,6 +46,16 @@ func (n StationNode) ID() int64 {
 
 func (n StationNode) String() string {
 	return n.Name
+}
+
+func (n StationNode) NodeType() int {
+	return NodeStation
+}
+
+func (n *StationNode) addTiploc(tiploc *TiplocNode) {
+	if tiploc != nil && tiploc.Crs == n.Crs {
+		n.tiploc = append(n.tiploc, tiploc)
+	}
 }
 
 func (n *StationNode) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
@@ -86,7 +96,7 @@ func (n *StationNode) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement)
 		switch tok := token.(type) {
 		case xml.CharData:
 			for _, t := range strings.Split(strings.ReplaceAll(string(tok), " ", ""), ",") {
-				tn := n.graph.tgraph.GetNode(t)
+				tn := n.graph.GetTiploc(t)
 				if tn == nil {
 					return errors.Errorf("tiploc \"%s\" not found for \"%s\"", t, n.Crs)
 				}

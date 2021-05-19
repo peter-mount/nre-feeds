@@ -25,6 +25,10 @@ func (n TiplocNode) String() string {
 	return n.Location.Tiploc
 }
 
+func (n TiplocNode) NodeType() int {
+	return NodeTiploc
+}
+
 // isNullIsland returns true if the coordinate is within 1 second of 0.
 func isNullIsland(v float32) bool {
 	return v >= -0.0002777778 && v <= 0.0002777778

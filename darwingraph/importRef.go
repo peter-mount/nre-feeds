@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -18,19 +19,17 @@ func (d *DarwinGraph) importFile() error {
 	}
 	defer f.Close()
 
-	importXml := ImportXml{d: d.graph.tiplocGraph}
+	importXml := ImportXml{d: d.graph}
 	err = xml.NewDecoder(f).Decode(&importXml)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("Read %d locations", len(d.graph.tiplocGraph.ids))
-
 	return nil
 }
 
 type ImportXml struct {
-	d     *TiplocGraph // direct will allow import faster as not locked
+	d     *RailGraph // direct will allow import faster as not locked
 	count int
 }
 
@@ -56,15 +55,13 @@ func (r *ImportXml) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) e
 				loc.Station = loc.IsPublic()
 
 				// Ensure we have an entry
-				node := r.d.ComputeIfAbsent(loc.Tiploc, func() *TiplocNode {
-					return &TiplocNode{LocSrc: "NreRef"}
-				})
+				node := r.d.ComputeIfAbsent(loc.Tiploc, func() RailNode {
+					id, _ := strconv.ParseInt(loc.Tiploc, IdBase, 64)
+					return &TiplocNode{id: id, LocSrc: "NreRef"}
+				}).(*TiplocNode)
 
 				// Update the location to the parsed one
 				node.Location = loc
-
-				// Ensure CRS is updated
-				r.d.AddCrs(node.Crs, node.Tiploc)
 			}
 		}
 	}

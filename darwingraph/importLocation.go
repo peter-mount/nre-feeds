@@ -5,6 +5,7 @@ import (
 	"github.com/peter-mount/nre-feeds/darwinref"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -34,15 +35,17 @@ func (d *DarwinGraph) importTiplocLocations() error {
 	for _, e := range export.Tiplocs {
 		// Remove spaces, there's 1 tiploc in there with it
 		tpl := strings.ReplaceAll(e.Tiploc, " ", "")
-		n := d.graph.ComputeTiplocIfAbsent(tpl, func() *TiplocNode {
+		n := d.graph.ComputeIfAbsent(tpl, func() RailNode {
+			id, _ := strconv.ParseInt(tpl, IdBase, 64)
 			return &TiplocNode{
+				id:       id,
 				Location: darwinref.Location{Tiploc: tpl, Name: e.Name, Crs: e.Details.CRS},
 				LocSrc:   Legolash,
 			}
-		})
+		}).(*TiplocNode)
 
 		if n.Crs == "" {
-			d.graph.tiplocGraph.AddCrs(e.Details.CRS, tpl)
+			n.Crs = e.Details.CRS
 			n.LocSrc = Legolash
 		}
 

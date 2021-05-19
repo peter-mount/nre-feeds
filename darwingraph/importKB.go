@@ -21,7 +21,7 @@ func (d *DarwinGraph) importKBStations() error {
 	}
 	defer f.Close()
 
-	importXml := ImportStations{d: d.graph.tiplocGraph}
+	importXml := ImportStations{d: d.graph}
 	err = xml.NewDecoder(f).Decode(&importXml)
 	if err != nil {
 		return err
@@ -32,7 +32,7 @@ func (d *DarwinGraph) importKBStations() error {
 }
 
 type ImportStations struct {
-	d         *TiplocGraph
+	d         *RailGraph
 	inStation bool
 	crs       string
 	lat       string
@@ -94,9 +94,9 @@ func (r *ImportStations) UnmarshalXML(decoder *xml.Decoder, start xml.StartEleme
 					if err != nil {
 						return err
 					}
-					for _, tpl := range r.d.GetCrs(r.crs) {
-						n := r.d.GetNode(tpl)
-						if n != nil {
+					crs := r.d.GetCrs(r.crs)
+					if crs != nil {
+						for _, n := range crs.tiploc {
 							// Only update if not Null Island & either no source or a previous NreKB entry
 							// This prevents invalid points and we don't overwrite custom entries
 							if !isNullIsland(float32(lat)) && !isNullIsland(float32(lon)) &&

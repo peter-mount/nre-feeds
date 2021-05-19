@@ -5,6 +5,7 @@ import (
 	"github.com/peter-mount/nre-feeds/darwinref"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -92,12 +93,14 @@ func (i *cifImporter) parseTiploc(l string) error {
 	parseStringTitle(l, 18, 26, &name)
 	parseStringTrim(l, 53, 3, &crs)
 
-	n := i.d.ComputeTiplocIfAbsent(tpl, func() *TiplocNode {
+	n := i.d.ComputeIfAbsent(tpl, func() RailNode {
+		id, _ := strconv.ParseInt(tpl, IdBase, 64)
 		return &TiplocNode{
+			id:       id,
 			Location: darwinref.Location{Tiploc: tpl, Name: name, Crs: crs},
 			LocSrc:   "CIF",
 		}
-	})
+	}).(*TiplocNode)
 
 	// If the name differs & we are not a station then set it.
 	// The station flag is uses so we keep NRE's station names rather than NROD's

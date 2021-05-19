@@ -93,13 +93,13 @@ func (d *DarwinGraph) Start() error {
 
 	if populate {
 		log.Println("Repopulating stations")
-		d.graph.stationGraph.Populate()
+		d.graph.populateStations()
 		log.Println("Repopulated stations")
+
+		log.Println("Generating line segments")
+		d.graph.generateLineSegments()
+		log.Println("Generated line segments")
 	}
-
-	d.Status()
-
-	d.test()
 
 	// Once started save the current graph (if enabled)
 	return d.SaveGraph()
@@ -126,10 +126,7 @@ func (d *DarwinGraph) LoadGraph() error {
 		return err
 	}
 
-	log.Printf("Loaded graph from %s Nodes %d\n",
-		*d.xmlFileName,
-		len(d.graph.tiplocGraph.ids),
-	)
+	log.Printf("Loaded graph from %s\n", *d.xmlFileName)
 
 	return nil
 }
@@ -169,17 +166,10 @@ func (d *DarwinGraph) GetTiplocNode(tiploc string) *TiplocNode {
 }
 
 // ComputeIfAbsent returns an existing TiplocNode or creates one using the supplied function
-func (d *DarwinGraph) ComputeIfAbsent(tiploc string, f func() *TiplocNode) *TiplocNode {
+func (d *DarwinGraph) ComputeIfAbsent(tiploc string, f func() RailNode) RailNode {
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
-	return d.graph.ComputeTiplocIfAbsent(tiploc, f)
-}
-
-// GetCrs returns the tiplocs associated with a CRS code or nil if none
-func (d *DarwinGraph) GetCrs(crs string) []string {
-	d.mutex.Lock()
-	defer d.mutex.Unlock()
-	return d.graph.GetTiplocsForCrs(crs)
+	return d.graph.ComputeIfAbsent(tiploc, f)
 }
 
 // LinkTiplocs links two tiplocs together
