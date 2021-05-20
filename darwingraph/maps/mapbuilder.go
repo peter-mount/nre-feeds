@@ -142,7 +142,7 @@ func (m *MapBuilder) AppendStationEdge(s *darwingraph.StationEdge) *MapBuilder {
 			ll := s2.LatLngFromDegrees(float64(t.Lat), float64(t.Lon))
 
 			// Ignore lines longer than .3 degrees - cuts out some major errors in the data
-			if len(ar) > 0 && ll.Distance(a).Degrees() > 0.3 {
+			if len(ar) > 0 && ll.Distance(a).Degrees() > 0.2 {
 				m.appendEdge(ar) // Append existing segment up to this point
 				ar = nil         // Start a new slice
 			}
