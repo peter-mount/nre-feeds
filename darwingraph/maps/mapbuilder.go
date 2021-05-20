@@ -11,15 +11,23 @@ import (
 )
 
 type MapBuilder struct {
-	ctx *sm.Context
+	ctx           *sm.Context
+	stationRadius float64
 }
 
 type MapTask func(builder *MapBuilder)
 
 func NewMapBuilder() *MapBuilder {
-	m := &MapBuilder{ctx: sm.NewContext()}
+	m := &MapBuilder{
+		ctx:           sm.NewContext(),
+		stationRadius: 100.0,
+	}
 	m.ctx.SetCenter(s2.LatLngFromDegrees(54.413, -3.878))
 	m.ctx.SetZoom(6)
+	return m
+}
+func (m *MapBuilder) StationRadius(r float64) *MapBuilder {
+	m.stationRadius = r
 	return m
 }
 
@@ -119,7 +127,7 @@ func (m *MapBuilder) AppendStation(s *darwingraph.StationNode) *MapBuilder {
 				s2.LatLngFromDegrees(float64(t.Lat), float64(t.Lon)),
 				color.RGBA{R: 0xff, A: 0xff},
 				color.RGBA{R: 0xff, A: 0xff},
-				100.0,
+				m.stationRadius,
 				5.0,
 			))
 		}
