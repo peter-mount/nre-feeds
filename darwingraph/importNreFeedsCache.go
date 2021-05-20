@@ -41,10 +41,13 @@ func (d *nreFeedImport) process(path string, info os.FileInfo, err error) error 
 			return err
 		}
 
-		err = d.importNreFeedsSchedule(sched)
-		if err != nil {
-			log.Printf("Failed to import %s, %s", path, err.Error())
-			return err
+		// Ignore Bus & Ship services
+		if !(sched.TrainId == "0B00" || sched.TrainId == "0S00") {
+			err = d.importNreFeedsSchedule(sched)
+			if err != nil {
+				log.Printf("Failed to import %s, %s", path, err.Error())
+				return err
+			}
 		}
 
 		d.fileCount++

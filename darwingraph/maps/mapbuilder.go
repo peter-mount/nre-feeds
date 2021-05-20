@@ -61,7 +61,7 @@ func (m *MapBuilder) AppendStation(s *darwingraph.StationNode) *MapBuilder {
 				s2.LatLngFromDegrees(float64(t.Lat), float64(t.Lon)),
 				color.RGBA{R: 0xff, A: 0xff},
 				color.RGBA{R: 0xff, A: 0xff},
-				500.0,
+				100.0,
 				5.0,
 			))
 		}
@@ -70,11 +70,37 @@ func (m *MapBuilder) AppendStation(s *darwingraph.StationNode) *MapBuilder {
 }
 
 func (m *MapBuilder) AppendStationEdge(s *darwingraph.StationEdge) *MapBuilder {
-	var points []s2.LatLng
+	var a s2.LatLng
+	first := true
 	s.ForEachTiploc(func(t *darwingraph.TiplocNode) {
 		if t.HasPosition() {
-			points = append(points, s2.LatLngFromDegrees(float64(t.Lat), float64(t.Lon)))
+			ll := s2.LatLngFromDegrees(float64(t.Lat), float64(t.Lon))
+			if first {
+				first = false
+			} else if ll.Distance(a).Degrees() > 0.2 {
+				first = true
+			} else {
+				m.AddObject(sm.NewPath([]s2.LatLng{a, ll}, color.RGBA{A: 0xff}, 1))
+			}
+			a = ll
 		}
 	})
-	return m.AddObject(sm.NewPath(points, color.RGBA{A: 0xff}, 1))
+
+	/*	var points []s2.LatLng
+		s.ForEachTiploc(func(t *darwingraph.TiplocNode) {
+			if t.HasPosition() {
+				ll := s2.LatLngFromDegrees(float64(t.Lat), float64(t.Lon))
+				if len(points) > 0 && ll.Distance(points[len(points)-1]).Degrees() > 0.2 {
+					points = m.appendEdge(s, points)
+				}
+				points = append(points, ll)
+			}
+		})
+		points = m.appendEdge(s, points)
+	*/return m
+}
+
+func (m *MapBuilder) appendEdge(s *darwingraph.StationEdge, p []s2.LatLng) []s2.LatLng {
+	m.AddObject(sm.NewPath(p, color.RGBA{A: 0xff}, 1))
+	return nil
 }

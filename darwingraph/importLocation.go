@@ -54,7 +54,7 @@ func (d *DarwinGraph) importTiplocLocations() error {
 			n.LocSrc = Legolash
 		}
 
-		if !isNullIsland(e.Longitude) && !isNullIsland(e.Longitude) {
+		if !isNullIsland(e.Longitude) && !isNullIsland(e.Longitude) && !e.Details.OffNetwork {
 			n.Lon = e.Longitude
 			n.Lat = e.Latitude
 			n.LLSrc = Legolash
