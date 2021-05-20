@@ -123,13 +123,20 @@ func (m *MapBuilder) ForEachStationNode(d *darwingraph.DarwinGraph, f func(*MapB
 func (m *MapBuilder) AppendStation(s *darwingraph.StationNode) *MapBuilder {
 	s.ForEachTiploc(func(t *darwingraph.TiplocNode) {
 		if t.HasPosition() {
-			m.AddObject(sm.NewCircle(
-				s2.LatLngFromDegrees(float64(t.Lat), float64(t.Lon)),
-				color.RGBA{R: 0xff, A: 0xff},
-				color.RGBA{R: 0xff, A: 0xff},
-				m.stationRadius,
-				5.0,
-			))
+			col := color.RGBA{R: 0xff, A: 0xff}
+			w := 5.0
+			if s.Crs[0] == 'X' || s.Crs[0] == 'Z' {
+				col.R = 0
+				col.B = 0xff
+				w = 4.0
+			}
+			if !t.IsPublic() {
+				col.R = 0x80
+				col.G = 0x80
+				col.B = 0x80
+				w = 3.0
+			}
+			m.AddObject(sm.NewCircle(s2.LatLngFromDegrees(float64(t.Lat), float64(t.Lon)), col, col, m.stationRadius, w))
 		}
 	})
 	return m
