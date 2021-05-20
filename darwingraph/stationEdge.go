@@ -27,10 +27,6 @@ func (e StationEdge) To() graph.Node { return e.t }
 // ReversedEdge returns a new Edge with the F and T fields swapped.
 func (e StationEdge) ReversedEdge() graph.Edge { return StationEdge{f: e.t, t: e.f} }
 
-func (e StationEdge) EdgeType() int {
-	return EdgeStation
-}
-
 func (e *StationEdge) ForEachTiploc(f func(node *TiplocNode)) {
 	if e != nil {
 		for _, t := range e.s {

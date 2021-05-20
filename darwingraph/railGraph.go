@@ -14,12 +14,14 @@ const (
 
 // RailGraph is a wrapper around a TiplocGraph & a StationGraph
 type RailGraph struct {
-	graph *simple.DirectedGraph // Underlying directed graph
+	graph    *simple.DirectedGraph // Underlying directed graph
+	stations *simple.DirectedGraph // Copy of graph with just Tiplocs, used for Station Edges
 }
 
 func NewRailGraph() *RailGraph {
 	return &RailGraph{
-		graph: simple.NewDirectedGraph(),
+		graph:    simple.NewDirectedGraph(),
+		stations: simple.NewDirectedGraph(),
 	}
 }
 
@@ -53,16 +55,10 @@ func (d *RailGraph) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 
 	// Get list of edges sorted by tiploc
 	var edgeAry []*TiplocEdge
-	var lineAry []*StationEdge
 	edges := d.graph.Edges()
 	for edges.Next() {
-		edge := edges.Edge().(RailEdge)
-		switch edge.EdgeType() {
-		case EdgeTiploc:
-			edgeAry = append(edgeAry, edge.(*TiplocEdge))
-		case EdgeStation:
-			lineAry = append(lineAry, edge.(*StationEdge))
-		}
+		edge := edges.Edge().(*TiplocEdge)
+		edgeAry = append(edgeAry, edge)
 	}
 
 	sort.Slice(edgeAry, func(i, j int) bool {
@@ -75,15 +71,12 @@ func (d *RailGraph) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 		return af < bf
 	})
 
-	sort.Slice(edgeAry, func(i, j int) bool {
-		af := edgeAry[i].From().(*TiplocNode).Tiploc
-		bf := edgeAry[j].From().(*TiplocNode).Tiploc
-		if af == bf {
-			af = edgeAry[i].To().(*TiplocNode).Tiploc
-			bf = edgeAry[j].To().(*TiplocNode).Tiploc
-		}
-		return af < bf
-	})
+	var lineAry []*StationEdge
+	edges = d.stations.Edges()
+	for edges.Next() {
+		edge := edges.Edge().(*StationEdge)
+		lineAry = append(lineAry, edge)
+	}
 
 	sort.Slice(lineAry, func(i, j int) bool {
 		af := lineAry[i].From().(*TiplocNode).Tiploc
@@ -123,7 +116,10 @@ func (d *RailGraph) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 		Build()
 }
 
-func (d *RailGraph) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error {
+func (d *RailGraph) UnmarshalXML(decoder *xml.Decoder, _ xml.StartElement) error {
+	d.graph = simple.NewDirectedGraph()
+	d.stations = nil
+
 	// We ignore attributes as they are just information in the generated xml file
 
 	for {
@@ -157,6 +153,10 @@ func (d *RailGraph) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) e
 				}
 
 			case "station":
+				// First station so clone the tiplocs for station edges
+				if d.stations == nil {
+					d.initStationsGraph()
+				}
 				n := &StationNode{graph: d}
 				err := decoder.DecodeElement(n, &tok)
 				if err != nil {
@@ -166,6 +166,10 @@ func (d *RailGraph) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) e
 				d.AddNode(n)
 
 			case "line":
+				// First station so clone the tiplocs for station edges
+				if d.stations == nil {
+					d.initStationsGraph()
+				}
 				e := &StationEdge{}
 				err := decoder.DecodeElement(e, &tok)
 				if err != nil {
@@ -180,11 +184,12 @@ func (d *RailGraph) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) e
 					}
 				}
 				if e.f != nil && e.t != nil {
-					d.graph.SetEdge(e)
+					d.stations.SetEdge(e)
 				}
 			}
 
 		case xml.EndElement:
+
 			return nil
 		}
 	}

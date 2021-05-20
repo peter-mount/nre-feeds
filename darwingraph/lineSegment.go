@@ -130,7 +130,11 @@ func (lv *lineSegmentVisitor) insertIntoGraph() {
 							edge.s = append(edge.s, t.(*TiplocNode))
 						}
 					}
-					lv.d.graph.SetEdge(edge)
+					// First station so clone the tiplocs for station edges
+					if lv.d.stations == nil {
+						lv.d.initStationsGraph()
+					}
+					lv.d.stations.SetEdge(edge)
 				}
 			}
 		}

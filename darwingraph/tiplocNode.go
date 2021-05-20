@@ -17,6 +17,17 @@ type TiplocNode struct {
 	LLSrc              string  // Source of Lat/Lon
 }
 
+func (n TiplocNode) Clone() RailNode {
+	return TiplocNode{
+		id:       n.id,
+		Location: n.Location,
+		LocSrc:   n.LocSrc,
+		Lat:      n.Lat,
+		Lon:      n.Lon,
+		LLSrc:    n.LLSrc,
+	}
+}
+
 func (n TiplocNode) ID() int64 {
 	return n.id
 }

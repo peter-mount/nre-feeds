@@ -40,6 +40,16 @@ func (d *RailGraph) NewStationNode(tiploc *TiplocNode) *StationNode {
 	}
 }
 
+func (n StationNode) Clone() RailNode {
+	return StationNode{
+		id:     n.id,
+		Crs:    n.Crs,
+		Name:   n.Name,
+		tiploc: n.tiploc,
+		graph:  n.graph,
+	}
+}
+
 func (n StationNode) ID() int64 {
 	return n.id
 }

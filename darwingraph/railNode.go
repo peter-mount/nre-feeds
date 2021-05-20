@@ -2,6 +2,7 @@ package darwingraph
 
 import (
 	"gonum.org/v1/gonum/graph"
+	"gonum.org/v1/gonum/graph/simple"
 	"log"
 	"strconv"
 )
@@ -14,12 +15,27 @@ const (
 type RailNode interface {
 	graph.Node
 	NodeType() int
+	Clone() RailNode
 }
 
 // AddNode internal call to set a node in the graph
 func (d *RailGraph) AddNode(n RailNode) {
 	if n != nil {
 		d.graph.AddNode(n)
+	}
+}
+
+// Mirrors all tiplocs in the main graph.
+// Needed as StationEdge cannot share the same graph as TiplocEdge when we have
+// just 2 points in the edge.
+func (d *RailGraph) initStationsGraph() {
+	d.stations = simple.NewDirectedGraph()
+	nodes := d.graph.Nodes()
+	for nodes.Next() {
+		n := nodes.Node().(RailNode)
+		if n.NodeType() == NodeTiploc {
+			d.stations.AddNode(n.Clone())
+		}
 	}
 }
 

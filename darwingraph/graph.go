@@ -214,27 +214,22 @@ func (d *DarwinGraph) ForEachStationNode(f func(*StationNode)) {
 	})
 }
 
-func (d *DarwinGraph) ForEachEdge(f func(RailEdge)) {
+func (d *DarwinGraph) ForEachTiplocEdge(f func(*TiplocEdge)) {
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
 	edges := d.graph.graph.Edges()
 	for edges.Next() {
-		f(edges.Edge().(RailEdge))
+		f(edges.Edge().(*TiplocEdge))
 	}
 }
 
-func (d *DarwinGraph) ForEachTiplocEdge(f func(*TiplocEdge)) {
-	d.ForEachEdge(func(e RailEdge) {
-		if e != nil && e.EdgeType() == EdgeTiploc {
-			f(e.(*TiplocEdge))
-		}
-	})
-}
-
 func (d *DarwinGraph) ForEachStationEdge(f func(edge *StationEdge)) {
-	d.ForEachEdge(func(e RailEdge) {
-		if e != nil && e.EdgeType() == EdgeStation {
-			f(e.(*StationEdge))
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+	if d.graph.stations != nil {
+		edges := d.graph.stations.Edges()
+		for edges.Next() {
+			f(edges.Edge().(*StationEdge))
 		}
-	})
+	}
 }

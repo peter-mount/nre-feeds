@@ -17,12 +17,13 @@ func (d *DarwinGraph) importNreFeedsCache() error {
 }
 
 type nreFeedImport struct {
-	d         *DarwinGraph
-	fileCount int // Number of files read
+	d           *DarwinGraph
+	fileCount   int // Number of files read
+	importCount int // Number of schedules accepted
 }
 
 func (d *nreFeedImport) status() {
-	log.Printf("Imported %d schedules", d.fileCount)
+	log.Printf("Imported %d/%d schedules", d.importCount, d.fileCount)
 }
 
 func (d *nreFeedImport) process(path string, info os.FileInfo, err error) error {
@@ -43,6 +44,7 @@ func (d *nreFeedImport) process(path string, info os.FileInfo, err error) error 
 
 		// Ignore Bus & Ship services
 		if !(sched.TrainId == "0B00" || sched.TrainId == "0S00") {
+			d.importCount++
 			err = d.importNreFeedsSchedule(sched)
 			if err != nil {
 				log.Printf("Failed to import %s, %s", path, err.Error())
