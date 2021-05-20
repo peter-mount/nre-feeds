@@ -21,6 +21,7 @@ func NewMapBuilder() *MapBuilder {
 }
 
 func (m *MapBuilder) TileProvider(p *sm.TileProvider) *MapBuilder {
+	p.IgnoreNotFound = true
 	m.ctx.SetTileProvider(p)
 	return m
 }
