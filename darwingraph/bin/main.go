@@ -10,7 +10,7 @@ import (
 func main() {
 	err := kernel.Launch(
 		&service.DarwinGraphService{},
-		&maps.UKMap{},
+		&maps.MapService{},
 	)
 	if err != nil {
 		log.Fatal(err)

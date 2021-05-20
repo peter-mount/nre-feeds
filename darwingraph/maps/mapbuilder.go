@@ -13,6 +13,8 @@ type MapBuilder struct {
 	ctx *sm.Context
 }
 
+type MapTask func(builder *MapBuilder)
+
 func NewMapBuilder() *MapBuilder {
 	m := &MapBuilder{ctx: sm.NewContext()}
 	m.ctx.SetCenter(s2.LatLngFromDegrees(54.413, -3.878))
@@ -41,6 +43,13 @@ func (m *MapBuilder) Zoom(z int) *MapBuilder {
 	return m
 }
 
+func (m *MapBuilder) Run(t MapTask) *MapBuilder {
+	if t != nil {
+		t(m)
+	}
+	return m
+}
+
 func (m *MapBuilder) Render(w io.Writer) error {
 	img, err := m.ctx.Render()
 	if err != nil {
@@ -55,6 +64,13 @@ func (m *MapBuilder) AddObject(o sm.MapObject) *MapBuilder {
 	return m
 }
 
+func (m *MapBuilder) ForEachStationNode(d *darwingraph.DarwinGraph, f func(*MapBuilder, *darwingraph.StationNode)) *MapBuilder {
+	d.ForEachStationNode(func(n *darwingraph.StationNode) {
+		f(m, n)
+	})
+	return m
+}
+
 func (m *MapBuilder) AppendStation(s *darwingraph.StationNode) *MapBuilder {
 	s.ForEachTiploc(func(t *darwingraph.TiplocNode) {
 		if t.HasPosition() {
@@ -66,6 +82,13 @@ func (m *MapBuilder) AppendStation(s *darwingraph.StationNode) *MapBuilder {
 				5.0,
 			))
 		}
+	})
+	return m
+}
+
+func (m *MapBuilder) ForEachStationEdge(d *darwingraph.DarwinGraph, f func(*MapBuilder, *darwingraph.StationEdge)) *MapBuilder {
+	d.ForEachStationEdge(func(e *darwingraph.StationEdge) {
+		f(m, e)
 	})
 	return m
 }
@@ -86,19 +109,7 @@ func (m *MapBuilder) AppendStationEdge(s *darwingraph.StationEdge) *MapBuilder {
 			a = ll
 		}
 	})
-
-	/*	var points []s2.LatLng
-		s.ForEachTiploc(func(t *darwingraph.TiplocNode) {
-			if t.HasPosition() {
-				ll := s2.LatLngFromDegrees(float64(t.Lat), float64(t.Lon))
-				if len(points) > 0 && ll.Distance(points[len(points)-1]).Degrees() > 0.2 {
-					points = m.appendEdge(s, points)
-				}
-				points = append(points, ll)
-			}
-		})
-		points = m.appendEdge(s, points)
-	*/return m
+	return m
 }
 
 func (m *MapBuilder) appendEdge(s *darwingraph.StationEdge, p []s2.LatLng) []s2.LatLng {
