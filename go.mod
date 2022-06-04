@@ -11,12 +11,13 @@ require (
 	github.com/flopp/go-staticmaps v0.0.0-20210425143944-2e6e19a99c28
 	github.com/fogleman/gg v1.3.0
 	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551
-	github.com/gorilla/handlers v1.4.2
+	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.7.3 // indirect
 	github.com/jlaffaye/ftp v0.0.0-20190828173736-6aaa91c7796e
+	github.com/jung-kurt/gofpdf v1.0.3-0.20190309125859-24315acbbda5 // indirect
 	github.com/lib/pq v1.2.0
 	github.com/peter-mount/filecache v0.0.0-20190909121939-281dcdcbbbfd
-	github.com/peter-mount/go-kernel v0.0.0-20210517141539-30ae4d463a5a
+	github.com/peter-mount/go-kernel v0.0.0-20210827013724-c3ef1ed4eab3
 	github.com/peter-mount/golib v0.0.0-20190924084925-7f296a747319
 	github.com/peter-mount/goxml2json v1.1.0
 	github.com/peter-mount/nrod-cif v0.0.0-20190716191943-8c7234b142cc
