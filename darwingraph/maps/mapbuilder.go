@@ -83,13 +83,18 @@ func (o wrapperPath) Draw(gc *gg.Context, trans *sm.Transformer) {
 
 	first := true
 
+	// Margin around the image bounds to allow points
+	margin := 10.0
+	maxW := float64(gc.Width()) + margin
+	maxH := float64(gc.Height()) + margin
+
 	gc.ClearPath()
 	gc.SetLineWidth(o.p.Weight)
 	gc.SetLineCap(gg.LineCapRound)
 	gc.SetLineJoin(gg.LineJoinRound)
 	for _, ll := range o.p.Positions {
 		x, y := trans.LatLngToXY(ll)
-		if x < 0 || y < 0 || int(x) >= gc.Width() || int(y) >= gc.Height() {
+		if x < -margin || y < -margin || x >= maxW || y >= maxH {
 			first = true
 		} else if first {
 			gc.MoveTo(x, y)

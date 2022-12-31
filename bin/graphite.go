@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/peter-mount/go-kernel"
 	"github.com/peter-mount/golib/statistics"
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type Graphite struct {

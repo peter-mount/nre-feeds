@@ -5,7 +5,7 @@ import (
 	"encoding/xml"
 	"github.com/peter-mount/go-kernel/rabbitmq"
 	"github.com/peter-mount/golib/statistics"
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 // BindConsumer binds a consumer to a RabbitMQ queue to receive D3 messages
