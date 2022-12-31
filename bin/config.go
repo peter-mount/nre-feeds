@@ -3,8 +3,8 @@ package bin
 
 import (
 	"flag"
-	"github.com/peter-mount/go-kernel"
-	"github.com/peter-mount/go-kernel/rabbitmq"
+	"github.com/peter-mount/go-kernel/v2"
+	"github.com/peter-mount/go-kernel/v2/rabbitmq"
 	"github.com/peter-mount/nre-feeds/util/s3"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"

@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/peter-mount/go-kernel/rest"
+	"github.com/peter-mount/go-kernel/v2/rest"
 	"log"
 	"net/http"
 	"strconv"

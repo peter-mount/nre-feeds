@@ -1,0 +1,7 @@
+.git
+.idea
+go_*
+Dockerfile*
+config*.yaml
+*.cif
+# go.sum

@@ -3,7 +3,7 @@ package darwindb
 import (
 	"database/sql"
 	_ "github.com/lib/pq"
-	"github.com/peter-mount/go-kernel/rabbitmq"
+	"github.com/peter-mount/go-kernel/v2/rabbitmq"
 	"github.com/peter-mount/golib/statistics"
 	"github.com/peter-mount/nre-feeds/bin"
 	"log"

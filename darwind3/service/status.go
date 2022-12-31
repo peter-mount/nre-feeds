@@ -1,6 +1,6 @@
 package service
 
-import "github.com/peter-mount/go-kernel/rest"
+import "github.com/peter-mount/go-kernel/v2/rest"
 
 type badgeResponse struct {
 	SchemaVersion int    `json:"schemaVersion"`
