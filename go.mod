@@ -10,7 +10,7 @@ require (
 	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551
 	github.com/gorilla/handlers v1.5.1
 	github.com/jlaffaye/ftp v0.0.0-20190828173736-6aaa91c7796e
-	github.com/lib/pq v1.2.0
+	github.com/lib/pq v1.10.4
 	github.com/peter-mount/filecache v0.0.0-20190909121939-281dcdcbbbfd
 	github.com/peter-mount/go-kernel/v2 v2.0.2
 	github.com/peter-mount/golib v0.0.0-20190924084925-7f296a747319

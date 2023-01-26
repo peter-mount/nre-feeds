@@ -31,12 +31,17 @@ go-init: validate-go-version resolve-platforms
 # Target to run all tests, results into builds directory
 .PHONY: go-test
 go-test:
-	@mkdir -p $(BUILDS)
+	$(MKDIR) $(BUILDS)
 	$(call cmd,"GO TEST",$(BUILDS)/go-test.txt);go test ./... >$(BUILDS)/go-test.txt 2>&1 || cat $(BUILDS)/go-test.txt
 
 # Rule to build a go application
 # For this to work: the main function is in tools/<toolName>/bin/main.go
 # The compiled binary will be placed in $(BUILDS)/<os>/<arch>/
+
+# This takes precedence of the main one, it allows us to ignore a tool if the .donotbuild file exists
+$(BUILDS)/%: tools/%/bin/main.go tools/%/.donotbuild
+	$(call cmd,"IGNORE",$(shell basename $@))
+
 $(BUILDS)/%: tools/%/bin/main.go
 	$(foreach PLATFORM,$(PLATFORMS),\
 		$(call GO-BUILD,$(PLATFORM),$(BUILDS)/$(call GO-ARCH-DIR,$(PLATFORM))/$(BINDIR)$(shell basename $@),$<)${\n}\
@@ -64,6 +69,8 @@ validate-go-version:
 # This will only expand then if the PLATFORMS environment variable was not set
 # when invoking make
 .PHONY: resolve-platforms
+# For now filter out various platforms due to:
+# incompatibilities with bbolt (missing syscalls)
 resolve-platforms:
 ifeq ("$(PLATFORMS)","")
 	$(eval DISC_PLATFORMS=)
@@ -74,7 +81,15 @@ ifeq ("$(PLATFORMS)","")
 				$(eval GOARCH=$(word 2,$(subst /, ,$(DISC_PLATFORM)))) \
 				$(foreach GOARM, \
 					$(if $(filter arm,$(GOARCH)),6 7,:), \
-					$(eval DISC_PLATFORMS=$(DISC_PLATFORMS) $(GOOS):$(GOARCH):$(GOARM)) \
+					$(if $(filter loong64,$(GOARCH)),,\
+						$(if $(filter aix,$(GOOS)),,\
+							$(if $(filter js,$(GOOS)),,\
+								$(if $(filter plan9,$(GOOS)),,\
+									$(eval DISC_PLATFORMS=$(DISC_PLATFORMS) $(GOOS):$(GOARCH):$(GOARM)) \
+								)\
+							)\
+						)\
+					)\
 				) \
 			)\
 		)\
