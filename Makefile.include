@@ -1,0 +1,26 @@
+
+cmd = @set -e;printf "%-8s %s\n" $1 $2
+
+# Tool names
+CP		= @cp -p
+ECHO	= echo
+
+MKDIR		= @mkdir -p $1
+
+# limited to 5 entries as no way to get all args
+REMOVE		= $(call cmd,"RM","$1");set +e;rm -rf $1
+
+TAR			= @$(eval TARFILE=$(DIST_PREFIX)-$(shell echo $1 | sed "s|/|_|g").tgz)${\n}\
+			  @$(eval BUILD=$(BUILDS)/$1)${\n}\
+			  $(call cmd,"TAR",$(TARFILE));\
+			  mkdir -p $(DIST);\
+			  tar -P --transform "s|^$(BUILD)|$(PACKAGE_NAME)|" -czpf $(DIST)/$(TARFILE) $(BUILD)
+
+PRINTF	= printf
+
+# Used to separate commands in foreach.
+# NOTE this MUST have 2 empty lines between define and endef for it to work!
+define \n
+
+
+endef

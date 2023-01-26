@@ -1,0 +1,104 @@
+
+# Extract args from platform definition.
+# Here PLATFORM is os:arch:arm, usually arm is "" unless arch=="arm" when it
+# is then one of "5","6" or "7"
+GO-OS		=$(word 1,$(subst :, ,$(PLATFORM)))
+GO-ARCH		=$(word 2,$(subst :, ,$(PLATFORM)))
+GO-ARM		=$(word 3,$(subst :, ,$(PLATFORM)))
+GO-ARCH-DIR	=$(call GO-OS,$1)/$(call GO-ARCH,$1)$(call GO-ARM,$1)
+
+# $(call GO-BUILD,platform,destination,src)
+GO-BUILD	= $(call cmd,"GO BUILD","$(subst /, ,$(call GO-ARCH-DIR,$1)) $(shell basename $2)");\
+			  mkdir -p $(shell dirname $2);\
+			  CGO_ENABLED=0 GOOS=$(call GO-OS,$1) GOARCH=$(call GO-ARCH,$1) GOARM=$(GO-ARM,$1) \
+			  	go build \
+			  		-ldflags="-X '$(PACKAGE_PREFIX).Version=$(shell basename $2) ($(VERSION) $(subst /, ,$(call GO-ARCH-DIR,$1)) $(shell id -u -n) $(shell date))'" \
+			  		-o $2 \
+			  		$3
+
+GO-CLEAN	= $(call cmd,"GO CLEAN",$1);go clean $1
+GO-MOD		= $(call cmd,"GO MOD",$1);go mod $1
+
+# Append -test.v to GO_TEST to show status of each test.
+# Without it, only shows total time per module if they pass
+GO-TEST		= $(GO_TEST)$(call cmd,"GO TEST",$1);(cd $1;go test ./...)
+
+# Init goInit
+.PHONY: go-init
+go-init: validate-go-version resolve-platforms
+	$(call GO-MOD,download)
+
+# Target to run all tests, results into builds directory
+.PHONY: go-test
+go-test:
+	@mkdir -p $(BUILDS)
+	$(call cmd,"GO TEST",$(BUILDS)/go-test.txt);go test ./... >$(BUILDS)/go-test.txt 2>&1 || cat $(BUILDS)/go-test.txt
+
+# Rule to build a go application
+# For this to work: the main function is in tools/<toolName>/bin/main.go
+# The compiled binary will be placed in $(BUILDS)/<os>/<arch>/
+$(BUILDS)/%: tools/%/bin/main.go
+	$(foreach PLATFORM,$(PLATFORMS),\
+		$(call GO-BUILD,$(PLATFORM),$(BUILDS)/$(call GO-ARCH-DIR,$(PLATFORM))/$(BINDIR)$(shell basename $@),$<)${\n}\
+	)
+
+# Validates the installed version of go against the version declared in go.mod
+MINIMUM_SUPPORTED_GO_MAJOR_VERSION	= $(shell grep "^go" go.mod | cut -f2 -d' ' | cut -f1 -d'.')
+MINIMUM_SUPPORTED_GO_MINOR_VERSION	= $(shell grep "^go" go.mod | cut -f2 -d' ' | cut -f2 -d'.')
+GO_MAJOR_VERSION = $(shell go version | cut -f3 -d' ' | cut -c 3- | cut -f1 -d' ' | cut -f1 -d'.')
+GO_MINOR_VERSION = $(shell go version | cut -f3 -d' ' | cut -c 3- | cut -f1 -d' ' | cut -f2 -d'.')
+GO_VERSION_VALIDATION_ERR_MSG = Golang version $(GO_MAJOR_VERSION).$(GO_MINOR_VERSION) is not supported, please update to at least $(MINIMUM_SUPPORTED_GO_MAJOR_VERSION).$(MINIMUM_SUPPORTED_GO_MINOR_VERSION)
+.PHONY: validate-go-version
+validate-go-version:
+	@if [ $(GO_MAJOR_VERSION) -gt $(MINIMUM_SUPPORTED_GO_MAJOR_VERSION) ]; then \
+		exit 0 ;\
+	elif [ $(GO_MAJOR_VERSION) -lt $(MINIMUM_SUPPORTED_GO_MAJOR_VERSION) ]; then \
+		$(ECHO) '$(GO_VERSION_VALIDATION_ERR_MSG)';\
+		exit 1; \
+	elif [ $(GO_MINOR_VERSION) -lt $(MINIMUM_SUPPORTED_GO_MINOR_VERSION) ] ; then \
+		$(ECHO) '$(GO_VERSION_VALIDATION_ERR_MSG)';\
+		exit 1; \
+	fi
+
+# This discovers all platforms supported by the locally installed go compiler.
+# This will only expand then if the PLATFORMS environment variable was not set
+# when invoking make
+.PHONY: resolve-platforms
+resolve-platforms:
+ifeq ("$(PLATFORMS)","")
+	$(eval DISC_PLATFORMS=)
+	$(foreach DISC_PLATFORM,$(shell go tool dist list), \
+		$(eval GOOS=$(word 1,$(subst /, ,$(DISC_PLATFORM)))) \
+		$(if $(filter android,$(GOOS)),,\
+			$(if $(filter ios,$(GOOS)),,\
+				$(eval GOARCH=$(word 2,$(subst /, ,$(DISC_PLATFORM)))) \
+				$(foreach GOARM, \
+					$(if $(filter arm,$(GOARCH)),6 7,:), \
+					$(eval DISC_PLATFORMS=$(DISC_PLATFORMS) $(GOOS):$(GOARCH):$(GOARM)) \
+				) \
+			)\
+		)\
+	)
+	$(eval export PLATFORMS=$(DISC_PLATFORMS))
+endif
+
+# Generates platforms.md based on the local go installation.
+# This does nothing other than keep that page in sync with what is currently
+# supported by go and the build system.
+platforms.md: resolve-platforms
+	$(shell ( \
+		echo "# Supported Platforms"; \
+		echo; \
+		echo "The following platforms are supported by virtue of how the build system works:"; \
+		echo; \
+		echo "| Operating System | CPU Architectures |"; \
+		echo "| ---------------- | ----------------- |"; \
+		$(foreach OS, $(shell ls $(BUILDS)), echo "| $(OS) | $(foreach ARCH,$(shell ls $(BUILDS)/$(OS)),$(ARCH)) |"; ) \
+		echo; \
+		echo "Operating Systems: $(shell ls $(BUILDS)|wc -l) CPU Architectures: $(shell ls -d $(BUILDS)/*/*| cut -f3 -d'/' | sort |uniq | wc -l)"; \
+		echo; \
+		echo "This is all non-mobile platforms supported by go version \`$(GO_MAJOR_VERSION).$(GO_MINOR_VERSION)\`" ;\
+		echo; \
+		echo "This page is automatically generated from the output of \`go tool dist list\`"; \
+	  ) >$@ \
+	)
