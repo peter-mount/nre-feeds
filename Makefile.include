@@ -1,5 +1,5 @@
 
-cmd = @set -e;printf "%-8s %s\n" $1 $2
+cmd = @set -e;printf "%-12s %s\n" $1 $2
 
 # Tool names
 CP		= @cp -p
@@ -10,8 +10,10 @@ MKDIR		= @mkdir -p $1
 # limited to 5 entries as no way to get all args
 REMOVE		= $(call cmd,"RM","$1");set +e;rm -rf $1
 
-TAR			= @$(eval TARFILE=$(DIST_PREFIX)-$(shell echo $1 | sed "s|/|_|g").tgz)${\n}\
-			  @$(eval BUILD=$(BUILDS)/$1)${\n}\
+TAR-FILE	= $(DIST_PREFIX)-$(shell echo $1 | sed "s|/|_|g").tgz
+
+TAR			= @$(eval TARFILE=$(call TAR-FILE,$1))\
+			  @$(eval BUILD=$(BUILDS)/$1)\
 			  $(call cmd,"TAR",$(TARFILE));\
 			  mkdir -p $(DIST);\
 			  tar -P --transform "s|^$(BUILD)|$(PACKAGE_NAME)|" -czpf $(DIST)/$(TARFILE) $(BUILD)
@@ -24,3 +26,5 @@ define \n
 
 
 endef
+
+targets-init =

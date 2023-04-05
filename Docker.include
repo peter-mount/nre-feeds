@@ -1,0 +1,115 @@
+# Makefile extensions for docker containers
+
+DOCKER_IMAGE 	?= test:latest
+DOCKER_BUILDER	?= builder
+
+BUILDX			= docker buildx
+
+DOCKER-RM	 	= $(call cmd,"BLDX RM",$(DOCKER_BUILDER)); $(BUILDX) rm $(DOCKER_BUILDER) || true
+
+DOCKER-CREATE 	= $(call cmd,"BLDX CREATE",$(DOCKER_BUILDER));\
+				  $(BUILDX) inspect $(DOCKER_BUILDER) >/dev/null 2>&1 || $(BUILDX) create --name $(DOCKER_BUILDER) --driver docker-container --bootstrap
+
+DOCKER-SWITCH 	= $(call cmd,"BLDX USE",$(DOCKER_BUILDER));\
+ 				  $(BUILDX) use $(DOCKER_BUILDER)
+
+DOCKER-BUILDX	= $(call cmd,"BLDX BUILD",$1);\
+				  $(BUILDX) build --platform $2 -t $1 --push .
+
+targets-init += docker-init
+.PHONY: docker-init
+docker-init:
+	$(DOCKER-CREATE)
+	$(DOCKER-SWITCH)
+
+targets-real-clean += docker-real-clean
+.PHONY: docker-real-clean
+docker-real-clean:
+	$(DOCKER-RM)
+
+targets-dist += docker-dist
+.PHONY: docker-tools
+docker-dist: init
+	$(call DOCKER-BUILDX,$(DOCKER-TAG),"$(shell $(BUILDX) inspect $(DOCKER_BUILDER) | grep Platforms | cut -f2- -d ':'|sed -e "s/ //g")",".")
+
+docker-version = $(shell printf '%02d' $(shell echo "$1" | tr . ' ' | sed -e "s/ 0*/ /g") 2>/dev/null)
+
+resolve-platforms = resolve-docker-platforms
+.PHONY: resolve-docker-platforms
+resolve-docker-platforms:
+ifeq ("$(PLATFORMS)","")
+	$(call cmd,"BLDX INSPCT",$(DOCKER_BUILDER))
+	$(eval DISC_PLATFORMS=)
+	$(eval export PLATFORMS=$(foreach PLATFORM,\
+		$(shell $(BUILDX) inspect $(DOCKER_BUILDER) | grep Platforms | cut -f2- -d ':'|sed -e "s/ //g" -e "s/,/ /g"),\
+		$(eval GOOS=$(word 1,$(subst /, ,$(PLATFORM))))\
+		$(eval GOARCH=$(word 2,$(subst /, ,$(PLATFORM))))\
+		$(eval GOARM=$(shell echo -n $(word 3,$(subst /, ,$(PLATFORM))) | sed -e "s/v2//" -e "s/v//" ))\
+		$(eval DISC_PLATFORMS=$(DISC_PLATFORMS) $(GOOS):$(GOARCH):$(GOARM)) \
+	))
+	$(eval export PLATFORMS=$(DISC_PLATFORMS))
+endif
+
+# Verify qemu is correct
+targets-validate += validate-docker-version
+.PHONY: validate-docker-version
+validate-docker-version:
+	$(call cmd,"CHECK-VERSN","docker")
+	@if ! command -v docker >/dev/null 2>&1; then \
+		$(ECHO) "Can't find docker. Install with 'sudo apt-get install docker-ce' or docker.io.";\
+		exit 1;\
+	fi
+
+	$(eval docker_version="$(shell docker --version | cut -d' ' -f3 | tr -cd '0-9.')")
+	@if [ $(call docker-version,$(docker_version)) -lt "19" ]; then \
+		$(ECHO) "docker $(docker_version) too old. Need >= 19.03";\
+		exit 1;\
+	fi
+
+	@if [ $(shell docker version | grep Experimental: | grep -c true) -eq 0 ]; then\
+		$(ECHO) "docker experimental flag not enabled: Set with 'export DOCKER_CLI_EXPERIMENTAL=enabled'";\
+		exit 1; \
+	fi
+
+	$(call cmd,"CHECK-VERSN","kernel")
+	$(eval kernel_version="$(shell uname -r|cut -f1 -d'-')")
+	@if [ $(call docker-version,$(kernel_version)) -lt $(call docker-version,'4.8') ]]; then\
+		$(ECHO) "Kernel $(kernel_version) too old - need >= 4.8. Install a newer kernel.";\
+		exit 1; \
+	fi
+
+	$(call cmd,"CHECK-VERSN","binfmt_misc")
+	@if [ $(shell mount | grep -c /proc/sys/fs/binfmt_misc) -eq 0 ]; then\
+		$(ECHO) "/proc/sys/fs/binfmt_misc not mounted. Mount with 'sudo mount -t binfmt_misc binfmt_misc /proc/sys/fs/binfmt_misc'";\
+		exit 1; \
+	fi
+
+	@if ! command -v update-binfmts >/dev/null 2>&1; then\
+		$(ECHO) "Can't find update-binfmts. Install with 'sudo apt-get install binfmt-support'.";\
+		exit 1; \
+	fi
+
+	$(eval binfmt_version="$(shell update-binfmts --version | cut -f2 -d' ')")
+	@if [ $(call docker-version,$(binfmt_version)) -lt $(call docker-version,"2.2") ]; then\
+		$(ECHO) "update-binfmts $(binfmt_version) too old. Need >= 2.1.7";\
+		exit 1; \
+	fi
+
+	$(call cmd,"CHECK-VERSN","qemu-aarch64")
+	@if [ ! -e /proc/sys/fs/binfmt_misc/qemu-aarch64 ]; then\
+		if [ ! -e /usr/bin/qemu-aarch64-static ]; then\
+			$(ECHO) "Missing QEMU. Install with 'sudo apt-get install qemu-user-static'.";\
+			exit 1;\
+		fi;\
+	fi
+
+	@if [ ! -e '/proc/sys/fs/binfmt_misc/qemu-aarch64' ]; then\
+		$(ECHO) 'QEMU not registered in binfmt_misc.';\
+		exit 1;\
+	fi
+
+	$(eval qemu_flags="$(shell grep flags: /proc/sys/fs/binfmt_misc/qemu-aarch64 2>/dev/null | cut -d' ' -f2)")
+	@if [ $(shell echo $(qemu_flags) | grep -c F) -eq 0 ]; then\
+		$(ECHO) 'QEMU not registered in binfmt_misc with fix-binary (F) flag.';\
+		exit 1;\
+	fi

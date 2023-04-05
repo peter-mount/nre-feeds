@@ -41,6 +41,9 @@ VERSION ?= $(shell git describe --tags --always --dirty --match=v* 2> /dev/null 
 DIST_PREFIX = $(PACKAGE_NAME)_$(VERSION)
 BUILD_DATE = $(shell date)
 
+DOCKER-REPOSITORY = docker.europa.area51.dev/
+DOCKER-TAG = $(DOCKER-REPOSITORY)$(PACKAGE_NAME):$(if $(filter dirty,$(VERSION)),"latest",$(VERSION))
+
 # Where to place build artifacts. These must be subdirectories here and not
 # a path elsewhere, otherwise it will break the build!
 BUILDS 	= builds
@@ -50,23 +53,34 @@ DIST		= dist
 # it must end with /
 BINDIR ?= bin/
 
-.PHONY: all clean init test tools dist
+.PHONY: all clean init test tools dist real-clean
 
 all: init test tools
 
 include Makefile.include
 include Go.include
+include Docker.include
 
-clean:
-	$(call GO-CLEAN,-testcache)
+clean: $(targets-clean)
 	$(call REMOVE,$(BUILDS) $(DIST))
 
-init: go-init
+real-clean: clean $(targets-real-clean)
 
-test: go-test
+init: $(targets-validate) $(resolve-platforms) $(targets-init)
+	@$(ECHO) "$(PLATFORMS)"
 
-tools: $(subst /bin/main.go,,$(subst tools,$(BUILDS),$(shell ls tools/*/bin/main.go)))
+test: $(targets-test)
 
-dist: all
+tools: $(targets-tools)
+
+dist1: all
 	$(MKDIR) $(DIST)
 	$(foreach PLATFORM,$(shell cd $(BUILDS);ls -d */*),$(call TAR,$(PLATFORM))${\n})
+
+dist: all
+	$(foreach PLATFORM,$(shell cd $(BUILDS);ls -d */*),@$(MAKE) $(DIST)/$(call TAR-FILE,$(PLATFORM)){\n})
+	@$(MAKE) $(targets-dist)
+
+$(DIST)/$(PACKAGE_NAME)_$(VERSION)-%.tgz: builds/$(subst _,/,%)
+	$(MKDIR) $(DIST)
+	echo "$@ $<"

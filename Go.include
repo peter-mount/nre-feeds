@@ -23,16 +23,27 @@ GO-MOD		= $(call cmd,"GO MOD",$1);go mod $1
 # Without it, only shows total time per module if they pass
 GO-TEST		= $(GO_TEST)$(call cmd,"GO TEST",$1);(cd $1;go test ./...)
 
+targets-clean += go-clean
+.PHONY: go-clean
+go-clean:
+	$(call GO-CLEAN,-testcache)
+
 # Init goInit
+targets-init += go-init
 .PHONY: go-init
-go-init: validate-go-version resolve-platforms
+go-init:
 	$(call GO-MOD,download)
 
 # Target to run all tests, results into builds directory
+targets-test += go-test
 .PHONY: go-test
 go-test:
 	$(MKDIR) $(BUILDS)
 	$(call cmd,"GO TEST",$(BUILDS)/go-test.txt);go test ./... >$(BUILDS)/go-test.txt 2>&1 || cat $(BUILDS)/go-test.txt
+
+targets-tools += go-tools
+.PHONY: go-tools
+go-tools: $(subst /bin/main.go,,$(subst tools,$(BUILDS),$(shell ls tools/*/bin/main.go)))
 
 # Rule to build a go application
 # For this to work: the main function is in tools/<toolName>/bin/main.go
@@ -53,8 +64,10 @@ MINIMUM_SUPPORTED_GO_MINOR_VERSION	= $(shell grep "^go" go.mod | cut -f2 -d' ' |
 GO_MAJOR_VERSION = $(shell go version | cut -f3 -d' ' | cut -c 3- | cut -f1 -d' ' | cut -f1 -d'.')
 GO_MINOR_VERSION = $(shell go version | cut -f3 -d' ' | cut -c 3- | cut -f1 -d' ' | cut -f2 -d'.')
 GO_VERSION_VALIDATION_ERR_MSG = Golang version $(GO_MAJOR_VERSION).$(GO_MINOR_VERSION) is not supported, please update to at least $(MINIMUM_SUPPORTED_GO_MAJOR_VERSION).$(MINIMUM_SUPPORTED_GO_MINOR_VERSION)
+targets-validate += validate-go-version
 .PHONY: validate-go-version
 validate-go-version:
+	$(call cmd,"CHECK_VERSN","go")
 	@if [ $(GO_MAJOR_VERSION) -gt $(MINIMUM_SUPPORTED_GO_MAJOR_VERSION) ]; then \
 		exit 0 ;\
 	elif [ $(GO_MAJOR_VERSION) -lt $(MINIMUM_SUPPORTED_GO_MAJOR_VERSION) ]; then \
@@ -68,10 +81,12 @@ validate-go-version:
 # This discovers all platforms supported by the locally installed go compiler.
 # This will only expand then if the PLATFORMS environment variable was not set
 # when invoking make
-.PHONY: resolve-platforms
+#
 # For now filter out various platforms due to:
 # incompatibilities with bbolt (missing syscalls)
-resolve-platforms:
+resolve-platforms = resolve-go-platforms
+.PHONY: resolve-go-platforms
+resolve-go-platforms:
 ifeq ("$(PLATFORMS)","")
 	$(eval DISC_PLATFORMS=)
 	$(foreach DISC_PLATFORM,$(shell go tool dist list), \
@@ -79,12 +94,12 @@ ifeq ("$(PLATFORMS)","")
 		$(if $(filter android,$(GOOS)),,\
 			$(if $(filter ios,$(GOOS)),,\
 				$(eval GOARCH=$(word 2,$(subst /, ,$(DISC_PLATFORM)))) \
-				$(foreach GOARM, \
-					$(if $(filter arm,$(GOARCH)),6 7,:), \
-					$(if $(filter loong64,$(GOARCH)),,\
-						$(if $(filter aix,$(GOOS)),,\
-							$(if $(filter js,$(GOOS)),,\
-								$(if $(filter plan9,$(GOOS)),,\
+				$(if $(filter loong64,$(GOARCH)),,\
+					$(if $(filter aix,$(GOOS)),,\
+						$(if $(filter js,$(GOOS)),,\
+							$(if $(filter plan9,$(GOOS)),,\
+								$(foreach GOARM, \
+									$(if $(filter arm,$(GOARCH)),6 7,:), \
 									$(eval DISC_PLATFORMS=$(DISC_PLATFORMS) $(GOOS):$(GOARCH):$(GOARM)) \
 								)\
 							)\
