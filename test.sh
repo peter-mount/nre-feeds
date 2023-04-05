@@ -7,6 +7,7 @@
 MODULE=ldb
 #MODULE=darwinkb
 #MODULE=darwindb
+#MODULE=darwinkb
 
 # db directory
 DB=/home/peter/tmp/nre
@@ -32,14 +33,10 @@ ARGS="$ARGS test:${MODULE}-amd64-latest"
 
 echo $ARGS
 
-./build.sh test amd64 latest ${MODULE} &&\
+./build.sh test amd64 latest ${MODULE}
+
+exit 0
+
+# &&\
 exec docker run $ARGS
-
-
-
-{"Type":"timeTableUpdate","TimeTableId":{"timeTableId":"20190617020748","ttfile":"20190617020748_v8.xml.gz"}}
-
-{"Type":"timeTableUpdate","TimeTableId":{"timeTableId":"20190617020748","ttfile":"20190617020748_v7.xml.gz"}}
-
-{"Type":"timeTableUpdate","TimeTableId":{"timeTableId":"20190617020748","ttreffile":"20190615020704_ref_v3.xml.gz"}}
 

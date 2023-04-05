@@ -2,7 +2,7 @@ package service
 
 import (
 	bolt "github.com/etcd-io/bbolt"
-	"github.com/peter-mount/go-kernel/rest"
+	"github.com/peter-mount/go-kernel/v2/rest"
 	"log"
 )
 

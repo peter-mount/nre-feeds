@@ -11,15 +11,23 @@ import (
 )
 
 type MapBuilder struct {
-	ctx *sm.Context
+	ctx           *sm.Context
+	stationRadius float64
 }
 
 type MapTask func(builder *MapBuilder)
 
 func NewMapBuilder() *MapBuilder {
-	m := &MapBuilder{ctx: sm.NewContext()}
+	m := &MapBuilder{
+		ctx:           sm.NewContext(),
+		stationRadius: 100.0,
+	}
 	m.ctx.SetCenter(s2.LatLngFromDegrees(54.413, -3.878))
 	m.ctx.SetZoom(6)
+	return m
+}
+func (m *MapBuilder) StationRadius(r float64) *MapBuilder {
+	m.stationRadius = r
 	return m
 }
 
@@ -75,13 +83,18 @@ func (o wrapperPath) Draw(gc *gg.Context, trans *sm.Transformer) {
 
 	first := true
 
+	// Margin around the image bounds to allow points
+	margin := 10.0
+	maxW := float64(gc.Width()) + margin
+	maxH := float64(gc.Height()) + margin
+
 	gc.ClearPath()
 	gc.SetLineWidth(o.p.Weight)
 	gc.SetLineCap(gg.LineCapRound)
 	gc.SetLineJoin(gg.LineJoinRound)
 	for _, ll := range o.p.Positions {
 		x, y := trans.LatLngToXY(ll)
-		if x < 0 || y < 0 || int(x) >= gc.Width() || int(y) >= gc.Height() {
+		if x < -margin || y < -margin || x >= maxW || y >= maxH {
 			first = true
 		} else if first {
 			gc.MoveTo(x, y)
@@ -115,13 +128,20 @@ func (m *MapBuilder) ForEachStationNode(d *darwingraph.DarwinGraph, f func(*MapB
 func (m *MapBuilder) AppendStation(s *darwingraph.StationNode) *MapBuilder {
 	s.ForEachTiploc(func(t *darwingraph.TiplocNode) {
 		if t.HasPosition() {
-			m.AddObject(sm.NewCircle(
-				s2.LatLngFromDegrees(float64(t.Lat), float64(t.Lon)),
-				color.RGBA{R: 0xff, A: 0xff},
-				color.RGBA{R: 0xff, A: 0xff},
-				100.0,
-				5.0,
-			))
+			col := color.RGBA{R: 0xff, A: 0xff}
+			w := 5.0
+			if s.Crs[0] == 'X' || s.Crs[0] == 'Z' {
+				col.R = 0
+				col.B = 0xff
+				w = 4.0
+			}
+			if !t.IsPublic() {
+				col.R = 0x80
+				col.G = 0x80
+				col.B = 0x80
+				w = 3.0
+			}
+			m.AddObject(sm.NewCircle(s2.LatLngFromDegrees(float64(t.Lat), float64(t.Lon)), col, col, m.stationRadius, w))
 		}
 	})
 	return m

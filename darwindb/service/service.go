@@ -1,9 +1,9 @@
 package service
 
 import (
-	"github.com/peter-mount/go-kernel"
-	"github.com/peter-mount/go-kernel/cron"
-	"github.com/peter-mount/go-kernel/rest"
+	"github.com/peter-mount/go-kernel/v2"
+	"github.com/peter-mount/go-kernel/v2/cron"
+	"github.com/peter-mount/go-kernel/v2/rest"
 	"github.com/peter-mount/nre-feeds/bin"
 	"github.com/peter-mount/nre-feeds/darwind3"
 	"github.com/peter-mount/nre-feeds/darwindb"

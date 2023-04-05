@@ -4,7 +4,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"flag"
-	"github.com/peter-mount/go-kernel"
+	"github.com/peter-mount/go-kernel/v2"
 	"log"
 	"os"
 	"sync"

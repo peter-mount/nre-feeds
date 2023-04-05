@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func (d *DarwinGraph) importNreFeedsCache() error {
@@ -43,7 +44,7 @@ func (d *nreFeedImport) process(path string, info os.FileInfo, err error) error 
 		}
 
 		// Ignore Bus & Ship services
-		if !(sched.TrainId == "0B00" || sched.TrainId == "0S00") {
+		if !(strings.HasPrefix(sched.TrainId, "0B") || strings.HasPrefix(sched.TrainId, "0S")) {
 			d.importCount++
 			err = d.importNreFeedsSchedule(sched)
 			if err != nil {

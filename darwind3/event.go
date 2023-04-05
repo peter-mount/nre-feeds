@@ -3,7 +3,7 @@ package darwind3
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/peter-mount/go-kernel/rabbitmq"
+	"github.com/peter-mount/go-kernel/v2/rabbitmq"
 	"log"
 	"os"
 )

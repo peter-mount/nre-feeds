@@ -13,6 +13,7 @@ func (m *MapService) initMapDefs() {
 	m.mapDefs = []MapDef{
 		{Name: "uk", Handler: m.ukMap},
 		{Name: "se", Handler: m.seMap},
+		{Name: "london", Handler: m.londonMap},
 	}
 }
 
@@ -29,11 +30,26 @@ func (m *MapService) ukMap(b *MapBuilder) {
 		})
 }
 
-// ukMap generate a map of the South East
+// seMap generate a map of the South East
 func (m *MapService) seMap(b *MapBuilder) {
-	b.Size(600, 710).
-		Center(0.5, 51).
-		Zoom(8).
+	b.Size(1000, 710).
+		Center(0.25, 51.25).
+		Zoom(9).
+		StationRadius(125).
+		ForEachStationEdge(m.darwinGraph, func(b *MapBuilder, e *darwingraph.StationEdge) {
+			b.AppendStationEdge(e)
+		}).
+		ForEachStationNode(m.darwinGraph, func(b *MapBuilder, n *darwingraph.StationNode) {
+			b.AppendStation(n)
+		})
+}
+
+// londonMap generate a map of London
+func (m *MapService) londonMap(b *MapBuilder) {
+	b.Size(1000, 710).
+		Center(-.125, 51.5).
+		Zoom(11).
+		StationRadius(30).
 		ForEachStationEdge(m.darwinGraph, func(b *MapBuilder, e *darwingraph.StationEdge) {
 			b.AppendStationEdge(e)
 		}).

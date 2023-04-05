@@ -1,7 +1,7 @@
 package update
 
 import (
-	"github.com/peter-mount/go-kernel"
+	"github.com/peter-mount/go-kernel/v2"
 	"github.com/peter-mount/nre-feeds/bin"
 	"github.com/peter-mount/nre-feeds/darwind3"
 	"github.com/peter-mount/nre-feeds/darwintimetable/service"

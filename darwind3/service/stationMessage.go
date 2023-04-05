@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/peter-mount/go-kernel/rest"
+	"github.com/peter-mount/go-kernel/v2/rest"
 	"github.com/peter-mount/nre-feeds/darwind3"
 	"strconv"
 )

@@ -1,7 +1,7 @@
 package darwind3
 
 import (
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 // FeedHeaders holds the relevant headers from the feed

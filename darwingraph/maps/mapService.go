@@ -4,7 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/peter-mount/go-kernel"
+	"github.com/peter-mount/go-kernel/v2"
 	"github.com/peter-mount/nre-feeds/darwingraph"
 	"log"
 	"os"

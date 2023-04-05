@@ -3,7 +3,7 @@ package xmas
 import (
 	"errors"
 	"flag"
-	"github.com/peter-mount/go-kernel"
+	"github.com/peter-mount/go-kernel/v2"
 	"github.com/peter-mount/nre-feeds/util"
 	"time"
 )
