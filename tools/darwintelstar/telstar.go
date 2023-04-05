@@ -71,7 +71,10 @@ func (t *Telstar) crs(crs string) error {
 
 			dest := departure.Dest
 			destName := dest.Tiploc
-			tpl, _ := result.Tiplocs.Get(dest.Tiploc)
+			if loc.FalseDestination != "" {
+				destName = loc.FalseDestination
+			}
+			tpl, _ := result.Tiplocs.Get(destName)
 			if tpl != nil {
 				destName = tpl.Name
 			}
