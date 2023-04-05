@@ -56,7 +56,7 @@ func (b *FrameBuilder) Print(s string) *FrameBuilder {
 }
 
 func (b *FrameBuilder) Println(s string) *FrameBuilder {
-	return b.Print(s).Print("\r\n")
+	return b.Print(s).NewLine()
 }
 
 func (b *FrameBuilder) Printf(f string, a ...interface{}) *FrameBuilder {

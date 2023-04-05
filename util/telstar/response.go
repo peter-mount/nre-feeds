@@ -43,7 +43,10 @@ func (r *Response) Dynamic() *Response {
 
 // AddFrame adds a frame to the response
 func (r *Response) addFrame(f *Frame) *Response {
-	r.frames = append(r.frames, f)
+	// Don't add a frame if we are full - e.g. large responses
+	if len(r.frames) < int('z'-r.frameId) {
+		r.frames = append(r.frames, f)
+	}
 	return r
 }
 
