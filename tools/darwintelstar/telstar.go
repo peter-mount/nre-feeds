@@ -35,7 +35,7 @@ func (t *Telstar) boards() error {
 
 func (t *Telstar) crs(crs string) error {
 
-	crs = "LBG"
+	//crs = "LBG"
 
 	cl := client.DarwinLDBClient{Url: "https://ldb.prod.a51.li"}
 	result, err := cl.GetSchedule(crs)

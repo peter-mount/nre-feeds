@@ -44,6 +44,10 @@ func (r *Response) Dynamic() *Response {
 // AddFrame adds a frame to the response
 func (r *Response) addFrame(f *Frame) *Response {
 	// Don't add a frame if we are full - e.g. large responses
+	// e.g. For london bridge, at times you can fill up frames a...y
+	// and have to cut off frames.
+	//
+	// Also, Telstar doesn't allow z in the response - hence why <'z' here
 	if len(r.frames) < int('z'-r.frameId) {
 		r.frames = append(r.frames, f)
 	}
