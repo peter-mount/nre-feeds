@@ -2,7 +2,6 @@ package darwintty
 
 import (
 	"github.com/peter-mount/go-kernel/v2/rest"
-	"github.com/peter-mount/nre-feeds/ldb/client"
 	"github.com/peter-mount/nre-feeds/tools/darwintty/render"
 	"net/http"
 	"strings"
@@ -16,8 +15,7 @@ func (s *Server) get(r *rest.Rest) error {
 		return s.respond(r, render.New().Println("Not found"))
 	}
 
-	cl := client.DarwinLDBClient{Url: "https://ldb.prod.a51.li"}
-	result, err := cl.GetSchedule(crs)
+	result, err := s.ldbClient.GetSchedule(crs)
 	if err != nil {
 		return err
 	}

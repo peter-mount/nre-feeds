@@ -3,7 +3,6 @@ package darwintty
 import (
 	"fmt"
 	"github.com/peter-mount/go-kernel/v2/rest"
-	"github.com/peter-mount/nre-feeds/darwinref/client"
 	"github.com/peter-mount/nre-feeds/tools/darwintty/render"
 	"strings"
 )
@@ -11,8 +10,7 @@ import (
 func (s *Server) search(r *rest.Rest) error {
 	name := r.Var("name")
 
-	c := client.DarwinRefClient{Url: "https://ref.prod.a51.li"}
-	results, err := c.Search(name)
+	results, err := s.refClient.Search(name)
 	if err != nil {
 		return err
 	}

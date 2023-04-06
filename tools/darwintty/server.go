@@ -2,21 +2,46 @@ package darwintty
 
 import (
 	"bytes"
+	"github.com/peter-mount/go-kernel/v2/cron"
 	"github.com/peter-mount/go-kernel/v2/rest"
+	"github.com/peter-mount/nre-feeds/darwinref"
+	refClient "github.com/peter-mount/nre-feeds/darwinref/client"
+	ldbClient "github.com/peter-mount/nre-feeds/ldb/client"
 	"github.com/peter-mount/nre-feeds/tools/darwintty/render"
 	"strings"
+	"sync"
 )
 
 type Server struct {
-	Server *rest.Server `kernel:"inject"`
+	Server       *rest.Server      `kernel:"inject"`
+	Cron         *cron.CronService `kernel:"inject"`
+	ldbClient    ldbClient.DarwinLDBClient
+	refClient    refClient.DarwinRefClient
+	mutex        sync.Mutex
+	stations     map[string][]*darwinref.Location
+	stationCount int
 }
 
 func (s *Server) Start() error {
+	s.ldbClient.Url = "https://ldb.prod.a51.li"
+	s.refClient.Url = "https://ref.prod.a51.li"
+
 	s.Server.Handle("/", s.home).Methods("GET")
 	s.Server.Handle("/search/{name}", s.search).Methods("GET")
+	s.Server.Handle("/index/", s.index).Methods("GET")
+	s.Server.Handle("/index/{prefix}", s.index).Methods("GET")
 	s.Server.Handle("/{crs}", s.get).Methods("GET")
 
-	return nil
+	// Refresh the station index every hour, at 25 mins past the hour,
+	// so we don't bombard the remote service all at once
+	if _, err := s.Cron.AddFunc("0 25 * * * *", func() {
+		_ = s.refreshIndex()
+	}); err != nil {
+		return err
+	}
+
+	// Finish off by refreshing the index now so we have data on startup
+	return s.refreshIndex()
 }
 
 func (s *Server) respond(r *rest.Rest, b render.Builder) error {
@@ -90,4 +115,5 @@ const (
 	midRight    = "┤"
 	bottomLeft  = "└"
 	bottomRight = "┘"
+	bottomLower = "┬"
 )
