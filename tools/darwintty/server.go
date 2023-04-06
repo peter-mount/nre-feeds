@@ -9,6 +9,7 @@ type Server struct {
 }
 
 func (s *Server) Start() error {
+	s.Server.Handle("/search/{name}", s.search).Methods("GET")
 	s.Server.Handle("/{crs}", s.get).Methods("GET")
 	return nil
 }
