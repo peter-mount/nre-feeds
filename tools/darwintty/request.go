@@ -4,6 +4,7 @@ import (
 	"github.com/peter-mount/go-kernel/v2/log"
 	"github.com/peter-mount/go-kernel/v2/rest"
 	"github.com/peter-mount/nre-feeds/ldb/client"
+	"net/http"
 	"strings"
 )
 
@@ -24,8 +25,14 @@ func (s *Server) get(r *rest.Rest) error {
 		return err
 	}
 
-	if IsPlainTextAgent(r.GetHeader("User-Agent")) {
-		return s.servePlain(r, result)
+	board := NewBoard(result)
+
+	switch {
+	case IsPlainTextAgent(r.GetHeader("User-Agent")):
+		return s.servePlain(r, board)
+
+	default:
+		r.Status(http.StatusNotFound)
 	}
 
 	return nil
