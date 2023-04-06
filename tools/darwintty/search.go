@@ -1,10 +1,10 @@
 package darwintty
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/peter-mount/go-kernel/v2/rest"
 	"github.com/peter-mount/nre-feeds/darwinref/client"
+	"github.com/peter-mount/nre-feeds/tools/darwintty/render"
 	"strings"
 )
 
@@ -22,22 +22,29 @@ func (s *Server) search(r *rest.Rest) error {
 	for _, result := range results {
 		l = Max(l, len(result.Label))
 	}
-	fmt1 := fmt.Sprintf("%%-%d.%ds %%s\n", l, l)
+	fmt1 := fmt.Sprintf("%%-%d.%ds ", l, l)
 
-	uriPrefix := fmt.Sprintf("https://%s/",
-		r.Request().Host)
+	uriPrefix := fmt.Sprintf("https://%s/", r.Request().Host)
 
-	var out bytes.Buffer
-	fmt.Fprintf(&out, "Search for %q returned %d results\n\n", name, len(results))
+	b := render.New().
+		Printf("Search for %q returned %d results", name, len(results)).
+		NewLine().
+		NewLine()
 
 	if len(results) > 0 {
-		fmt.Fprintf(&out, fmt1, "Station", "Url")
-		fmt.Fprintln(&out, strings.Repeat(horiz, l+len(uriPrefix)+3+1))
+		b = b.Printf(fmt1, "Station").Println("Url").
+			Repeat(horiz, l+len(uriPrefix)+3+1).
+			NewLine()
+
 		for _, result := range results {
-			fmt.Fprintf(&out, fmt1, result.Label, uriPrefix+strings.ToLower(result.Crs))
+			b = b.Printf(fmt1, result.Label).
+				Link(uriPrefix + strings.ToLower(result.Crs)).
+				NewLine()
 		}
-		fmt.Fprintln(&out, strings.Repeat(horiz, l+len(uriPrefix)+3+1))
+
+		b = b.Repeat(horiz, l+len(uriPrefix)+3+1).
+			NewLine()
 	}
 
-	return s.respond(r, out.Bytes())
+	return s.respond(r, b)
 }

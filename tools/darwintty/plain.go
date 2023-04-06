@@ -2,14 +2,15 @@ package darwintty
 
 import (
 	"fmt"
+	"github.com/peter-mount/nre-feeds/tools/darwintty/render"
 	"github.com/peter-mount/nre-feeds/util/telstar"
-	"io"
-	"strings"
+	"time"
 )
 
-func (b *Board) Write(w io.Writer) {
+func (b *Board) Write(w render.Builder) {
 
-	fmt.Fprintf(w, "Live train departures for: %s\n", b.Name)
+	w = w.Printf("Live train departures for: %s", b.Name).
+		NewLine()
 
 	// Work out max length of destination and via's
 	destLen := len("destination")
@@ -32,21 +33,27 @@ func (b *Board) Write(w io.Writer) {
 	}
 	maxLen := Max(destLen+headerLen, fullLen)
 
-	fmt1 := fmt.Sprintf("%s %%-%d.%ds %%2.2s %%5.5s %%5.5s %s\n", vertical, destLen, destLen, vertical)
+	fmt1 := fmt.Sprintf(" %%-%d.%ds %%2.2s %%5.5s %%5.5s ", destLen, destLen)
 
-	hdr := fmt.Sprintf(fmt.Sprintf("%s %%-%d.%ds Pl Deprt Exptd %s", vertical, destLen, destLen, vertical), "Destination")
+	fmt2 := fmt.Sprintf(" %%-%d.%ds ", maxLen, maxLen)
 
-	sep := "%s" + horiz + strings.Repeat(horiz, maxLen) + horiz + "%s\n"
-	fmt2 := fmt.Sprintf("%s %%-%d.%ds %s\n", vertical, maxLen, maxLen, vertical)
-
-	fmt.Fprintf(w, sep, topLeft, topRight)
-	fmt.Fprintln(w, hdr)
+	w = w.Print(topLeft).
+		Repeat(horiz, maxLen+2).
+		Print(topRight).
+		NewLine().
+		Print(vertical).
+		White().
+		Printf(fmt.Sprintf(" %%-%d.%ds Pl Deprt Exptd ", destLen, destLen), "Destination").
+		End().
+		Print(vertical).
+		NewLine()
 
 	switch len(b.Departures) {
 	case 0:
 	default:
 		for _, departure := range b.Departures {
-			fmt.Fprintf(w, sep, midLeft, midRight)
+			w = w.Print(midLeft).Repeat(horiz, maxLen+2).Print(midRight).
+				NewLine()
 
 			var supp []string
 
@@ -62,14 +69,28 @@ func (b *Board) Write(w io.Writer) {
 				departure.LastReport.String(),
 			)
 
-			fmt.Fprintf(w, fmt1, departure.Destination, departure.Plat, departure.Depart, departure.Expected)
+			w = w.Print(vertical).
+				White().
+				Printf(fmt1, departure.Destination, departure.Plat, departure.Depart, departure.Expected).
+				End().
+				Print(vertical).
+				NewLine()
 
 			for _, s := range supp {
 				if s != "" {
-					fmt.Fprintf(w, fmt2, s)
+					w = w.Print(vertical).
+						Yellow().
+						Printf(fmt2, s).
+						End().
+						Print(vertical).
+						NewLine()
 				}
 			}
 		}
 	}
-	fmt.Fprintf(w, sep, bottomLeft, bottomRight)
+	w = w.Print(bottomLeft).Repeat(horiz, maxLen+2).Print(bottomRight).
+		NewLine().
+		NewLine().
+		Printf("Generated: %s", b.Date.Format(time.RFC3339)).
+		NewLine()
 }

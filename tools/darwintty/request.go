@@ -1,9 +1,9 @@
 package darwintty
 
 import (
-	"bytes"
 	"github.com/peter-mount/go-kernel/v2/rest"
 	"github.com/peter-mount/nre-feeds/ldb/client"
+	"github.com/peter-mount/nre-feeds/tools/darwintty/render"
 	"net/http"
 	"strings"
 )
@@ -13,7 +13,7 @@ func (s *Server) get(r *rest.Rest) error {
 
 	if len(crs) != 3 {
 		r.Status(http.StatusNotFound)
-		return s.respond(r, []byte("Not found"))
+		return s.respond(r, render.New().Println("Not found"))
 	}
 
 	cl := client.DarwinLDBClient{Url: "https://ldb.prod.a51.li"}
@@ -24,13 +24,14 @@ func (s *Server) get(r *rest.Rest) error {
 
 	if result == nil {
 		r.Status(http.StatusNotFound)
-		return s.respond(r, []byte("Not found"))
+		return s.respond(r, render.New().Println("Not found"))
 	}
 
 	board := NewBoard(result)
 
-	var out bytes.Buffer
-	board.Write(&out)
+	b := render.New()
 
-	return s.respond(r, out.Bytes())
+	board.Write(b)
+
+	return s.respond(r, b)
 }

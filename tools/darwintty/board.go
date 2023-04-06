@@ -7,11 +7,13 @@ import (
 	"github.com/peter-mount/nre-feeds/util"
 	"sort"
 	"strings"
+	"time"
 )
 
 type Board struct {
 	Crs        string       `json:"crs" xml:"crs,attr"`
 	Name       string       `json:"name" xml:"name,attr"`
+	Date       time.Time    `json:"date" xml:"date,attr"`
 	Departures []*Departure `json:"departures" xml:"departures"`
 }
 
@@ -174,6 +176,7 @@ func NewBoard(result *service.StationResult) *Board {
 	b := &Board{
 		Crs:  result.Crs,
 		Name: GetTiploc(result, result.Station[0]),
+		Date: result.Date,
 	}
 
 	for _, departure := range result.Services {

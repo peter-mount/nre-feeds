@@ -1,36 +1,49 @@
 package darwintty
 
 import (
-	"bytes"
-	"fmt"
 	"github.com/peter-mount/go-kernel/v2/rest"
+	"github.com/peter-mount/nre-feeds/tools/darwintty/render"
 )
 
 func (s *Server) home(r *rest.Rest) error {
 
-	hostName := r.Request().Host
+	hostName := "http://" + r.Request().Host + "/"
 
-	var out bytes.Buffer
+	b := render.New().
+		Println("UK Rail Departure Boards for the command line").
+		NewLine().
+		Print(r.Request().Host).
+		Println(" is a console-oriented service for displaying").
+		Println("the departure boards for UK railway stations").
+		Println("using terminal-oriented ANSI sequences for").
+		Println("console HTTP client (curl, wget etc)").
+		Println("or HTML for web browsers.").
+		NewLine().
+		Println("To use this service:").
+		Print("curl ").Link(hostName + "crs").Println(" where crs is the 3 letter CRS code for a station.").
+		NewLine().
+		Println("For example:").
+		NewLine().
+		Print("curl ").Link(hostName + "chx").Println(" For London Charing Cross").
+		Print("curl ").Link(hostName + "chc").Println(" For Charing Cross (Glasgow)").
+		Print("curl ").Link(hostName + "lbg").Println(" For London Bridge").
+		Print("curl ").Link(hostName + "mde").Println(" For Maidstone East").
+		NewLine().
+		Println("If you do not know the code then use:").
+		Print("curl ").Link(hostName + "search/name").Println(" where name is the place name.").
+		NewLine().
+		Println("For example:").
+		NewLine().
+		Print("curl ").Link(hostName + "search/maidstone").NewLine().
+		Print("curl ").Link(hostName + "search/staplehurst").NewLine().
+		Print("curl ").Link(hostName + "search/london").NewLine().
+		Print("curl ").Link(hostName + "search/edin").NewLine().
+		NewLine().
+		Println("All values of crs or search strings are case insensitive.").
+		NewLine().
+		Println("Note: with wget try running it with: ").
+		White().Print("wget -q -O - ").Link(hostName + "mde").
+		NewLine()
 
-	fmt.Fprintf(&out,
-		"To use this service:\n"+
-			"http://%s/crs where crs is the 3 letter CRS code for a station.\n"+
-			"\nFor example:\n"+
-			"http://%s/chx For London Charing Cross\n"+
-			"http://%s/chc For Charing Cross (Glasgow)\n"+
-			"http://%s/lbg For London Bridge\n"+
-			"http://%s/mde For Maidstone East\n"+
-			"\n\nIf you do not know the code then use\n"+
-			"http://%s/search/name where name is the place name.\n"+
-			"\nFor example:\n\n"+
-			"http://%s/search/maidstone\n"+
-			"http://%s/search/staplehurst\n"+
-			"http://%s/search/london\n"+
-			"http://%s/search/edin\n"+
-			"\nAll values of crs or search strings are case insensitive.",
-		hostName, hostName, hostName, hostName, hostName, hostName,
-		hostName, hostName, hostName, hostName,
-	)
-
-	return s.respond(r, out.Bytes())
+	return s.respond(r, b)
 }
