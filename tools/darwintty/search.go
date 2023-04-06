@@ -32,14 +32,12 @@ func (s *Server) search(r *rest.Rest) error {
 
 	if len(results) > 0 {
 		fmt.Fprintf(&out, fmt1, "Station", "Url")
-		fmt.Fprintln(&out, strings.Repeat("─", l+len(uriPrefix)+3+1))
+		fmt.Fprintln(&out, strings.Repeat(horiz, l+len(uriPrefix)+3+1))
 		for _, result := range results {
 			fmt.Fprintf(&out, fmt1, result.Label, uriPrefix+strings.ToLower(result.Crs))
 		}
+		fmt.Fprintln(&out, strings.Repeat(horiz, l+len(uriPrefix)+3+1))
 	}
 
-	r.ContentType("text/plain").
-		Value(out.Bytes())
-
-	return nil
+	return s.respond(r, out.Bytes())
 }
