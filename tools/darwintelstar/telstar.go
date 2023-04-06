@@ -104,7 +104,7 @@ func (t *Telstar) crs(crs string) error {
 			}
 
 			var reasonText []string
-			{
+			if result.Reasons != nil {
 				reason := result.Reasons.Late[departure.LateReason.Reason]
 				if loc.Cancelled && departure.CancelReason.Reason != 0 {
 					reason = result.Reasons.Cancelled[departure.CancelReason.Reason]
