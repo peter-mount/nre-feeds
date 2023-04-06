@@ -21,6 +21,13 @@ func Max(a, b int) int {
 	return b
 }
 
+func MaxV(a int, b ...int) int {
+	for _, e := range b {
+		a = Max(a, e)
+	}
+	return a
+}
+
 func GetDestName(r *service.StationResult, departure ldb.Service) string {
 	loc := departure.Location
 	dest := departure.Dest

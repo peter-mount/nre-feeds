@@ -29,7 +29,7 @@ func (s *Server) get(r *rest.Rest) error {
 
 	switch {
 	case IsPlainTextAgent(r.GetHeader("User-Agent")):
-		return s.servePlain(r, board)
+		return s.serveAnsi(r, board)
 
 	default:
 		r.Status(http.StatusNotFound)
