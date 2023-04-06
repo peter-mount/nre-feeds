@@ -22,7 +22,7 @@ func (s *Server) search(r *rest.Rest) error {
 	}
 	fmt1 := fmt.Sprintf("%%-%d.%ds ", l, l)
 
-	uriPrefix := fmt.Sprintf("https://%s/", r.Request().Host)
+	uriPrefix := *s.Hostname + "/"
 
 	b := render.New().
 		Printf("Search for %q returned %d results", name, len(results)).

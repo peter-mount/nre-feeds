@@ -15,6 +15,7 @@ import (
 type Server struct {
 	Server       *rest.Server      `kernel:"inject"`
 	Cron         *cron.CronService `kernel:"inject"`
+	Hostname     *string           `kernel:"flag,hostname"`
 	ldbClient    ldbClient.DarwinLDBClient
 	refClient    refClient.DarwinRefClient
 	mutex        sync.Mutex

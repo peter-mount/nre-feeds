@@ -7,7 +7,7 @@ import (
 
 func (s *Server) home(r *rest.Rest) error {
 
-	hostName := "http://" + r.Request().Host + "/"
+	hostName := *s.Hostname + "/"
 
 	b := render.New().
 		Println("UK Rail Departure Boards for the command line").

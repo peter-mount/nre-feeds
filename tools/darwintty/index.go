@@ -96,10 +96,10 @@ func (s *Server) index(r *rest.Rest) error {
 		prefix = ""
 	}
 
-	crsPrefix := "http://" + r.Request().Host + "/"
+	crsPrefix := *s.Hostname + "/"
 	crsLen := len(crsPrefix) + 3 // +3 for crs
 
-	urlPrefix := "http://" + r.Request().Host + "/index/"
+	urlPrefix := *s.Hostname + "/index/"
 	prefixLen := len(urlPrefix) + 1 // +1 for letter
 
 	b := render.New()
