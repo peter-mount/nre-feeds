@@ -9,7 +9,8 @@ import (
 
 func (b *Board) Write(w render.Builder) {
 
-	w = w.Printf("Live train departures for: %s", b.Name).
+	w = w.Printf("Live train departures at %s", b.Date.Format(time.RFC3339)).
+		NewLine().
 		NewLine()
 
 	// Work out max length of destination and via's
@@ -18,6 +19,7 @@ func (b *Board) Write(w render.Builder) {
 	for _, departure := range b.Departures {
 		destLen = Max(destLen, len(departure.Destination))
 		fullLen = MaxV(fullLen,
+			len(b.Name)+8, // Station Name Banner
 			len(departure.LastReport.String()),
 			len(departure.TocName()),
 			len(departure.Coaches()),
@@ -38,11 +40,27 @@ func (b *Board) Write(w render.Builder) {
 	fmt1 := fmt.Sprintf(" %%-%d.%ds ", destLen, destLen)
 	fmt2 := fmt.Sprintf(" %%-%d.%ds ", maxLen, maxLen)
 
-	w = w.Print(topLeft).
-		Repeat(horiz, maxLen+2).
-		Print(topRight).
+	sl0 := len(b.Name)
+	sl1 := (maxLen - sl0) >> 1
+
+	w = w.Repeat(" ", sl1).
+		Print(topLeft).Repeat(horiz, sl0+2).Print(topRight).
 		NewLine().
-		Print(vertical).
+		Repeat(" ", sl1).
+		Print(vertical).Printf(" %s ", b.Name).Print(vertical).
+		NewLine()
+
+	w = w.Print(topLeft).
+		Repeat(horiz, sl1-1).
+		Print(topUpper).
+		Repeat(horiz, sl0+2).
+		Print(topUpper).
+		Repeat(horiz, maxLen-sl1-sl0-1).
+		//Repeat(horiz, maxLen+2).
+		Print(topRight).
+		NewLine()
+
+	w = w.Print(vertical).
 		White().
 		Printf(fmt.Sprintf(" %%-%d.%ds Pl  Depart  Expected ", destLen, destLen), "Destination").
 		End().
@@ -114,7 +132,11 @@ func (b *Board) Write(w render.Builder) {
 	w = w.Print(bottomLeft).Repeat(horiz, maxLen+2).Print(bottomRight).
 		NewLine().
 		NewLine().
-		Printf("Generated: %s", b.Date.Format(time.RFC3339)).
+		Print("Data provided by ").
+		Link("https://departureboards.mobi").
+		NewLine().
+		Link("https://area51.dev").
+		Print(" and National Rail Enquiries").
 		NewLine()
 }
 

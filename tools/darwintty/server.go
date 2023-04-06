@@ -83,6 +83,7 @@ const (
 	topLeft     = "┌"
 	horiz       = "─"
 	topRight    = "┐"
+	topUpper    = "┴"
 	vertical    = "│"
 	midLeft     = "├"
 	midCross    = "┼"
