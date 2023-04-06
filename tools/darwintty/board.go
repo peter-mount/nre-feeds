@@ -18,13 +18,12 @@ type Board struct {
 }
 
 type Departure struct {
-	Destination string `json:"destination" xml:"destination,attr"`
-	Via         string `json:"via,omitempty" xml:"via,omitempty"`
-	Plat        string `json:"plat,omitempty" xml:"plat,attr,omitempty"`
-	Depart      string `json:"depart" xml:"depart,attr"`
-	depart      util.WorkingTime
-	Expected    string `json:"expected" xml:"expected,attr"`
-	expected    util.WorkingTime
+	Destination string                    `json:"destination" xml:"destination,attr"`
+	Via         string                    `json:"via,omitempty" xml:"via,omitempty"`
+	Plat        string                    `json:"plat,omitempty" xml:"plat,attr,omitempty"`
+	Depart      string                    `json:"depart" xml:"depart,attr"`
+	Expected    string                    `json:"expected" xml:"expected,attr"`
+	Delayed     bool                      `json:"delayed,omitempty" xml:"delayed,attr,omitempty"`
 	Delay       int                       `json:"delay,omitempty" xml:"delay,omitempty"`
 	Length      int                       `json:"length,omitempty" xml:"length,attr,omitempty"`
 	Cancelled   bool                      `json:"cancelled,omitempty" xml:"cancelled,attr,omitempty"`
@@ -32,6 +31,8 @@ type Departure struct {
 	Toc         string                    `json:"toc" xml:"toc,attr"`
 	LastReport  Location                  `json:"lastReport" xml:"lastReport"`
 	Formation   []darwind3.CoachFormation `json:"formation,omitempty" xml:"formation,omitempty"`
+	depart      util.WorkingTime
+	expected    util.WorkingTime
 }
 
 func (d *Departure) TocName() string {
@@ -59,7 +60,7 @@ func (d *Departure) FormationString() string {
 	return "Coaches: " + strings.Join(a, ", ")
 }
 
-func (d *Departure) ToiletStatus() string {
+func (d *Departure) ToiletStatus() []string {
 	var t []string
 	var acc []string
 	for _, coach := range d.Formation {
@@ -70,19 +71,16 @@ func (d *Departure) ToiletStatus() string {
 			acc = append(acc, coach.CoachNumber)
 		}
 	}
-	if len(t)+len(acc) == 0 {
-		return ""
-	}
 
 	var a []string
 	if len(t) > 0 {
-		a = append(a, "Standard: "+plural(t))
+		a = append(a, "Standard toilets: "+plural(t))
 	}
 	if len(acc) > 0 {
-		a = append(a, "Accessible: "+plural(acc))
+		a = append(a, "Accessible toilets: "+plural(acc))
 	}
 
-	return "Toilets are available. " + strings.Join(a, ", ")
+	return a
 }
 
 func plural(s []string) string {
@@ -181,17 +179,20 @@ func NewBoard(result *service.StationResult) *Board {
 
 	for _, departure := range result.Services {
 		loc := departure.Location
-		if !loc.IsDestination() && !loc.IsSetDownOnly() {
+		if !loc.IsDestination() && !loc.IsSetDownOnly() && !loc.Forecast.Departed {
+			loc.UpdateTime()
+
 			d := &Departure{
 				Destination: GetDestName(result, departure),
-				depart:      loc.Time,
-				Depart:      loc.Time.String()[:5],
+				depart:      loc.Times.Time,
+				Depart:      loc.Times.Time.String()[:5],
 				expected:    loc.Forecast.Time,
 				Expected:    loc.Forecast.Time.String()[:5],
 				Cancelled:   loc.Cancelled,
 				Toc:         departure.Toc,
 				Length:      loc.Length,
-				Delay:       loc.Delay,
+				Delayed:     loc.Forecast.Delayed,
+				Delay:       loc.Delay / 60,
 				Formation:   departure.Formation.Formation.Coaches,
 				LastReport: Location{
 					Location: GetTiploc(result, departure.LastReport.Tiploc),

@@ -22,19 +22,20 @@ func (b *Board) Write(w render.Builder) {
 			len(departure.TocName()),
 			len(departure.Coaches()),
 			len(departure.FormationString()),
-			len(departure.ToiletStatus()),
 		)
+		for _, s := range departure.ToiletStatus() {
+			fullLen = Max(fullLen, len(s))
+		}
 	}
 
 	// Expand destLen if fullLen is larger than it and the headers
-	headerLen := 2 + 5 + 5 + 3
+	headerLen := 2 + 8 + 8 + 3
 	if fullLen > (destLen + headerLen) {
 		destLen = Max(destLen, fullLen-headerLen)
 	}
 	maxLen := Max(destLen+headerLen, fullLen)
 
-	fmt1 := fmt.Sprintf(" %%-%d.%ds %%2.2s %%5.5s %%5.5s ", destLen, destLen)
-
+	fmt1 := fmt.Sprintf(" %%-%d.%ds ", destLen, destLen)
 	fmt2 := fmt.Sprintf(" %%-%d.%ds ", maxLen, maxLen)
 
 	w = w.Print(topLeft).
@@ -43,7 +44,7 @@ func (b *Board) Write(w render.Builder) {
 		NewLine().
 		Print(vertical).
 		White().
-		Printf(fmt.Sprintf(" %%-%d.%ds Pl Deprt Exptd ", destLen, destLen), "Destination").
+		Printf(fmt.Sprintf(" %%-%d.%ds Pl  Depart  Expected ", destLen, destLen), "Destination").
 		End().
 		Print(vertical).
 		NewLine()
@@ -55,42 +56,107 @@ func (b *Board) Write(w render.Builder) {
 			w = w.Print(midLeft).Repeat(horiz, maxLen+2).Print(midRight).
 				NewLine()
 
-			var supp []string
-
-			if departure.Reason != "" {
-				supp = append(supp, telstar.Split(departure.Reason, maxLen)...)
+			w = w.Print(vertical)
+			if departure.Cancelled {
+				w = w.Red().
+					Printf(fmt1, departure.Destination).
+					Print("        Cancelled    ")
+			} else {
+				w = w.White().
+					Printf(fmt1, departure.Destination).
+					Printf("%2.2s %8.8s ", departure.Plat, departure.Depart)
+				if departure.Delayed {
+					w = w.End().Red().Print(" Delayed ")
+				} else {
+					if departure.Depart != departure.Expected {
+						w = w.End().
+							Yellow().
+							Printf("%8.8s ", departure.Expected)
+					} else {
+						w = w.End().
+							Green().
+							Print(" On Time ")
+					}
+				}
 			}
-
-			supp = append(supp,
-				departure.TocName(),
-				departure.Coaches(),
-				departure.FormationString(),
-				departure.ToiletStatus(),
-				departure.LastReport.String(),
-			)
-
-			w = w.Print(vertical).
-				White().
-				Printf(fmt1, departure.Destination, departure.Plat, departure.Depart, departure.Expected).
-				End().
+			w = w.End().
 				Print(vertical).
 				NewLine()
 
-			for _, s := range supp {
-				if s != "" {
-					w = w.Print(vertical).
-						Yellow().
-						Printf(fmt2, s).
-						End().
-						Print(vertical).
-						NewLine()
+			w = renderIf(w, departure.TocName(), fmt2, green)
+
+			if departure.Reason != "" {
+				h := yellow
+				if departure.Cancelled {
+					h = red
+				}
+				for _, s := range telstar.Split(departure.Reason, maxLen) {
+					w = renderIf(w, s, fmt2, h)
 				}
 			}
+
+			if !departure.Cancelled {
+				w = renderIf(w, departure.Coaches(), fmt2, green)
+				w = renderIf(w, departure.FormationString(), fmt2, green)
+				for _, s := range departure.ToiletStatus() {
+					w = renderIf(w, s, fmt2, green)
+				}
+				w = renderIf(w, departure.LastReport.String(), fmt2, white)
+				if departure.Delay > 0 && departure.Delay < 300 {
+					w = renderIf(w,
+						fmt.Sprintf("Delayed by %d minutes", departure.Delay),
+						fmt2, yellow)
+				}
+			}
+
 		}
 	}
 	w = w.Print(bottomLeft).Repeat(horiz, maxLen+2).Print(bottomRight).
 		NewLine().
 		NewLine().
 		Printf("Generated: %s", b.Date.Format(time.RFC3339)).
+		NewLine()
+}
+
+func renderIf(w render.Builder, s, f string, cb func(builder render.Builder, s, f string) render.Builder) render.Builder {
+	if s != "" {
+		return cb(w, s, f)
+	}
+	return w
+}
+
+func white(w render.Builder, s, f string) render.Builder {
+	return w.Print(vertical).
+		Yellow().
+		Printf(f, s).
+		End().
+		Print(vertical).
+		NewLine()
+}
+
+func green(w render.Builder, s, f string) render.Builder {
+	return w.Print(vertical).
+		Green().
+		Printf(f, s).
+		End().
+		Print(vertical).
+		NewLine()
+}
+
+func yellow(w render.Builder, s, f string) render.Builder {
+	return w.Print(vertical).
+		Yellow().
+		Printf(f, s).
+		End().
+		Print(vertical).
+		NewLine()
+}
+
+func red(w render.Builder, s, f string) render.Builder {
+	return w.Print(vertical).
+		Red().
+		Printf(f, s).
+		End().
+		Print(vertical).
 		NewLine()
 }

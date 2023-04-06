@@ -50,7 +50,7 @@ func (s *Server) respond(r *rest.Rest, b render.Builder) error {
 			"code {white-space: pre;}",
 			"span { display: inline-block; }",
 			".col1 {color:red;}",
-			".col2 {color:green;}",
+			".col2 {color:lightgreen;}",
 			".col3 {color:yellow;}",
 			".col4 {color:blue;}",
 			".col5 {color:magenta;}",
