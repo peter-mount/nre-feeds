@@ -12,7 +12,7 @@ func (s *Server) home(r *rest.Rest) error {
 	b := render.New().
 		Println("UK Rail Departure Boards for the command line").
 		NewLine().
-		Print(r.Request().Host).
+		Link(hostName).
 		Println(" is a console-oriented service for displaying").
 		Println("the departure boards for UK railway stations").
 		Println("using terminal-oriented ANSI sequences for").
