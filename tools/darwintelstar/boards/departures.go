@@ -1,4 +1,4 @@
-package telstar
+package boards
 
 import (
 	"fmt"
@@ -8,12 +8,14 @@ import (
 	"strings"
 )
 
-type Telstar struct {
+// Departures handles serving realtime departure board frames
+// This is called from Telstar when a relevant page is requested
+type Departures struct {
 	PageNumber *int    `kernel:"flag,page,Page number"`
 	Crs        *string `kernel:"flag,crs,crs"`
 }
 
-func (t *Telstar) Start() error {
+func (t *Departures) Start() error {
 	/*if *t.PageNumber > 0 {
 		return t.boards()
 	}*/
@@ -23,7 +25,7 @@ func (t *Telstar) Start() error {
 	return nil
 }
 
-func (t *Telstar) boards() error {
+func (t *Departures) boards() error {
 	pn := *t.PageNumber
 	var crsa []byte
 	for pn > 64 {
@@ -33,7 +35,7 @@ func (t *Telstar) boards() error {
 	return t.crs(string(crsa))
 }
 
-func (t *Telstar) crs(crs string) error {
+func (t *Departures) crs(crs string) error {
 
 	//crs = "LBG"
 
@@ -245,7 +247,7 @@ func (t *Telstar) crs(crs string) error {
 	return err
 }
 
-func (t *Telstar) newDepartureFrame(response *telstar.Response, result *service.StationResult) *telstar.FrameBuilder {
+func (t *Departures) newDepartureFrame(response *telstar.Response, result *service.StationResult) *telstar.FrameBuilder {
 
 	stationTiploc, _ := result.Tiplocs.Get(result.Station[0])
 

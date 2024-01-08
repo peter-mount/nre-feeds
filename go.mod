@@ -3,7 +3,7 @@ module github.com/peter-mount/nre-feeds
 go 1.19
 
 require (
-	github.com/aws/aws-sdk-go v1.34.0
+	github.com/aws/aws-sdk-go v1.44.261
 	github.com/etcd-io/bbolt v1.3.3
 	github.com/flopp/go-staticmaps v0.0.0-20210425143944-2e6e19a99c28
 	github.com/fogleman/gg v1.3.0
@@ -30,7 +30,7 @@ require (
 	github.com/flopp/go-coordsparser v0.0.0-20201115094714-8baaeb7062d5 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/gorilla/mux v1.7.3 // indirect
-	github.com/jmespath/go-jmespath v0.3.0 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/peter-mount/go.uuid v1.2.1-0.20180103174451-36e9d2ebbde5 // indirect
 	github.com/tkrajina/gpxgo v1.0.1 // indirect
 	golang.org/x/image v0.10.0 // indirect
