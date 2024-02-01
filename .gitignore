@@ -26,3 +26,8 @@ go.sum
 /ukrail.xml
 /tt.cif
 /TiplocPublicExport_2021-05-14_07-35.json
+
+/build
+/builds/
+/dist/
+/Makefile.gen

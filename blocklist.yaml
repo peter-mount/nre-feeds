@@ -1,0 +1,13 @@
+block:
+  # unsupported by bbolt
+  - os: aix
+  - os: linux
+    arch: loong64
+  - os: plan9
+
+tools:
+  darwingraph:
+    # unsupported by wessie
+    - os: dragonfly
+    - os: illumos
+    - os: solaris

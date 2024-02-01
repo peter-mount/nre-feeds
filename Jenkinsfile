@@ -1,4 +1,3 @@
-// Build properties
 properties([
   buildDiscarder(
     logRotator(
@@ -11,94 +10,134 @@ properties([
   disableConcurrentBuilds(),
   disableResume(),
   pipelineTriggers([
-    cron('H H * * *')
+    cron("H H * * *")
   ])
 ])
-
-// Repository name use, must end with / or be '' for none.
-// Setting this to '' will also disable any pushing
-repository= 'area51/'
-
-// image prefix
-imagePrefix = 'nre-feeds'
-
-// The architectures to build. This is an array of [node,arch]
-architectures = [
- ['AMD64', 'amd64'],
- ['ARM64', 'arm64v8'],
- ['ARM32v7', 'arm32v7']
-]
-
-// The modules to build.
-// Most projects will have a dummy entry ['Build'] some like nre-feeds have multiple
-// ones.
-// Note 'Build' is a magic keyword here for a single module project
-modules = [ 'darwinref', 'darwintt', 'darwind3', 'ldb', 'darwinkb' ]
-
-// ======================================================================
-// Do not modify anything below this point
-// ======================================================================
-
-// The image tag (i.e. repository/image but no version)
-imageTag=repository + imagePrefix
-
-// The image version based on the branch name - master branch is latest in docker
-version=BRANCH_NAME
-if( version == 'master' ) {
-  version = 'latest'
-}
-
-// Build each architecture on each node in parallel
-modules.each {
-  module -> stage( module ) {
-    def builders = [:]
-    for( architecture in architectures ) {
-      // Need to bind these before the closure, cannot access these as architecture[x]
-      def nodeId = architecture[0]
-      def arch = architecture[1]
-      builders[arch] = {
-        node( nodeId ) {
-          withCredentials([
-            usernameColonPassword(credentialsId: 'artifact-publisher', variable: 'UPLOAD_CRED')]
-          ) {
-            stage( arch ) {
-              checkout scm
-
-              sh './build.sh ' + imageTag + ' ' + arch + ' ' + version + ' ' + module
-
-              if( repository != '' ) {
-                sh 'docker push ' + imageTag + ':' + ( module != 'Build' ? ( module + '-' ) : '' ) + arch + '-' + version
-              }
-            }
-          }
-        }
-      }
-    }
-    parallel builders
+node("go") {
+  stage("Checkout") {
+    checkout scm
   }
-}
-
-// The multiarch build only if we have a repository set
-if( repository != '' ) {
-  stage( "Multiarch" ) {
-    def builders = [:]
-    for( mod in modules ) {
-      // Need to bind before closure again
-      def module = mod
-      builders[mod] = {
-        node( 'AMD64' ) {
-          stage( mod ) {
-            checkout scm
-
-            sh './multiarch.sh' +
-              ' ' + imageTag +
-              ' ' + version +
-              ' ' + module +
-              ' ' + architectures.collect { it[1] } .join(' ')
-          }
-        }
-      }
-    }
-    parallel builders
+  stage("Init") {
+    sh 'make clean init test'
+  }
+  stage("darwin_amd64") {
+    sh 'make -f Makefile.gen darwin_amd64'
+  }
+  stage("darwin_arm64") {
+    sh 'make -f Makefile.gen darwin_arm64'
+  }
+  stage("dragonfly_amd64") {
+    sh 'make -f Makefile.gen dragonfly_amd64'
+  }
+  stage("freebsd_386") {
+    sh 'make -f Makefile.gen freebsd_386'
+  }
+  stage("freebsd_amd64") {
+    sh 'make -f Makefile.gen freebsd_amd64'
+  }
+  stage("freebsd_arm6") {
+    sh 'make -f Makefile.gen freebsd_arm6'
+  }
+  stage("freebsd_arm7") {
+    sh 'make -f Makefile.gen freebsd_arm7'
+  }
+  stage("freebsd_arm64") {
+    sh 'make -f Makefile.gen freebsd_arm64'
+  }
+  stage("freebsd_riscv64") {
+    sh 'make -f Makefile.gen freebsd_riscv64'
+  }
+  stage("illumos_amd64") {
+    sh 'make -f Makefile.gen illumos_amd64'
+  }
+  stage("linux_386") {
+    sh 'make -f Makefile.gen linux_386'
+  }
+  stage("linux_amd64") {
+    sh 'make -f Makefile.gen linux_amd64'
+  }
+  stage("linux_arm6") {
+    sh 'make -f Makefile.gen linux_arm6'
+  }
+  stage("linux_arm7") {
+    sh 'make -f Makefile.gen linux_arm7'
+  }
+  stage("linux_arm64") {
+    sh 'make -f Makefile.gen linux_arm64'
+  }
+  stage("linux_mips") {
+    sh 'make -f Makefile.gen linux_mips'
+  }
+  stage("linux_mips64") {
+    sh 'make -f Makefile.gen linux_mips64'
+  }
+  stage("linux_mips64le") {
+    sh 'make -f Makefile.gen linux_mips64le'
+  }
+  stage("linux_mipsle") {
+    sh 'make -f Makefile.gen linux_mipsle'
+  }
+  stage("linux_ppc64") {
+    sh 'make -f Makefile.gen linux_ppc64'
+  }
+  stage("linux_ppc64le") {
+    sh 'make -f Makefile.gen linux_ppc64le'
+  }
+  stage("linux_riscv64") {
+    sh 'make -f Makefile.gen linux_riscv64'
+  }
+  stage("linux_s390x") {
+    sh 'make -f Makefile.gen linux_s390x'
+  }
+  stage("netbsd_386") {
+    sh 'make -f Makefile.gen netbsd_386'
+  }
+  stage("netbsd_amd64") {
+    sh 'make -f Makefile.gen netbsd_amd64'
+  }
+  stage("netbsd_arm6") {
+    sh 'make -f Makefile.gen netbsd_arm6'
+  }
+  stage("netbsd_arm7") {
+    sh 'make -f Makefile.gen netbsd_arm7'
+  }
+  stage("netbsd_arm64") {
+    sh 'make -f Makefile.gen netbsd_arm64'
+  }
+  stage("openbsd_386") {
+    sh 'make -f Makefile.gen openbsd_386'
+  }
+  stage("openbsd_amd64") {
+    sh 'make -f Makefile.gen openbsd_amd64'
+  }
+  stage("openbsd_arm6") {
+    sh 'make -f Makefile.gen openbsd_arm6'
+  }
+  stage("openbsd_arm7") {
+    sh 'make -f Makefile.gen openbsd_arm7'
+  }
+  stage("openbsd_arm64") {
+    sh 'make -f Makefile.gen openbsd_arm64'
+  }
+  stage("solaris_amd64") {
+    sh 'make -f Makefile.gen solaris_amd64'
+  }
+  stage("windows_386") {
+    sh 'make -f Makefile.gen windows_386'
+  }
+  stage("windows_amd64") {
+    sh 'make -f Makefile.gen windows_amd64'
+  }
+  stage("windows_arm6") {
+    sh 'make -f Makefile.gen windows_arm6'
+  }
+  stage("windows_arm7") {
+    sh 'make -f Makefile.gen windows_arm7'
+  }
+  stage("windows_arm64") {
+    sh 'make -f Makefile.gen windows_arm64'
+  }
+  stage("archiveArtifacts") {
+    archiveArtifacts artifacts: 'dist/*'
   }
 }
